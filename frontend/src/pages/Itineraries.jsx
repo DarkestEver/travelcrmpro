@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'react-hot-toast';
 import { 
@@ -8,7 +9,8 @@ import {
   FiEye,
   FiDownload,
   FiCalendar,
-  FiMapPin
+  FiMapPin,
+  FiLayers
 } from 'react-icons/fi';
 import DataTable from '../components/DataTable';
 import Modal from '../components/Modal';
@@ -16,6 +18,7 @@ import ConfirmDialog from '../components/ConfirmDialog';
 import { itinerariesAPI } from '../services/apiEndpoints';
 
 const Itineraries = () => {
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
@@ -126,6 +129,13 @@ const Itineraries = () => {
       accessor: '_id',
       render: (value, row) => (
         <div className="flex gap-2">
+          <button
+            onClick={() => navigate(`/itineraries/${row._id}/build`)}
+            className="text-primary-600 hover:text-primary-800"
+            title="Build Itinerary"
+          >
+            <FiLayers className="w-4 h-4" />
+          </button>
           <button
             onClick={() => handlePreview(row)}
             className="text-green-600 hover:text-green-800"

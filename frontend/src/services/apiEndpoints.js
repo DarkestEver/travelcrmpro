@@ -69,15 +69,35 @@ export const itinerariesAPI = {
   getAll: (params) => api.get('/itineraries', { params }),
   getTemplates: (params) => api.get('/itineraries/templates', { params }),
   getOne: (id) => api.get(`/itineraries/${id}`),
+  getById: (id) => api.get(`/itineraries/${id}`).then(res => res.data.data),
   create: (data) => api.post('/itineraries', data),
-  update: (id, data) => api.put(`/itineraries/${id}`, data),
+  update: (id, data) => api.put(`/itineraries/${id}`, data).then(res => res.data.data),
   delete: (id) => api.delete(`/itineraries/${id}`),
   duplicate: (id) => api.post(`/itineraries/${id}/duplicate`),
   archive: (id) => api.patch(`/itineraries/${id}/archive`),
   publishTemplate: (id, visibility) =>
     api.patch(`/itineraries/${id}/publish-template`, { templateVisibility: visibility }),
   calculateCost: (id) => api.get(`/itineraries/${id}/calculate-cost`),
-  // NEW: Detailed itinerary info
+  // PHASE 1: Day Management
+  addDay: (id, dayData) => api.post(`/itineraries/${id}/days`, dayData).then(res => res.data.data),
+  updateDay: (id, dayId, dayData) => api.put(`/itineraries/${id}/days/${dayId}`, dayData).then(res => res.data.data),
+  deleteDay: (id, dayId) => api.delete(`/itineraries/${id}/days/${dayId}`).then(res => res.data.data),
+  // PHASE 1: Component Management
+  addComponent: (id, dayId, componentData) => 
+    api.post(`/itineraries/${id}/days/${dayId}/components`, componentData).then(res => res.data.data),
+  updateComponent: (id, dayId, componentId, componentData) => 
+    api.put(`/itineraries/${id}/days/${dayId}/components/${componentId}`, componentData).then(res => res.data.data),
+  deleteComponent: (id, dayId, componentId) => 
+    api.delete(`/itineraries/${id}/days/${dayId}/components/${componentId}`).then(res => res.data.data),
+  reorderComponents: (id, dayId, componentIds) => 
+    api.put(`/itineraries/${id}/days/${dayId}/reorder`, { componentIds }).then(res => res.data.data),
+  // PHASE 1: Sharing & Analytics
+  generateShareLink: (id, options) => api.post(`/itineraries/${id}/share`, options).then(res => res.data.data),
+  getSharedItinerary: (token, password) => 
+    api.get(`/itineraries/share/${token}`, { params: { password } }).then(res => res.data.data),
+  getStats: (id) => api.get(`/itineraries/${id}/stats`).then(res => res.data.data),
+  clone: (id) => api.post(`/itineraries/${id}/clone`).then(res => res.data.data),
+  // Detailed itinerary info (legacy)
   getActivities: (id) => api.get(`/itineraries/${id}/activities`),
   getAccommodations: (id) => api.get(`/itineraries/${id}/accommodations`),
   getPricing: (id) => api.get(`/itineraries/${id}/pricing`),
