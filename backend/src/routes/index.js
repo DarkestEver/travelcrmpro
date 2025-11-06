@@ -11,6 +11,7 @@ const bookingRoutes = require('./bookingRoutes');
 const notificationRoutes = require('./notificationRoutes');
 const analyticsRoutes = require('./analyticsRoutes');
 const auditLogRoutes = require('./auditLogRoutes');
+const uploadRoutes = require('./uploadRoutes');
 
 const router = express.Router();
 
@@ -39,5 +40,6 @@ router.use('/bookings', bookingRoutes);
 router.use('/notifications', notificationRoutes);
 router.use('/analytics', analyticsRoutes);
 router.use('/audit-logs', auditLogRoutes);
+router.use('/upload', uploadRoutes);
 
 module.exports = router;
