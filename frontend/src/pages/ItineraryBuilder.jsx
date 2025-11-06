@@ -402,21 +402,99 @@ const ItineraryBuilder = () => {
                 </button>
               </div>
               <div className="flex items-center space-x-4 mt-1 text-sm text-gray-500">
+                {/* Location */}
                 <span className="flex items-center">
                   <FiMapPin className="w-4 h-4 mr-1" />
-                  {itinerary?.destination?.city}, {itinerary?.destination?.country}
+                  {itinerary?.destination?.city && itinerary?.destination?.country
+                    ? `${itinerary.destination.city}, ${itinerary.destination.country}`
+                    : itinerary?.destination?.country || 'No destination'}
                 </span>
+                
+                {/* Duration */}
                 <span className="flex items-center">
                   <FiCalendar className="w-4 h-4 mr-1" />
-                  {itinerary?.numberOfDays} Days / {itinerary?.numberOfNights} Nights
+                  {(() => {
+                    const daysCount = itinerary?.days?.length || itinerary?.duration?.days || 0;
+                    const nightsCount = daysCount > 0 ? daysCount - 1 : 0;
+                    return `${daysCount} Days / ${nightsCount} Nights`;
+                  })()}
                 </span>
-                {stats && (
+
+                {/* Dates */}
+                {(itinerary?.startDate || itinerary?.endDate) && (
                   <span className="flex items-center">
+                    <FiClock className="w-4 h-4 mr-1" />
+                    {itinerary?.startDate && new Date(itinerary.startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                    {itinerary?.startDate && itinerary?.endDate && ' - '}
+                    {itinerary?.endDate && new Date(itinerary.endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                  </span>
+                )}
+
+                {/* Total Cost */}
+                {stats?.costBreakdown?.totalCost > 0 && (
+                  <span className="flex items-center text-green-600 font-medium">
                     <FiDollarSign className="w-4 h-4 mr-1" />
-                    {stats.costBreakdown?.totalCost?.toLocaleString()} {stats.costBreakdown?.currency}
+                    {stats.costBreakdown.currency} {stats.costBreakdown.totalCost.toLocaleString()}
+                  </span>
+                )}
+
+                {/* Travel Style Badge */}
+                {itinerary?.travelStyle && (
+                  <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
+                    {itinerary.travelStyle.charAt(0).toUpperCase() + itinerary.travelStyle.slice(1)}
+                  </span>
+                )}
+
+                {/* Status Badge */}
+                {itinerary?.status && (
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                    itinerary.status === 'published' ? 'bg-green-100 text-green-700' :
+                    itinerary.status === 'draft' ? 'bg-gray-100 text-gray-700' :
+                    'bg-yellow-100 text-yellow-700'
+                  }`}>
+                    {itinerary.status.charAt(0).toUpperCase() + itinerary.status.slice(1)}
                   </span>
                 )}
               </div>
+
+              {/* Additional Details Row */}
+              {(itinerary?.themes?.length > 0 || itinerary?.minGroupSize || itinerary?.difficulty) && (
+                <div className="flex items-center space-x-3 mt-2 text-xs text-gray-500">
+                  {/* Group Size */}
+                  {(itinerary?.minGroupSize || itinerary?.maxGroupSize) && (
+                    <span className="flex items-center">
+                      <FiUsers className="w-3 h-3 mr-1" />
+                      {itinerary.minGroupSize || 1}-{itinerary.maxGroupSize || 10} people
+                    </span>
+                  )}
+
+                  {/* Difficulty */}
+                  {itinerary?.difficulty && (
+                    <span className={`px-2 py-0.5 rounded-full font-medium ${
+                      itinerary.difficulty === 'easy' ? 'bg-green-50 text-green-700' :
+                      itinerary.difficulty === 'moderate' ? 'bg-yellow-50 text-yellow-700' :
+                      itinerary.difficulty === 'challenging' ? 'bg-orange-50 text-orange-700' :
+                      'bg-red-50 text-red-700'
+                    }`}>
+                      {itinerary.difficulty.charAt(0).toUpperCase() + itinerary.difficulty.slice(1)}
+                    </span>
+                  )}
+
+                  {/* Themes */}
+                  {itinerary?.themes && itinerary.themes.length > 0 && (
+                    <div className="flex items-center space-x-1">
+                      {itinerary.themes.slice(0, 3).map((theme, idx) => (
+                        <span key={idx} className="px-2 py-0.5 bg-purple-50 text-purple-700 rounded-full">
+                          {theme}
+                        </span>
+                      ))}
+                      {itinerary.themes.length > 3 && (
+                        <span className="text-gray-400">+{itinerary.themes.length - 3} more</span>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 
