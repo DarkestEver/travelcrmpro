@@ -118,6 +118,7 @@ export const itinerariesAPI = {
     api.get(`/itineraries/share/${token}`, { params: { password } }).then(res => res.data.data),
   getStats: (id) => api.get(`/itineraries/${id}/stats`).then(res => res.data.data),
   clone: (id) => api.post(`/itineraries/${id}/clone`).then(res => res.data.data),
+  import: (itineraryData) => api.post('/itineraries/import', { itineraryData }).then(res => res.data.data),
   // Detailed itinerary info (legacy)
   getActivities: (id) => api.get(`/itineraries/${id}/activities`),
   getAccommodations: (id) => api.get(`/itineraries/${id}/accommodations`),

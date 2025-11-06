@@ -734,6 +734,60 @@ const cloneItinerary = asyncHandler(async (req, res) => {
   successResponse(res, 201, 'Itinerary cloned successfully', { itinerary: newItinerary });
 });
 
+// @desc    Import itinerary from JSON
+// @route   POST /api/v1/itineraries/import
+// @access  Private
+const importItinerary = asyncHandler(async (req, res) => {
+  const { itineraryData } = req.body;
+
+  if (!itineraryData) {
+    throw new AppError('No itinerary data provided', 400);
+  }
+
+  // Validate required fields
+  if (!itineraryData.title) {
+    throw new AppError('Itinerary title is required', 400);
+  }
+
+  // Prepare itinerary data with tenant and user info
+  const importData = {
+    ...itineraryData,
+    tenantId: req.tenantId,
+    createdBy: req.user._id,
+    status: itineraryData.status || 'draft',
+    isTemplate: false, // Imported itineraries are not templates by default
+    // Remove any _id from imported data to create new document
+    _id: undefined,
+  };
+
+  // Clean up days data if present
+  if (importData.days && Array.isArray(importData.days)) {
+    importData.days = importData.days.map((day, index) => {
+      const cleanDay = {
+        ...day,
+        _id: undefined, // Remove old IDs
+        dayNumber: index + 1, // Renumber days
+      };
+      
+      // Clean up components if present
+      if (cleanDay.components && Array.isArray(cleanDay.components)) {
+        cleanDay.components = cleanDay.components.map(component => ({
+          ...component,
+          _id: undefined, // Remove old IDs
+        }));
+      }
+      
+      return cleanDay;
+    });
+  }
+
+  // Create the itinerary
+  const newItinerary = await Itinerary.create(importData);
+  await newItinerary.populate('createdBy', 'firstName lastName email');
+
+  successResponse(res, 201, 'Itinerary imported successfully', { itinerary: newItinerary });
+});
+
 module.exports = {
   getAllItineraries,
   getItinerary,
@@ -756,4 +810,5 @@ module.exports = {
   reorderComponents,
   getItineraryStats,
   cloneItinerary,
+  importItinerary,
 };

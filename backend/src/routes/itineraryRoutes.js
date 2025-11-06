@@ -22,6 +22,7 @@ const {
   reorderComponents,
   getItineraryStats,
   cloneItinerary,
+  importItinerary,
 } = require('../controllers/itineraryController');
 const { protect, restrictTo, loadAgent } = require('../middleware/auth');
 const { auditLogger } = require('../middleware/auditLogger');
@@ -37,6 +38,7 @@ router.get('/templates', getTemplates);
 // CRUD routes
 router.get('/', restrictTo('super_admin', 'operator', 'agent'), loadAgent, getAllItineraries);
 router.post('/', restrictTo('super_admin', 'operator', 'agent'), auditLogger('create', 'itinerary'), createItinerary);
+router.post('/import', restrictTo('super_admin', 'operator', 'agent'), auditLogger('create', 'itinerary'), importItinerary);
 
 router.get('/:id', getItinerary);
 router.put('/:id', auditLogger('update', 'itinerary'), updateItinerary);

@@ -122,9 +122,17 @@ const ItineraryBuilder = () => {
 
   // Delete day mutation
   const deleteDayMutation = useMutation({
-    mutationFn: (dayId) => itinerariesAPI.deleteDay(id, dayId),
+    mutationFn: (dayId) => {
+      console.log('Deleting day:', dayId);
+      return itinerariesAPI.deleteDay(id, dayId);
+    },
     onSuccess: (data) => {
-      toast.success('Day deleted successfully');
+      console.log('Delete day response:', data);
+      if (!data) {
+        console.error('No data returned from deleteDay');
+        toast.error('Invalid response from server');
+        return;
+      }
       queryClient.invalidateQueries(['itinerary', id]);
       setItinerary(data);
       // Select first day if current day was deleted
@@ -133,8 +141,10 @@ const ItineraryBuilder = () => {
       } else {
         setSelectedDay(null);
       }
+      toast.success('Day deleted successfully');
     },
     onError: (error) => {
+      console.error('Delete day error:', error);
       toast.error(error.response?.data?.message || 'Failed to delete day');
     }
   });
@@ -341,13 +351,16 @@ const ItineraryBuilder = () => {
     },
     onSuccess: (data) => {
       console.log('Clone response:', data);
-      if (!data || !data._id) {
+      // API returns the itinerary object directly after .then(res => res.data.data)
+      const itineraryId = data?.itinerary?._id || data?._id;
+      if (!itineraryId) {
+        console.error('No itinerary ID in clone response:', data);
         toast.error('Invalid response from server');
         return;
       }
       toast.success('Itinerary duplicated successfully');
       // Navigate to the new duplicated itinerary
-      navigate(`/itineraries/${data._id}/build`);
+      navigate(`/itineraries/${itineraryId}/build`);
     },
     onError: (error) => {
       console.error('Clone error:', error);

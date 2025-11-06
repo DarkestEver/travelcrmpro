@@ -12,6 +12,7 @@ const routes = require('./routes');
 const { errorHandler, notFound } = require('./middleware/errorHandler');
 const logger = require('./utils/logger');
 const setupSwagger = require('./config/swagger');
+const { initCronJobs } = require('./jobs');
 // const getWebSocketService = require('./services/websocketService'); // Temporarily disabled
 const getPDFService = require('./services/pdfService');
 
@@ -31,6 +32,9 @@ connectDB();
 getPDFService().catch(err => {
   logger.error('Failed to initialize PDF service:', err);
 });
+
+// Initialize cron jobs
+initCronJobs();
 
 // Security middleware
 app.use(helmet());

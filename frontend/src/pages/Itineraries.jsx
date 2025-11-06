@@ -10,11 +10,13 @@ import {
   FiDownload,
   FiCalendar,
   FiMapPin,
-  FiLayers
+  FiLayers,
+  FiUpload
 } from 'react-icons/fi';
 import DataTable from '../components/DataTable';
 import Modal from '../components/Modal';
 import ConfirmDialog from '../components/ConfirmDialog';
+import ImportItineraryModal from '../components/itinerary/ImportItineraryModal';
 import { itinerariesAPI } from '../services/apiEndpoints';
 
 const Itineraries = () => {
@@ -25,6 +27,7 @@ const Itineraries = () => {
   const [showModal, setShowModal] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
   const [selectedItinerary, setSelectedItinerary] = useState(null);
 
   // Fetch itineraries
@@ -100,6 +103,28 @@ const Itineraries = () => {
     },
   });
 
+  // Import mutation
+  const importMutation = useMutation({
+    mutationFn: (itineraryData) => itinerariesAPI.import(itineraryData),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries(['itineraries']);
+      const itineraryId = data?.itinerary?._id || data?._id;
+      if (itineraryId) {
+        toast.success('Itinerary imported successfully! Opening builder...');
+        navigate(`/itineraries/${itineraryId}/build`);
+      } else {
+        toast.success('Itinerary imported successfully');
+      }
+    },
+    onError: (error) => {
+      toast.error(error.response?.data?.message || 'Failed to import itinerary');
+    },
+  });
+
+  const handleImport = (itineraryData) => {
+    importMutation.mutate(itineraryData);
+  };
+
   const handleEdit = (itinerary) => {
     setSelectedItinerary(itinerary);
     setShowModal(true);
@@ -136,11 +161,6 @@ const Itineraries = () => {
           </div>
         </div>
       ),
-    },
-    {
-      header: 'Customer',
-      accessor: 'customer',
-      render: (value) => value?.name || <span className="text-gray-400">-</span>,
     },
     {
       header: 'Duration',
@@ -222,6 +242,13 @@ const Itineraries = () => {
           <p className="text-gray-600 mt-1">Create and manage travel itineraries</p>
         </div>
         <div className="flex gap-2">
+          <button
+            onClick={() => setShowImportModal(true)}
+            className="btn btn-outline flex items-center gap-2"
+          >
+            <FiUpload className="w-4 h-4" />
+            Import JSON
+          </button>
           <button
             onClick={() => quickCreateMutation.mutate()}
             className="btn btn-primary flex items-center gap-2"
@@ -538,6 +565,16 @@ const ItineraryPreviewModal = ({ isOpen, onClose, itinerary }) => {
         </div>
       </div>
     </Modal>
+  );
+};
+
+      {/* Import Modal */}
+      <ImportItineraryModal
+        isOpen={showImportModal}
+        onClose={() => setShowImportModal(false)}
+        onImport={handleImport}
+      />
+    </div>
   );
 };
 
