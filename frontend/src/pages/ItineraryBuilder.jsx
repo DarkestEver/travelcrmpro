@@ -139,6 +139,60 @@ const ItineraryBuilder = () => {
     }
   });
 
+  // Reorder components mutation
+  const reorderComponentsMutation = useMutation({
+    mutationFn: ({ dayId, startIndex, endIndex }) => {
+      // Optimistically reorder locally
+      const day = itinerary.days.find(d => d._id === dayId);
+      if (!day) return Promise.reject('Day not found');
+      
+      const components = [...day.components];
+      const [removed] = components.splice(startIndex, 1);
+      components.splice(endIndex, 0, removed);
+      
+      const componentIds = components.map(c => c._id);
+      return itinerariesAPI.reorderComponents(id, dayId, componentIds);
+    },
+    onMutate: async ({ dayId, startIndex, endIndex }) => {
+      // Cancel outgoing refetches
+      await queryClient.cancelQueries(['itinerary', id]);
+
+      // Snapshot previous value
+      const previousItinerary = queryClient.getQueryData(['itinerary', id]);
+
+      // Optimistically update
+      queryClient.setQueryData(['itinerary', id], (old) => {
+        if (!old) return old;
+        
+        const newItinerary = { ...old };
+        newItinerary.days = newItinerary.days.map(day => {
+          if (day._id === dayId) {
+            const components = [...day.components];
+            const [removed] = components.splice(startIndex, 1);
+            components.splice(endIndex, 0, removed);
+            return { ...day, components };
+          }
+          return day;
+        });
+        
+        return newItinerary;
+      });
+
+      return { previousItinerary };
+    },
+    onSuccess: (data) => {
+      toast.success('Order updated');
+      queryClient.invalidateQueries(['itinerary', id]);
+    },
+    onError: (error, variables, context) => {
+      // Rollback on error
+      if (context?.previousItinerary) {
+        queryClient.setQueryData(['itinerary', id], context.previousItinerary);
+      }
+      toast.error('Failed to update order');
+    }
+  });
+
   // Handle auto-save
   useEffect(() => {
     if (autoSaveEnabled && unsavedChanges && itinerary) {
@@ -184,6 +238,11 @@ const ItineraryBuilder = () => {
     if (window.confirm('Are you sure you want to delete this component?')) {
       deleteComponentMutation.mutate({ dayId, componentId });
     }
+  };
+
+  // Handle reordering components
+  const handleReorderComponents = (dayId, startIndex, endIndex) => {
+    reorderComponentsMutation.mutate({ dayId, startIndex, endIndex });
   };
 
   // Handle saving component
@@ -379,6 +438,7 @@ const ItineraryBuilder = () => {
               onAddComponent={handleAddComponent}
               onEditComponent={handleEditComponent}
               onDeleteComponent={handleDeleteComponent}
+              onReorderComponents={handleReorderComponents}
             />
           )}
           
@@ -397,6 +457,7 @@ const ItineraryBuilder = () => {
                   onAddComponent={handleAddComponent}
                   onEditComponent={handleEditComponent}
                   onDeleteComponent={handleDeleteComponent}
+                  onReorderComponents={handleReorderComponents}
                 />
               </div>
               <div className="overflow-auto">

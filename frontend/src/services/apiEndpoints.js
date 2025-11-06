@@ -161,6 +161,33 @@ export const analyticsAPI = {
   getSettings: () => api.get('/analytics/settings'),
 }
 
+// Upload API
+export const uploadAPI = {
+  uploadImage: (file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return api.post('/upload/image', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    }).then(res => res.data.data);
+  },
+  uploadImages: (files) => {
+    const formData = new FormData();
+    files.forEach(file => formData.append('files', file));
+    return api.post('/upload/images', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    }).then(res => res.data.data);
+  },
+  uploadItineraryImages: (itineraryId, type, files) => {
+    const formData = new FormData();
+    files.forEach(file => formData.append('files', file));
+    formData.append('type', type);
+    return api.post(`/upload/itinerary/${itineraryId}/${type}`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    }).then(res => res.data.data);
+  },
+  deleteImage: (filePath) => api.delete(`/upload/image`, { data: { filePath } })
+}
+
 export default {
   auth: authAPI,
   agents: agentsAPI,
@@ -171,4 +198,5 @@ export default {
   bookings: bookingsAPI,
   auditLogs: auditLogsAPI,
   analytics: analyticsAPI,
+  upload: uploadAPI,
 }
