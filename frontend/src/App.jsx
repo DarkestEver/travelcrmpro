@@ -14,6 +14,7 @@ import Customers from './pages/Customers'
 import Suppliers from './pages/Suppliers'
 import Itineraries from './pages/Itineraries'
 import ItineraryBuilder from './pages/ItineraryBuilder'
+import ItineraryPreview from './pages/ItineraryPreview'
 import Quotes from './pages/Quotes'
 import Bookings from './pages/Bookings'
 import Profile from './pages/Profile'
@@ -85,6 +86,7 @@ function App() {
         <Route path="suppliers" element={<Suppliers />} />
         <Route path="itineraries" element={<Itineraries />} />
         <Route path="itineraries/:id/build" element={<ItineraryBuilder />} />
+        <Route path="itinerary-preview/:id" element={<ItineraryPreview />} />
         <Route path="quotes" element={<Quotes />} />
         <Route path="bookings" element={<Bookings />} />
         <Route path="analytics" element={<Analytics />} />

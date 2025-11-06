@@ -275,13 +275,9 @@ const ItineraryBuilder = () => {
 
   // Handle export
   const handleExport = async () => {
-    try {
-      toast.loading('Generating PDF...');
-      // TODO: Implement PDF export
-      toast.success('PDF generated successfully');
-    } catch (error) {
-      toast.error('Failed to generate PDF');
-    }
+    // Open preview page which has PDF export functionality
+    window.open(`/itinerary-preview/${id}`, '_blank');
+    toast.success('Opening preview - use Download PDF button to export');
   };
 
   // Handle share
