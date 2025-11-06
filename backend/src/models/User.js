@@ -3,6 +3,13 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
 const userSchema = new mongoose.Schema({
+  // Multi-tenancy
+  tenantId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Tenant',
+    required: true,
+    index: true,
+  },
   name: {
     type: String,
     required: [true, 'Please provide a name'],
@@ -11,7 +18,6 @@ const userSchema = new mongoose.Schema({
   email: {
     type: String,
     required: [true, 'Please provide an email'],
-    unique: true,
     lowercase: true,
     trim: true,
     match: [/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/, 'Please provide a valid email'],
@@ -65,6 +71,8 @@ const userSchema = new mongoose.Schema({
 });
 
 // Indexes
+userSchema.index({ tenantId: 1, email: 1 }, { unique: true }); // Unique email per tenant
+userSchema.index({ tenantId: 1, role: 1 });
 userSchema.index({ email: 1 });
 userSchema.index({ role: 1 });
 

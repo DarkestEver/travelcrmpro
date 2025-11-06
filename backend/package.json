@@ -6,7 +6,9 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
-    "test": "jest --coverage"
+    "test": "jest --coverage",
+    "seed:tenants": "node src/scripts/seedTenants.js",
+    "migrate:tenants": "node src/scripts/migrateTenantData.js"
   },
   "keywords": [
     "travel",

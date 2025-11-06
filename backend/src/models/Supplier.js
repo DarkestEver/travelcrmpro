@@ -1,6 +1,12 @@
 const mongoose = require('mongoose');
 
 const supplierSchema = new mongoose.Schema({
+  tenantId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Tenant',
+    required: true,
+    index: true,
+  },
   userId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',

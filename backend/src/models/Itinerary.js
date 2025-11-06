@@ -51,6 +51,12 @@ const daySchema = new mongoose.Schema({
 }, { _id: true });
 
 const itinerarySchema = new mongoose.Schema({
+  tenantId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Tenant',
+    required: true,
+    index: true,
+  },
   title: {
     type: String,
     required: [true, 'Please provide itinerary title'],

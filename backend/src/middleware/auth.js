@@ -47,6 +47,14 @@ exports.protect = async (req, res, next) => {
             message: 'User no longer exists.',
           });
         }
+        
+        // Verify user belongs to the current tenant (if tenant context exists)
+        if (req.tenantId && user.tenantId.toString() !== req.tenantId.toString()) {
+          return res.status(403).json({
+            success: false,
+            message: 'Access denied. User does not belong to this tenant.',
+          });
+        }
 
         // Cache user data for 1 hour
         await setAsync(`user_${decoded.id}`, JSON.stringify(user), 3600);

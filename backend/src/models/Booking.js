@@ -1,6 +1,12 @@
 const mongoose = require('mongoose');
 
 const bookingSchema = new mongoose.Schema({
+  tenantId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Tenant',
+    required: true,
+    index: true,
+  },
   bookingNumber: {
     type: String,
     unique: true,

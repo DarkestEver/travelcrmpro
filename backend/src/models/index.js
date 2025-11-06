@@ -1,5 +1,6 @@
 module.exports = {
   User: require('./User'),
+  Tenant: require('./Tenant'),
   Agent: require('./Agent'),
   Customer: require('./Customer'),
   Supplier: require('./Supplier'),

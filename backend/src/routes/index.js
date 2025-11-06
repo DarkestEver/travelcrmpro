@@ -1,5 +1,6 @@
 const express = require('express');
 const authRoutes = require('./authRoutes');
+const tenantRoutes = require('./tenantRoutes');
 const agentRoutes = require('./agentRoutes');
 const customerRoutes = require('./customerRoutes');
 const supplierRoutes = require('./supplierRoutes');
@@ -23,6 +24,7 @@ router.get('/health', (req, res) => {
 
 // API routes
 router.use('/auth', authRoutes);
+router.use('/tenants', tenantRoutes);
 router.use('/agents', agentRoutes);
 router.use('/customers', customerRoutes);
 router.use('/suppliers', supplierRoutes);
