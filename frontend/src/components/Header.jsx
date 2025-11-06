@@ -1,0 +1,68 @@
+import { Link, useNavigate } from 'react-router-dom'
+import { useAuthStore } from '../stores/authStore'
+import { authAPI } from '../services/apiEndpoints'
+import { FiUser, FiLogOut, FiBell } from 'react-icons/fi'
+import toast from 'react-hot-toast'
+
+const Header = () => {
+  const { user, logout } = useAuthStore()
+  const navigate = useNavigate()
+
+  const handleLogout = async () => {
+    try {
+      await authAPI.logout()
+      logout()
+      toast.success('Logged out successfully')
+      navigate('/login')
+    } catch (error) {
+      console.error('Logout error:', error)
+      logout()
+      navigate('/login')
+    }
+  }
+
+  return (
+    <header className="bg-white shadow-sm border-b">
+      <div className="px-6 py-4 flex items-center justify-between">
+        <div className="flex-1">
+          <h2 className="text-xl font-semibold text-gray-800">
+            Welcome back, {user?.name}!
+          </h2>
+        </div>
+
+        <div className="flex items-center gap-4">
+          {/* Notifications */}
+          <button className="p-2 rounded-lg hover:bg-gray-100 relative">
+            <FiBell className="text-xl text-gray-600" />
+            <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+          </button>
+
+          {/* Profile dropdown */}
+          <div className="flex items-center gap-3">
+            <Link
+              to="/profile"
+              className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors"
+            >
+              <div className="w-8 h-8 rounded-full bg-primary-500 flex items-center justify-center text-white font-medium">
+                {user?.name?.charAt(0).toUpperCase()}
+              </div>
+              <span className="text-sm font-medium text-gray-700">
+                {user?.name}
+              </span>
+            </Link>
+
+            <button
+              onClick={handleLogout}
+              className="p-2 rounded-lg hover:bg-red-50 text-red-600 transition-colors"
+              title="Logout"
+            >
+              <FiLogOut className="text-xl" />
+            </button>
+          </div>
+        </div>
+      </div>
+    </header>
+  )
+}
+
+export default Header

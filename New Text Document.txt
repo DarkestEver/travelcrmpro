@@ -1,0 +1,369 @@
+Nice — I’ll give you a single, actionable, detailed plan (product + technical + rollout) for a B2B Travel Operations CRM where agents have access to manage their own customers. I won’t ask questions — I’ll assume you want a robust, production-grade system based on your existing Node + React preference and SSO requirement. If anything looks off, tell me what to change and I’ll update instantly.
+
+1) Project purpose & success criteria
+
+Purpose: centralize itineraries, supplier (country POC) data, agent relationships, pricing and bookings; let agents self-manage their customers; automate quote generation and operator workflows.
+
+Success criteria (what “done” looks like):
+
+Agents can log in, create/manage their customers, request itineraries, receive & accept quotes, and confirm bookings.
+
+Country POCs can upload rate sheets, availability, and confirm supplier items.
+
+Admins can create itineraries, define markups, and reconcile bookings/supplier settlements.
+
+System generates branded PDF itineraries/quotations and records audit trail for every action.
+
+Role-based permissions enforced; secure SSO and payment integrations working.
+
+2) Major user roles & permissions
+
+Super Admin — full product configuration, payments, billing, user provisioning.
+
+Operator / Internal — create itineraries, suppliers, approve quotations, manage bookings.
+
+Country POC (Supplier) — manage their own rate sheets, availability, respond to inquiries, upload documents.
+
+Agent (B2B client) — create/manage their customers, request/receive quotes, confirm bookings, make payments, see invoices.
+
+Agent-Customer — optional portal for end customers (view itinerary, e-voucher).
+
+Auditor / Finance — read-only access to financials and logs.
+
+Permissions model: RBAC + resource-scoped ownership. Agents can only see customers they own (unless elevated). Country POCs see suppliers tied to their country.
+
+3) High-level architecture
+
+Frontend: React + Next.js (SSR for public pages + export), Tailwind UI.
+
+Backend: Node.js with NestJS (or Express if preferred) for structured controllers/services.
+
+DB: MongoDB primary (flexible itinerary documents). RDBMS (Postgres/MySQL) optional for accounting ledgers and strict relational data.
+
+Search: Elasticsearch for destinations, sites, supplier search.
+
+Cache/Queue: Redis + BullMQ for jobs (PDF generation, emails).
+
+File storage: S3-compatible (AWS S3 / MinIO).
+
+Auth/SSO: OAuth2/OpenID Connect. Support SAML/Google Workspace if needed. Use Keycloak or Auth0 as identity provider or integrate with your SSO.
+
+Email/SMS: SendGrid / Amazon SES + Twilio.
+
+AI services: OpenAI for itinerary drafts and descriptions.
+
+Containerization & infra: Docker + Kubernetes or Docker Compose on VPS; Nginx reverse proxy; CI/CD with GitHub Actions.
+
+Monitoring: Prometheus + Grafana, Sentry for errors, ELK or Loki for logs.
+
+4) Functional modules & features (detailed)
+Core CRM & Data
+
+Agent management: create agent profile, credit limit, commission rules, contact persons, documents.
+
+Agent customers: Agents create/manage customers (contact details, passport info, preferences).
+
+Supplier management: country POC profile, contracts, default markups, preferred hotels/transport.
+
+Rate sheets: supplier-uploadable CSV/Excel import; versioned; support per-season rates & inventory.
+
+Itinerary builder: day-by-day with drag/drop or form mode; components for stay, transport, activities, meals, notes, images.
+
+Activity & site catalog: global catalog of sites/scenes with descriptions, categories, tags, photos, coordinates.
+
+Pricing engine: supplier_net + markup rules (percent/fixed), agent-specific discounts/commissions, group pricing.
+
+Quote/Proposal generator: templates, variables, generate PDF & HTML email; patchable before sending.
+
+Booking flow: quote → provisional hold → deposit/payment → final confirmation → voucher generation.
+
+Invoices & settlements: generate invoices, record payments, supplier payout reports.
+
+Document & asset manager: upload e-vouchers, supplier contracts, passports (if needed).
+
+Notifications & messaging: agent-supplier chat threads per itinerary, email/SMS pushes, status changes.
+
+Audit logs: who/what/when for critical actions.
+
+Agent self-service specifics
+
+Agent portal:
+
+Dashboard: pending quotes, bookings, balance, quick-request form.
+
+Customers: full CRUD, upload files, link bookings.
+
+Quote requests: structured request form (destination, dates, pax, budget, notes).
+
+Quote history with accept/reject and messaging.
+
+Agents see only their customers and their data unless Super Admin links them to other teams.
+
+Agent teams: optionally support sub-users and role limits for agency staff.
+
+Supplier (Country POC) specifics
+
+Supplier portal:
+
+Upload rates & calendars.
+
+Accept/decline requests or propose alternatives.
+
+Upload documents (contracts, vendor receipts).
+
+Supplier availability sync: manual/CSV upload and future API integrations with DMC systems.
+
+5) Data model (document collections & key fields) — Mongo style
+
+(You can map to SQL if you prefer normalized schemas.)
+
+agents
+
+_id, name, email, phone, agency_name, address, credit_limit, currency, users (sub-accounts), commission_rules, createdAt, updatedAt
+
+agent_customers
+
+_id, agent_id, name, email, phone, passport_info (opt), preferences, notes, createdAt
+
+suppliers
+
+_id, country, company_name, contacts, pocs (country POC profiles), currencies, payment_terms, contract_documents, createdAt
+
+rate_sheets
+
+_id, supplier_id, name, valid_from, valid_to, lines (array of rate line objects), imported_from_file, version, createdAt
+
+Rate line example:
+{ item_type: "hotel|transfer|activity", code, description, pax_type, base_price, currency, availability_info }
+
+itineraries
+
+_id, title, country, state, city, days: [{dayNo, title, components: [...] }], components (stays, transfers, activities), images, notes, estimated_cost_breakdown, supplier_references, status, createdBy, createdAt
+
+quotes
+
+_id, itinerary_id, agent_id, agent_customer_id, supplier_offers (linked), total_agent_price, markup_applied, valid_until, status, pdf_url, createdAt
+
+bookings
+
+_id, quote_id, payment_status, payment_records, voucher_url, supplier_confirmations, status, createdAt
+
+audit_logs
+
+_id, user_id, role, action, resource_type, resource_id, timestamp, meta
+
+6) Suggested API surface (REST style examples)
+
+(Implement with NestJS controllers; use API versioning /v1)
+
+Auth:
+
+POST /v1/auth/login
+
+GET /v1/auth/me
+
+POST /v1/auth/sso/callback
+
+Agents & Customers:
+
+GET /v1/agents (admin)
+
+POST /v1/agents/:agentId/customers
+
+GET /v1/agents/:agentId/customers/:customerId
+
+Itineraries & Catalog:
+
+POST /v1/itineraries
+
+GET /v1/itineraries/:id
+
+PUT /v1/itineraries/:id
+
+GET /v1/catalog/sites?country=&tags=
+
+Rate & Supplier:
+
+POST /v1/suppliers/:id/rates/upload (CSV)
+
+GET /v1/suppliers/:id/rates?valid=true
+
+Quotes & Bookings:
+
+POST /v1/quotes (generate and link itinerary + pricing)
+
+POST /v1/quotes/:id/send (email PDF)
+
+POST /v1/bookings/:id/pay (payment webhook)
+
+POST /v1/bookings/:id/confirm-supplier
+
+Admin:
+
+GET /v1/reports/sales?agentId=&from=&to=
+
+POST /v1/templates/quote (HTML template management)
+
+7) UI screens & flows (brief)
+
+Login / SSO — sign in with SSO or email/password.
+
+Multi-tenant dashboard — quick KPIs (pending quotes, bookings, outstanding payments).
+
+Itinerary Builder — drag/drop days, add hotel/transfer/activity blocks, preview PDF.
+
+Quote Composer — pick itinerary, apply markups, set validity, preview PDF.
+
+Agent Portal — customers list, create request, track quote status, payments.
+
+Supplier Portal — rate sheet upload, incoming requests, message center.
+
+Booking Detail — payment timeline, suppliers, voucher download.
+
+Admin Console — manage users, roles, templates, audit logs.
+
+8) Integrations & automation
+
+Payment gateways: Stripe (international), Razorpay (India) — webhooks for payment status.
+
+Email/SMS: SendGrid + Twilio.
+
+LLM (OpenAI): generate itinerary descriptions, auto-suggest attractions and day plans.
+
+Accounting / ERP: export CSV or integrate via APIs (Xero, QuickBooks).
+
+Calendar: iCal export for customers’ trips.
+
+Maps: Google Maps or Mapbox for places and routing.
+
+Optional channel manager / DMC APIs: later phase.
+
+9) Non-functional & security requirements
+
+Authentication: enforce MFA for Admins & Operators; SSO for Agents (your preference).
+
+Authorization: RBAC & resource-scoped ACLs.
+
+Encryption: TLS everywhere, encrypt PII at rest (passport numbers), use KMS.
+
+Backups: automated DB snapshots and file-store replication.
+
+Logging & audit: immutable audit logs for financial actions.
+
+GDPR / Data privacy: retention policy, data export and delete endpoints.
+
+Rate limiting & abuse protection for public APIs.
+
+10) Testing strategy
+
+Unit tests for services and pricing engine.
+
+Integration tests for API endpoints (mock external services).
+
+E2E tests for major user flows (itinerary create → quote → booking → payment).
+
+Security testing: static code scan, dependency checks, pen-test for external exposure.
+
+Load testing: simulate peak quoting and PDF generation loads.
+
+11) DevOps & deployments
+
+Environments: dev, staging, production (separate clusters/instances).
+
+CI/CD: GitHub Actions to run tests, build containers, deploy to staging on merge, production on release.
+
+Secrets management: Vault or cloud secrets manager.
+
+Observability: instrument metrics with Prometheus & traces with Jaeger; errors to Sentry.
+
+Scaling: run stateless backend on autoscaling groups; Mongo replica set and Elasticsearch cluster.
+
+12) Phased rollout (features by phase)
+
+I’ll map features to phases so you can ship value and iterate:
+
+Phase A — MVP (core)
+
+Agent login & agent-customer management
+
+Itinerary creation (operator & agent request flow)
+
+Basic supplier & rate sheet upload (CSV)
+
+Quote generation + PDF template
+
+Booking record + basic payment capture webhook
+
+Audit logs, notifications, admin user management
+
+Phase B — Commercialization
+
+Agent portal (self-servicing customers & requests)
+
+Supplier portal (respond & upload rates)
+
+Pricing engine with complex markup rules
+
+Branded PDFs, email templates, invoice export
+
+Phase C — Automation & Scale
+
+AI itinerary generator & email parsing
+
+Elasticsearch for catalog search
+
+Multi-currency & payments, advanced reporting
+
+Integrations: accounting, calendar, maps
+
+Phase D — Maturity
+
+SLA & supplier SLAs, settlement automation, dynamic pricing analytics, mobile apps (optional), channel manager integrations.
+
+Note: I intentionally kept phases so you can launch quickly and iterate. Pick Phase A features first to start onboarding agents.
+
+13) Acceptance criteria & examples
+
+When an agent creates a customer, that customer is visible only to that agent and editable by their sub-users.
+
+When operator sends a quote, agent receives email with PDF and can accept; acceptance creates a booking record with status accepted.
+
+Supplier uploads CSV → system validates and stores rates; any invalid rows are shown to uploader with error details.
+
+Every financial event (deposit, refund) writes to audit_logs with user id, timestamp, and metadata.
+
+14) Developer & resource recommendations
+
+Core team roles (project-level):
+
+Product Owner (you or delegate) — define business rules and priorities.
+
+Tech Lead / Backend Engineer (Node, NestJS).
+
+Frontend Engineer (React + Next.js).
+
+DevOps Engineer (Docker, infra, CI/CD).
+
+QA Engineer (tests & E2E).
+
+Designer (UI/UX) — templates and PDF design.
+
+Optional: ML/AI Engineer (for itinerary generator).
+
+You can scale team size based on parallelization needs.
+
+15) Deliverables I can prepare next (pick whichever you want me to produce immediately)
+
+I can create any of the following now — pick one (or more) and I’ll produce it immediately:
+
+Database schema docs (detailed Mongo schema + indexes).
+
+Full REST API spec (OpenAPI/Swagger) for the MVP.
+
+UI wireframes for agent + operator + supplier portals (described screens).
+
+A prioritized backlog (user stories with acceptance criteria).
+
+A deployment checklist & ops runbook (secrets, backups, disaster recovery).
+
+Example quote PDF template HTML ready to plug into the system.

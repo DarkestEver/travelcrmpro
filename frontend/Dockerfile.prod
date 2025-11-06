@@ -1,0 +1,57 @@
+# Production Dockerfile for Frontend
+# ================================
+# Build Stage
+# ================================
+FROM node:18-alpine AS builder
+
+# Set working directory
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+
+# Install dependencies
+RUN npm ci && npm cache clean --force
+
+# Copy application code
+COPY . .
+
+# Build arguments
+ARG VITE_API_URL
+ARG VITE_SOCKET_URL
+ARG VITE_APP_NAME=Travel CRM
+ARG VITE_APP_VERSION=1.0.0
+
+# Set environment variables for build
+ENV VITE_API_URL=$VITE_API_URL
+ENV VITE_SOCKET_URL=$VITE_SOCKET_URL
+ENV VITE_APP_NAME=$VITE_APP_NAME
+ENV VITE_APP_VERSION=$VITE_APP_VERSION
+
+# Build the application
+RUN npm run build
+
+# ================================
+# Production Stage with Nginx
+# ================================
+FROM nginx:alpine
+
+# Copy custom nginx configuration
+COPY nginx.conf /etc/nginx/nginx.conf
+
+# Copy built application from builder
+COPY --from=builder /app/dist /usr/share/nginx/html
+
+# Create nginx user and set permissions
+RUN chown -R nginx:nginx /usr/share/nginx/html && \
+    chmod -R 755 /usr/share/nginx/html
+
+# Expose ports
+EXPOSE 80 443
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+    CMD wget --quiet --tries=1 --spider http://localhost/ || exit 1
+
+# Start nginx
+CMD ["nginx", "-g", "daemon off;"]

@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quote - Travel CRM</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .container {
+            background-color: #ffffff;
+            border-radius: 10px;
+            padding: 40px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            padding-bottom: 30px;
+            border-bottom: 3px solid #3b82f6;
+        }
+        .logo {
+            font-size: 32px;
+            font-weight: bold;
+            color: #3b82f6;
+            margin-bottom: 10px;
+        }
+        .title {
+            font-size: 24px;
+            color: #1f2937;
+            margin: 20px 0;
+        }
+        .quote-badge {
+            display: inline-block;
+            background-color: #f59e0b;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            margin: 10px 0;
+        }
+        .info-section {
+            margin: 30px 0;
+            padding: 20px;
+            background-color: #f9fafb;
+            border-radius: 8px;
+        }
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .info-row:last-child {
+            border-bottom: none;
+        }
+        .info-label {
+            font-weight: 600;
+            color: #6b7280;
+        }
+        .info-value {
+            color: #1f2937;
+            font-weight: 500;
+        }
+        .highlight {
+            background-color: #fef3c7;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border-left: 4px solid #f59e0b;
+        }
+        .quote-number {
+            font-size: 20px;
+            font-weight: bold;
+            color: #f59e0b;
+            margin: 10px 0;
+        }
+        .button {
+            display: inline-block;
+            background-color: #3b82f6;
+            color: white;
+            padding: 12px 30px;
+            text-decoration: none;
+            border-radius: 6px;
+            margin: 20px 0;
+            font-weight: 600;
+        }
+        .button-secondary {
+            background-color: #10b981;
+        }
+        .line-items {
+            margin: 20px 0;
+        }
+        .line-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px;
+            background-color: #f9fafb;
+            margin: 8px 0;
+            border-radius: 6px;
+        }
+        .line-item-desc {
+            flex: 1;
+        }
+        .line-item-price {
+            font-weight: bold;
+            color: #1f2937;
+        }
+        .price-summary {
+            margin: 20px 0;
+            padding: 20px;
+            background-color: #f3f4f6;
+            border-radius: 8px;
+        }
+        .price-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+        }
+        .total-row {
+            font-size: 20px;
+            font-weight: bold;
+            color: #1f2937;
+            border-top: 2px solid #3b82f6;
+            margin-top: 10px;
+            padding-top: 10px;
+        }
+        .validity {
+            background-color: #fee2e2;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 20px 0;
+            border-left: 4px solid #ef4444;
+            color: #991b1b;
+        }
+        .footer {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #e5e7eb;
+            text-align: center;
+            color: #6b7280;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">Travel CRM</div>
+            <div class="quote-badge">Quote</div>
+            <h1 class="title">Your Travel Quote</h1>
+        </div>
+
+        <p>Dear {{customerName}},</p>
+        
+        <p>Thank you for your interest in planning your trip with us! We've prepared a customized quote based on your requirements.</p>
+
+        <div class="highlight">
+            <div class="info-label">Quote Number</div>
+            <div class="quote-number">{{quoteNumber}}</div>
+            <p style="margin: 5px 0 0 0; font-size: 14px; color: #92400e;">Reference this number when contacting us about this quote.</p>
+        </div>
+
+        <div class="info-section">
+            <h3 style="margin-top: 0; color: #1f2937;">Trip Overview</h3>
+            <div class="info-row">
+                <span class="info-label">Destination:</span>
+                <span class="info-value">{{destination}}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Travel Dates:</span>
+                <span class="info-value">{{startDate}} - {{endDate}}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Duration:</span>
+                <span class="info-value">{{duration}} days</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Travelers:</span>
+                <span class="info-value">{{travelerCount}}</span>
+            </div>
+        </div>
+
+        <div class="line-items">
+            <h3 style="color: #1f2937;">What's Included</h3>
+            {{#each items}}
+            <div class="line-item">
+                <div class="line-item-desc">
+                    <strong>{{name}}</strong>
+                    {{#if description}}
+                    <div style="font-size: 14px; color: #6b7280; margin-top: 5px;">{{description}}</div>
+                    {{/if}}
+                    {{#if quantity}}
+                    <div style="font-size: 14px; color: #6b7280;">Quantity: {{quantity}}</div>
+                    {{/if}}
+                </div>
+                <div class="line-item-price">${{price}}</div>
+            </div>
+            {{/each}}
+        </div>
+
+        <div class="price-summary">
+            <h3 style="margin-top: 0; color: #1f2937;">Price Breakdown</h3>
+            <div class="price-row">
+                <span>Subtotal:</span>
+                <span>${{subtotal}}</span>
+            </div>
+            {{#if discount}}
+            <div class="price-row" style="color: #10b981;">
+                <span>Discount ({{discountPercentage}}%):</span>
+                <span>-${{discount}}</span>
+            </div>
+            {{/if}}
+            <div class="price-row">
+                <span>Taxes & Fees:</span>
+                <span>${{taxesAndFees}}</span>
+            </div>
+            <div class="price-row total-row">
+                <span>Total Price:</span>
+                <span>${{totalPrice}}</span>
+            </div>
+        </div>
+
+        <div class="validity">
+            <strong>⏱ Valid Until:</strong> {{validUntil}}<br>
+            <span style="font-size: 14px;">This quote is valid until the date specified above. Prices may change after this date.</span>
+        </div>
+
+        {{#if notes}}
+        <div class="info-section">
+            <h4 style="margin-top: 0; color: #1f2937;">Additional Notes</h4>
+            <p style="margin: 0; color: #4b5563;">{{notes}}</p>
+        </div>
+        {{/if}}
+
+        <div style="text-align: center; margin: 30px 0;">
+            <a href="{{acceptQuoteUrl}}" class="button button-secondary">Accept Quote & Book Now</a>
+            <br>
+            <a href="{{viewQuoteUrl}}" class="button">View Full Details</a>
+        </div>
+
+        <div class="info-section" style="background-color: #dbeafe; border-left: 4px solid #3b82f6;">
+            <h4 style="margin-top: 0; color: #1e40af;">What Happens Next?</h4>
+            <ol style="margin: 10px 0; padding-left: 20px; color: #1e3a8a;">
+                <li>Review the quote details carefully</li>
+                <li>Contact us if you have any questions or need modifications</li>
+                <li>Click "Accept Quote" to proceed with booking</li>
+                <li>Complete the payment process</li>
+                <li>Receive your booking confirmation</li>
+            </ol>
+        </div>
+
+        <p>Have questions about this quote? We're here to help!</p>
+        
+        <div class="info-section">
+            <div class="info-row">
+                <span class="info-label">Your Agent:</span>
+                <span class="info-value">{{agentName}}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Email:</span>
+                <span class="info-value">{{agentEmail}}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Phone:</span>
+                <span class="info-value">{{agentPhone}}</span>
+            </div>
+        </div>
+
+        <p>We look forward to helping you create an unforgettable travel experience!</p>
+
+        <p>Best regards,<br>
+        <strong>The Travel CRM Team</strong></p>
+
+        <div class="footer">
+            <p>This quote was generated on {{generatedDate}}</p>
+            <p>© 2024 Travel CRM. All rights reserved.</p>
+            <p style="font-size: 12px; margin-top: 10px;">
+                <a href="{{privacyUrl}}" style="color: #3b82f6;">Privacy Policy</a> | 
+                <a href="{{termsUrl}}" style="color: #3b82f6;">Terms of Service</a>
+            </p>
+        </div>
+    </div>
+</body>
+</html>

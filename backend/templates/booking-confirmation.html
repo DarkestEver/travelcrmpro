@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Booking Confirmation</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .container {
+            background-color: #ffffff;
+            border-radius: 10px;
+            padding: 40px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            padding-bottom: 30px;
+            border-bottom: 3px solid #3b82f6;
+        }
+        .logo {
+            font-size: 32px;
+            font-weight: bold;
+            color: #3b82f6;
+            margin-bottom: 10px;
+        }
+        .title {
+            font-size: 24px;
+            color: #1f2937;
+            margin: 20px 0;
+        }
+        .success-badge {
+            display: inline-block;
+            background-color: #10b981;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            margin: 10px 0;
+        }
+        .info-section {
+            margin: 30px 0;
+            padding: 20px;
+            background-color: #f9fafb;
+            border-radius: 8px;
+        }
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .info-row:last-child {
+            border-bottom: none;
+        }
+        .info-label {
+            font-weight: 600;
+            color: #6b7280;
+        }
+        .info-value {
+            color: #1f2937;
+            font-weight: 500;
+        }
+        .highlight {
+            background-color: #dbeafe;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border-left: 4px solid #3b82f6;
+        }
+        .reference-number {
+            font-size: 20px;
+            font-weight: bold;
+            color: #3b82f6;
+            margin: 10px 0;
+        }
+        .button {
+            display: inline-block;
+            background-color: #3b82f6;
+            color: white;
+            padding: 12px 30px;
+            text-decoration: none;
+            border-radius: 6px;
+            margin: 20px 0;
+            font-weight: 600;
+        }
+        .footer {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #e5e7eb;
+            text-align: center;
+            color: #6b7280;
+            font-size: 14px;
+        }
+        .travelers {
+            margin: 20px 0;
+        }
+        .traveler-item {
+            padding: 10px;
+            background-color: #f3f4f6;
+            margin: 5px 0;
+            border-radius: 5px;
+        }
+        .price-breakdown {
+            margin: 20px 0;
+        }
+        .price-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+        }
+        .total-row {
+            font-size: 18px;
+            font-weight: bold;
+            color: #1f2937;
+            border-top: 2px solid #3b82f6;
+            margin-top: 10px;
+            padding-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">Travel CRM</div>
+            <div class="success-badge">✓ Booking Confirmed</div>
+            <h1 class="title">Your Trip is Confirmed!</h1>
+        </div>
+
+        <p>Dear {{customerName}},</p>
+        
+        <p>We're excited to confirm your booking! Your adventure awaits, and we can't wait to help make it unforgettable.</p>
+
+        <div class="highlight">
+            <div class="info-label">Booking Reference</div>
+            <div class="reference-number">{{bookingReference}}</div>
+            <p style="margin: 5px 0 0 0; font-size: 14px; color: #6b7280;">Please save this reference number for your records.</p>
+        </div>
+
+        <div class="info-section">
+            <h3 style="margin-top: 0; color: #1f2937;">Trip Details</h3>
+            <div class="info-row">
+                <span class="info-label">Destination:</span>
+                <span class="info-value">{{destination}}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Check-in:</span>
+                <span class="info-value">{{startDate}}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Check-out:</span>
+                <span class="info-value">{{endDate}}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Duration:</span>
+                <span class="info-value">{{duration}} days</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Number of Travelers:</span>
+                <span class="info-value">{{travelerCount}}</span>
+            </div>
+        </div>
+
+        {{#if travelers}}
+        <div class="travelers">
+            <h3 style="color: #1f2937;">Travelers</h3>
+            {{#each travelers}}
+            <div class="traveler-item">
+                <strong>{{name}}</strong><br>
+                Passport: {{passportNumber}}<br>
+                Date of Birth: {{dateOfBirth}}
+            </div>
+            {{/each}}
+        </div>
+        {{/if}}
+
+        <div class="price-breakdown">
+            <h3 style="color: #1f2937;">Payment Summary</h3>
+            <div class="price-row">
+                <span>Subtotal:</span>
+                <span>${{subtotal}}</span>
+            </div>
+            {{#if discount}}
+            <div class="price-row" style="color: #10b981;">
+                <span>Discount:</span>
+                <span>-${{discount}}</span>
+            </div>
+            {{/if}}
+            <div class="price-row">
+                <span>Taxes & Fees:</span>
+                <span>${{taxesAndFees}}</span>
+            </div>
+            <div class="price-row total-row">
+                <span>Total Amount:</span>
+                <span>${{totalAmount}}</span>
+            </div>
+            <div class="price-row" style="color: #10b981;">
+                <span>Amount Paid:</span>
+                <span>${{amountPaid}}</span>
+            </div>
+            {{#if balance}}
+            <div class="price-row" style="color: #f59e0b;">
+                <span>Balance Due:</span>
+                <span>${{balance}}</span>
+            </div>
+            {{/if}}
+        </div>
+
+        <div style="text-align: center;">
+            <a href="{{bookingUrl}}" class="button">View Booking Details</a>
+        </div>
+
+        <div class="info-section" style="background-color: #fef3c7; border-left: 4px solid #f59e0b;">
+            <h4 style="margin-top: 0; color: #92400e;">Important Information</h4>
+            <ul style="margin: 10px 0; padding-left: 20px; color: #78350f;">
+                <li>Please arrive at least 2 hours before your departure time</li>
+                <li>Ensure all travel documents are valid and up to date</li>
+                <li>Check visa requirements for your destination</li>
+                <li>Review travel insurance options</li>
+                <li>Contact us immediately if you need to make any changes</li>
+            </ul>
+        </div>
+
+        <p>If you have any questions or need assistance, please don't hesitate to reach out to us:</p>
+        
+        <div class="info-section">
+            <div class="info-row">
+                <span class="info-label">Email:</span>
+                <span class="info-value">support@travelcrm.com</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Phone:</span>
+                <span class="info-value">+1 (555) 123-4567</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Agent:</span>
+                <span class="info-value">{{agentName}} ({{agentEmail}})</span>
+            </div>
+        </div>
+
+        <p>Thank you for choosing Travel CRM. We look forward to making your trip memorable!</p>
+
+        <p>Safe travels,<br>
+        <strong>The Travel CRM Team</strong></p>
+
+        <div class="footer">
+            <p>This is an automated confirmation email. Please do not reply to this email.</p>
+            <p>© 2024 Travel CRM. All rights reserved.</p>
+            <p style="font-size: 12px; margin-top: 10px;">
+                <a href="{{unsubscribeUrl}}" style="color: #3b82f6;">Unsubscribe</a> | 
+                <a href="{{privacyUrl}}" style="color: #3b82f6;">Privacy Policy</a> | 
+                <a href="{{termsUrl}}" style="color: #3b82f6;">Terms of Service</a>
+            </p>
+        </div>
+    </div>
+</body>
+</html>

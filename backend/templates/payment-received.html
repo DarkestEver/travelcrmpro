@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Received</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .container {
+            background-color: #ffffff;
+            border-radius: 10px;
+            padding: 40px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            padding-bottom: 30px;
+            border-bottom: 3px solid #10b981;
+        }
+        .logo {
+            font-size: 32px;
+            font-weight: bold;
+            color: #3b82f6;
+            margin-bottom: 10px;
+        }
+        .title {
+            font-size: 24px;
+            color: #1f2937;
+            margin: 20px 0;
+        }
+        .success-icon {
+            font-size: 60px;
+            color: #10b981;
+            margin: 20px 0;
+        }
+        .success-badge {
+            display: inline-block;
+            background-color: #10b981;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            margin: 10px 0;
+        }
+        .info-section {
+            margin: 30px 0;
+            padding: 20px;
+            background-color: #f9fafb;
+            border-radius: 8px;
+        }
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .info-row:last-child {
+            border-bottom: none;
+        }
+        .info-label {
+            font-weight: 600;
+            color: #6b7280;
+        }
+        .info-value {
+            color: #1f2937;
+            font-weight: 500;
+        }
+        .highlight {
+            background-color: #d1fae5;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border-left: 4px solid #10b981;
+        }
+        .amount {
+            font-size: 32px;
+            font-weight: bold;
+            color: #10b981;
+            margin: 10px 0;
+        }
+        .button {
+            display: inline-block;
+            background-color: #3b82f6;
+            color: white;
+            padding: 12px 30px;
+            text-decoration: none;
+            border-radius: 6px;
+            margin: 20px 0;
+            font-weight: 600;
+        }
+        .payment-details {
+            background-color: #f3f4f6;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .footer {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #e5e7eb;
+            text-align: center;
+            color: #6b7280;
+            font-size: 14px;
+        }
+        .receipt-number {
+            font-size: 18px;
+            font-weight: bold;
+            color: #1f2937;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">Travel CRM</div>
+            <div class="success-icon">✓</div>
+            <div class="success-badge">Payment Received</div>
+            <h1 class="title">Thank You for Your Payment!</h1>
+        </div>
+
+        <p>Dear {{customerName}},</p>
+        
+        <p>We've successfully received your payment. This email serves as your payment receipt.</p>
+
+        <div class="highlight">
+            <div style="text-align: center;">
+                <div class="info-label">Payment Amount</div>
+                <div class="amount">${{paymentAmount}}</div>
+                <div class="info-label">Receipt Number</div>
+                <div class="receipt-number">{{receiptNumber}}</div>
+            </div>
+        </div>
+
+        <div class="payment-details">
+            <h3 style="margin-top: 0; color: #1f2937;">Payment Details</h3>
+            <div class="info-row">
+                <span class="info-label">Payment Date:</span>
+                <span class="info-value">{{paymentDate}}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Payment Method:</span>
+                <span class="info-value">{{paymentMethod}}</span>
+            </div>
+            {{#if transactionId}}
+            <div class="info-row">
+                <span class="info-label">Transaction ID:</span>
+                <span class="info-value">{{transactionId}}</span>
+            </div>
+            {{/if}}
+            <div class="info-row">
+                <span class="info-label">Booking Reference:</span>
+                <span class="info-value">{{bookingReference}}</span>
+            </div>
+        </div>
+
+        <div class="info-section">
+            <h3 style="margin-top: 0; color: #1f2937;">Booking Summary</h3>
+            <div class="info-row">
+                <span class="info-label">Destination:</span>
+                <span class="info-value">{{destination}}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Travel Dates:</span>
+                <span class="info-value">{{startDate}} - {{endDate}}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Travelers:</span>
+                <span class="info-value">{{travelerCount}}</span>
+            </div>
+        </div>
+
+        <div class="info-section">
+            <h3 style="margin-top: 0; color: #1f2937;">Payment Summary</h3>
+            <div class="info-row">
+                <span class="info-label">Total Booking Amount:</span>
+                <span class="info-value">${{totalAmount}}</span>
+            </div>
+            <div class="info-row" style="color: #10b981;">
+                <span class="info-label">Total Paid:</span>
+                <span class="info-value">${{totalPaid}}</span>
+            </div>
+            {{#if balanceDue}}
+            <div class="info-row" style="color: #f59e0b;">
+                <span class="info-label" style="font-weight: bold;">Remaining Balance:</span>
+                <span class="info-value" style="font-weight: bold;">${{balanceDue}}</span>
+            </div>
+            {{/if}}
+            {{#unless balanceDue}}
+            <div class="info-row" style="color: #10b981;">
+                <span class="info-label" style="font-weight: bold;">Status:</span>
+                <span class="info-value" style="font-weight: bold;">✓ Fully Paid</span>
+            </div>
+            {{/unless}}
+        </div>
+
+        {{#if balanceDue}}
+        <div class="info-section" style="background-color: #fef3c7; border-left: 4px solid #f59e0b;">
+            <h4 style="margin-top: 0; color: #92400e;">Payment Reminder</h4>
+            <p style="margin: 0; color: #78350f;">
+                You have a remaining balance of <strong>${{balanceDue}}</strong>. 
+                {{#if dueDate}}
+                Please ensure payment is completed by <strong>{{dueDate}}</strong>.
+                {{/if}}
+            </p>
+        </div>
+        {{/if}}
+
+        <div style="text-align: center;">
+            <a href="{{viewBookingUrl}}" class="button">View Booking Details</a>
+            <br>
+            <a href="{{downloadReceiptUrl}}" class="button" style="background-color: #6b7280;">Download Receipt (PDF)</a>
+        </div>
+
+        <div class="info-section" style="background-color: #dbeafe; border-left: 4px solid #3b82f6;">
+            <h4 style="margin-top: 0; color: #1e40af;">Important Information</h4>
+            <ul style="margin: 10px 0; padding-left: 20px; color: #1e3a8a;">
+                <li>Please keep this receipt for your records</li>
+                <li>A copy has been sent to your registered email address</li>
+                <li>If you paid by credit card, the charge will appear as "Travel CRM"</li>
+                <li>For refund inquiries, please refer to our cancellation policy</li>
+                <li>Allow 3-5 business days for payment processing</li>
+            </ul>
+        </div>
+
+        <p>Need to make another payment or have questions?</p>
+        
+        <div class="info-section">
+            <div class="info-row">
+                <span class="info-label">Customer Support:</span>
+                <span class="info-value">support@travelcrm.com</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Phone:</span>
+                <span class="info-value">+1 (555) 123-4567</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Your Agent:</span>
+                <span class="info-value">{{agentName}} ({{agentEmail}})</span>
+            </div>
+        </div>
+
+        <p>Thank you for your business!</p>
+
+        <p>Best regards,<br>
+        <strong>The Travel CRM Team</strong></p>
+
+        <div class="footer">
+            <p>This is an automated payment receipt. Please keep it for your records.</p>
+            <p>© 2024 Travel CRM. All rights reserved.</p>
+            <p style="font-size: 12px; margin-top: 10px;">
+                <a href="{{privacyUrl}}" style="color: #3b82f6;">Privacy Policy</a> | 
+                <a href="{{refundPolicyUrl}}" style="color: #3b82f6;">Refund Policy</a> | 
+                <a href="{{termsUrl}}" style="color: #3b82f6;">Terms of Service</a>
+            </p>
+        </div>
+    </div>
+</body>
+</html>
