@@ -43,7 +43,17 @@ const ItineraryBuilder = () => {
   // Fetch itinerary data
   const { data: itineraryData, isLoading, error } = useQuery({
     queryKey: ['itinerary', id],
-    queryFn: () => itinerariesAPI.getById(id),
+    queryFn: async () => {
+      console.log('Fetching itinerary with ID:', id);
+      try {
+        const result = await itinerariesAPI.getById(id);
+        console.log('Fetched itinerary data:', result);
+        return result;
+      } catch (err) {
+        console.error('Error fetching itinerary:', err);
+        throw err;
+      }
+    },
     enabled: !!id
   });
 

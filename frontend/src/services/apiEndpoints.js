@@ -69,9 +69,30 @@ export const itinerariesAPI = {
   getAll: (params) => api.get('/itineraries', { params }),
   getTemplates: (params) => api.get('/itineraries/templates', { params }),
   getOne: (id) => api.get(`/itineraries/${id}`),
-  getById: (id) => api.get(`/itineraries/${id}`).then(res => res.data.data),
+  getById: (id) => api.get(`/itineraries/${id}`).then(res => {
+    console.log('getById response:', res.data);
+    // Handle different response structures
+    if (res.data.data && res.data.data.itinerary) {
+      return res.data.data.itinerary;
+    } else if (res.data.itinerary) {
+      return res.data.itinerary;
+    } else if (res.data.data) {
+      return res.data.data;
+    }
+    throw new Error('Unexpected response structure');
+  }),
   create: (data) => api.post('/itineraries', data),
-  update: (id, data) => api.put(`/itineraries/${id}`, data).then(res => res.data.data),
+  update: (id, data) => api.put(`/itineraries/${id}`, data).then(res => {
+    // Handle different response structures
+    if (res.data.data && res.data.data.itinerary) {
+      return res.data.data.itinerary;
+    } else if (res.data.itinerary) {
+      return res.data.itinerary;
+    } else if (res.data.data) {
+      return res.data.data;
+    }
+    return res.data;
+  }),
   delete: (id) => api.delete(`/itineraries/${id}`),
   duplicate: (id) => api.post(`/itineraries/${id}/duplicate`),
   archive: (id) => api.patch(`/itineraries/${id}/archive`),
