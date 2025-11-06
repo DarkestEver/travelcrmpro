@@ -155,7 +155,17 @@ const BasicInfoModal = ({ isOpen, onClose, itinerary, onSave }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSave(formData);
+    
+    // Remove empty enum fields to avoid validation errors
+    const cleanedData = { ...formData };
+    if (!cleanedData.travelStyle || cleanedData.travelStyle === '') {
+      delete cleanedData.travelStyle;
+    }
+    if (!cleanedData.difficulty || cleanedData.difficulty === '') {
+      delete cleanedData.difficulty;
+    }
+    
+    onSave(cleanedData);
     onClose();
   };
 

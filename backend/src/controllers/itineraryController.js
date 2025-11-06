@@ -462,16 +462,17 @@ const deleteDay = asyncHandler(async (req, res) => {
     throw new AppError('You do not have permission to modify this itinerary', 403);
   }
 
-  const day = itinerary.days.id(req.params.dayId);
+  // Find the day to delete
+  const dayIndex = itinerary.days.findIndex(d => d._id.toString() === req.params.dayId);
   
-  if (!day) {
+  if (dayIndex === -1) {
     throw new AppError('Day not found', 404);
   }
 
-  const deletedDayNumber = day.dayNumber;
+  const deletedDayNumber = itinerary.days[dayIndex].dayNumber;
 
-  // Remove the day
-  day.remove();
+  // Remove the day using pull or splice
+  itinerary.days.pull(req.params.dayId);
 
   // Renumber all subsequent days
   itinerary.days.forEach(d => {

@@ -126,9 +126,13 @@ const Itineraries = () => {
       accessor: 'title',
       render: (value, row) => (
         <div>
-          <div className="font-medium">{value}</div>
-          <div className="text-xs text-gray-500">
-            {row.destinations?.join(', ')}
+          <div className="font-medium text-gray-900">{value || 'Untitled Itinerary'}</div>
+          <div className="text-xs text-gray-500 flex items-center gap-1">
+            <FiMapPin className="w-3 h-3" />
+            {row.destination?.city && row.destination?.country 
+              ? `${row.destination.city}, ${row.destination.country}`
+              : row.destination?.country || 'No destination set'
+            }
           </div>
         </div>
       ),
@@ -136,17 +140,21 @@ const Itineraries = () => {
     {
       header: 'Customer',
       accessor: 'customer',
-      render: (value) => value?.name || 'N/A',
+      render: (value) => value?.name || <span className="text-gray-400">-</span>,
     },
     {
       header: 'Duration',
       accessor: 'days',
-      render: (value, row) => (
-        <div className="flex items-center gap-1">
-          <FiCalendar className="w-4 h-4 text-gray-500" />
-          <span>{value?.length || 0} days</span>
-        </div>
-      ),
+      render: (value, row) => {
+        const daysCount = value?.length || row.duration?.days || 0;
+        const nightsCount = value?.length > 0 ? value.length - 1 : (row.duration?.nights || 0);
+        return (
+          <div className="flex items-center gap-1 text-sm">
+            <FiCalendar className="w-4 h-4 text-gray-500" />
+            <span>{daysCount} Days / {nightsCount} Nights</span>
+          </div>
+        );
+      },
     },
     {
       header: 'Status',

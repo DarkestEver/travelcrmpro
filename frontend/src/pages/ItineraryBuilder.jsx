@@ -26,6 +26,7 @@ import ComponentModal from '../components/itinerary/ComponentModal';
 import ShareModal from '../components/itinerary/ShareModal';
 import BasicInfoModal from '../components/itinerary/BasicInfoModal';
 import ItineraryMap from '../components/itinerary/ItineraryMap';
+import ConfirmDialog from '../components/ConfirmDialog';
 
 const ItineraryBuilder = () => {
   const { id } = useParams();
@@ -39,6 +40,7 @@ const ItineraryBuilder = () => {
   const [showComponentModal, setShowComponentModal] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
   const [showBasicInfoModal, setShowBasicInfoModal] = useState(false);
+  const [showDuplicateConfirm, setShowDuplicateConfirm] = useState(false);
   const [viewMode, setViewMode] = useState('timeline'); // timeline, map, both
   const [autoSaveEnabled, setAutoSaveEnabled] = useState(true);
   const [unsavedChanges, setUnsavedChanges] = useState(false);
@@ -314,22 +316,29 @@ const ItineraryBuilder = () => {
 
   // Duplicate itinerary mutation
   const duplicateItineraryMutation = useMutation({
-    mutationFn: () => itinerariesAPI.clone(id),
+    mutationFn: () => {
+      console.log('Cloning itinerary:', id);
+      return itinerariesAPI.clone(id);
+    },
     onSuccess: (data) => {
+      console.log('Clone response:', data);
+      if (!data || !data._id) {
+        toast.error('Invalid response from server');
+        return;
+      }
       toast.success('Itinerary duplicated successfully');
       // Navigate to the new duplicated itinerary
       navigate(`/itineraries/${data._id}/build`);
     },
     onError: (error) => {
+      console.error('Clone error:', error);
       toast.error(error.response?.data?.message || 'Failed to duplicate itinerary');
     }
   });
 
   // Handle duplicate
   const handleDuplicate = () => {
-    if (window.confirm('Are you sure you want to duplicate this itinerary?')) {
-      duplicateItineraryMutation.mutate();
-    }
+    setShowDuplicateConfirm(true);
   };
 
   // Handle basic info save
@@ -579,6 +588,19 @@ const ItineraryBuilder = () => {
           onSave={handleSaveBasicInfo}
         />
       )}
+
+      {/* Duplicate Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={showDuplicateConfirm}
+        onClose={() => setShowDuplicateConfirm(false)}
+        onConfirm={() => {
+          duplicateItineraryMutation.mutate();
+          setShowDuplicateConfirm(false);
+        }}
+        type="info"
+        title="Duplicate Itinerary"
+        message="This will create a copy of the entire itinerary including all days, components, and details. Do you want to continue?"
+      />
     </div>
   );
 };

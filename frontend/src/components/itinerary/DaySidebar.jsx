@@ -1,6 +1,9 @@
+import { useState } from 'react';
 import { FiPlus, FiCalendar, FiMapPin, FiSun, FiCloud, FiCloudRain, FiTrash2 } from 'react-icons/fi';
+import ConfirmDialog from '../ConfirmDialog';
 
 const DaySidebar = ({ days, selectedDay, onSelectDay, onAddDay, onDeleteDay, stats }) => {
+  const [deleteConfirm, setDeleteConfirm] = useState({ isOpen: false, dayId: null, dayNumber: null });
   const getWeatherIcon = (condition) => {
     if (!condition) return <FiSun className="w-4 h-4" />;
     
@@ -130,9 +133,11 @@ const DaySidebar = ({ days, selectedDay, onSelectDay, onAddDay, onDeleteDay, sta
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  if (window.confirm(`Are you sure you want to delete Day ${day.dayNumber}? This will renumber all following days.`)) {
-                    onDeleteDay(day._id);
-                  }
+                  setDeleteConfirm({ 
+                    isOpen: true, 
+                    dayId: day._id,
+                    dayNumber: day.dayNumber 
+                  });
                 }}
                 className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
                 title="Delete day"
@@ -160,6 +165,19 @@ const DaySidebar = ({ days, selectedDay, onSelectDay, onAddDay, onDeleteDay, sta
           Add New Day
         </button>
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={deleteConfirm.isOpen}
+        onClose={() => setDeleteConfirm({ isOpen: false, dayId: null, dayNumber: null })}
+        onConfirm={() => {
+          onDeleteDay(deleteConfirm.dayId);
+          setDeleteConfirm({ isOpen: false, dayId: null, dayNumber: null });
+        }}
+        type="danger"
+        title="Delete Day"
+        message={`Are you sure you want to delete Day ${deleteConfirm.dayNumber}? This will renumber all following days and cannot be undone.`}
+      />
     </div>
   );
 };
