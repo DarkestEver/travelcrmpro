@@ -41,17 +41,21 @@ const ItineraryBuilder = () => {
   const [unsavedChanges, setUnsavedChanges] = useState(false);
 
   // Fetch itinerary data
-  const { data, isLoading, error } = useQuery({
+  const { data: itineraryData, isLoading, error } = useQuery({
     queryKey: ['itinerary', id],
     queryFn: () => itinerariesAPI.getById(id),
-    enabled: !!id,
-    onSuccess: (data) => {
-      setItinerary(data);
-      if (data.days && data.days.length > 0) {
-        setSelectedDay(data.days[0]);
+    enabled: !!id
+  });
+
+  // Update local state when data changes
+  useEffect(() => {
+    if (itineraryData) {
+      setItinerary(itineraryData);
+      if (itineraryData.days && itineraryData.days.length > 0) {
+        setSelectedDay(itineraryData.days[0]);
       }
     }
-  });
+  }, [itineraryData]);
 
   // Get itinerary stats
   const { data: stats } = useQuery({

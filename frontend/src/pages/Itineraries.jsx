@@ -52,26 +52,31 @@ const Itineraries = () => {
 
   // Quick create and go to builder
   const quickCreateMutation = useMutation({
-    mutationFn: () => itinerariesAPI.create({
-      title: 'New Itinerary',
-      overview: 'Click here to add description',
-      destination: {
-        country: 'India',
-        city: 'New Delhi'
-      },
-      startDate: new Date().toISOString().split('T')[0],
-      endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-      numberOfDays: 7,
-      numberOfNights: 6,
-      status: 'draft'
-    }),
-    onSuccess: (response) => {
-      const itineraryId = response.data.data._id;
+    mutationFn: async () => {
+      const response = await itinerariesAPI.create({
+        title: 'New Itinerary',
+        overview: 'Click here to add description',
+        destination: {
+          country: 'India',
+          city: 'New Delhi'
+        },
+        startDate: new Date().toISOString().split('T')[0],
+        endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        numberOfDays: 7,
+        numberOfNights: 6,
+        status: 'draft'
+      });
+      return response.data;
+    },
+    onSuccess: (data) => {
+      const itineraryId = data.data._id;
       toast.success('Itinerary created! Opening builder...');
+      queryClient.invalidateQueries(['itineraries']);
       navigate(`/itineraries/${itineraryId}/build`);
     },
     onError: (error) => {
-      toast.error(error.response?.data?.message || 'Failed to create itinerary');
+      console.error('Quick create error:', error);
+      toast.error(error.response?.data?.message || error.message || 'Failed to create itinerary');
     },
   });
 
