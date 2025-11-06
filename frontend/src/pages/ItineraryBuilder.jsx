@@ -23,6 +23,7 @@ import ItineraryHeader from '../components/itinerary/ItineraryHeader';
 import DaySidebar from '../components/itinerary/DaySidebar';
 import ComponentModal from '../components/itinerary/ComponentModal';
 import ShareModal from '../components/itinerary/ShareModal';
+import BasicInfoModal from '../components/itinerary/BasicInfoModal';
 import ItineraryMap from '../components/itinerary/ItineraryMap';
 
 const ItineraryBuilder = () => {
@@ -36,6 +37,7 @@ const ItineraryBuilder = () => {
   const [selectedComponent, setSelectedComponent] = useState(null);
   const [showComponentModal, setShowComponentModal] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
+  const [showBasicInfoModal, setShowBasicInfoModal] = useState(false);
   const [viewMode, setViewMode] = useState('timeline'); // timeline, map, both
   const [autoSaveEnabled, setAutoSaveEnabled] = useState(true);
   const [unsavedChanges, setUnsavedChanges] = useState(false);
@@ -290,6 +292,15 @@ const ItineraryBuilder = () => {
     window.open(`/itinerary-preview/${id}`, '_blank');
   };
 
+  // Handle basic info save
+  const handleSaveBasicInfo = (basicInfoData) => {
+    const updatedItinerary = {
+      ...itinerary,
+      ...basicInfoData
+    };
+    saveMutation.mutate(updatedItinerary);
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -329,9 +340,18 @@ const ItineraryBuilder = () => {
               <FiArrowLeft className="w-5 h-5 text-gray-600" />
             </button>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">
-                {itinerary?.title || 'Untitled Itinerary'}
-              </h1>
+              <div className="flex items-center space-x-2">
+                <h1 className="text-2xl font-bold text-gray-900">
+                  {itinerary?.title || 'Untitled Itinerary'}
+                </h1>
+                <button
+                  onClick={() => setShowBasicInfoModal(true)}
+                  className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors text-gray-500 hover:text-gray-700"
+                  title="Edit basic information"
+                >
+                  <FiSettings className="w-4 h-4" />
+                </button>
+              </div>
               <div className="flex items-center space-x-4 mt-1 text-sm text-gray-500">
                 <span className="flex items-center">
                   <FiMapPin className="w-4 h-4 mr-1" />
@@ -499,6 +519,15 @@ const ItineraryBuilder = () => {
           isOpen={showShareModal}
           onClose={() => setShowShareModal(false)}
           itineraryId={id}
+        />
+      )}
+
+      {showBasicInfoModal && (
+        <BasicInfoModal
+          isOpen={showBasicInfoModal}
+          onClose={() => setShowBasicInfoModal(false)}
+          itinerary={itinerary}
+          onSave={handleSaveBasicInfo}
         />
       )}
     </div>

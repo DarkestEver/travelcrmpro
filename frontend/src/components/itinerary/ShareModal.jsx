@@ -16,10 +16,19 @@ const ShareModal = ({ isOpen, onClose, itineraryId }) => {
   const generateLinkMutation = useMutation({
     mutationFn: (options) => itinerariesAPI.generateShareLink(itineraryId, options),
     onSuccess: (data) => {
-      setShareLink(data);
+      // Transform backend response to match expected format
+      const linkData = {
+        url: data.shareUrl,
+        token: data.token,
+        expiresAt: data.expiresAt,
+        isPasswordProtected: data.hasPassword,
+        viewCount: 0
+      };
+      setShareLink(linkData);
       toast.success('Share link generated successfully');
     },
     onError: (error) => {
+      console.error('Share link error:', error);
       toast.error(error.response?.data?.message || 'Failed to generate share link');
     }
   });
