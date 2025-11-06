@@ -96,8 +96,16 @@ const ItineraryBuilder = () => {
 
   // Add day mutation
   const addDayMutation = useMutation({
-    mutationFn: (dayData) => itinerariesAPI.addDay(id, dayData),
+    mutationFn: (dayData) => {
+      console.log('Adding day:', dayData);
+      return itinerariesAPI.addDay(id, dayData);
+    },
     onSuccess: (data) => {
+      console.log('Add day response:', data);
+      if (!data) {
+        toast.error('Invalid response from server');
+        return;
+      }
       toast.success('Day added successfully');
       queryClient.invalidateQueries(['itinerary', id]);
       setItinerary(data);
@@ -106,7 +114,9 @@ const ItineraryBuilder = () => {
       }
     },
     onError: (error) => {
-      toast.error(error.response?.data?.message || 'Failed to add day');
+      console.error('Add day error:', error);
+      const errorMessage = error.response?.data?.message || 'Failed to add day';
+      toast.error(errorMessage);
     }
   });
 
@@ -240,8 +250,17 @@ const ItineraryBuilder = () => {
 
   // Handle adding new day
   const handleAddDay = () => {
-    const dayNumber = itinerary.days ? itinerary.days.length + 1 : 1;
-    const date = new Date(itinerary.startDate);
+    // Frontend validation for max days
+    const MAX_DAYS = 365;
+    const currentDaysCount = itinerary.days ? itinerary.days.length : 0;
+    
+    if (currentDaysCount >= MAX_DAYS) {
+      toast.error(`Cannot add more days. Maximum limit is ${MAX_DAYS} days`);
+      return;
+    }
+
+    const dayNumber = currentDaysCount + 1;
+    const date = itinerary.startDate ? new Date(itinerary.startDate) : new Date();
     date.setDate(date.getDate() + dayNumber - 1);
 
     const newDay = {

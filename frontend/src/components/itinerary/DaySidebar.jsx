@@ -157,13 +157,33 @@ const DaySidebar = ({ days, selectedDay, onSelectDay, onAddDay, onDeleteDay, sta
 
       {/* Add Day Button */}
       <div className="p-4 border-t border-gray-200">
-        <button
-          onClick={onAddDay}
-          className="w-full btn btn-primary flex items-center justify-center"
-        >
-          <FiPlus className="w-4 h-4 mr-2" />
-          Add New Day
-        </button>
+        {days.length >= 365 ? (
+          <div className="text-center">
+            <p className="text-xs text-red-600 mb-2">Maximum day limit (365) reached</p>
+            <button
+              disabled
+              className="w-full btn btn-primary flex items-center justify-center opacity-50 cursor-not-allowed"
+            >
+              <FiPlus className="w-4 h-4 mr-2" />
+              Add New Day
+            </button>
+          </div>
+        ) : (
+          <>
+            {days.length >= 350 && (
+              <p className="text-xs text-amber-600 mb-2 text-center">
+                Warning: Approaching day limit ({days.length}/365)
+              </p>
+            )}
+            <button
+              onClick={onAddDay}
+              className="w-full btn btn-primary flex items-center justify-center"
+            >
+              <FiPlus className="w-4 h-4 mr-2" />
+              Add New Day
+            </button>
+          </>
+        )}
       </div>
 
       {/* Delete Confirmation Dialog */}

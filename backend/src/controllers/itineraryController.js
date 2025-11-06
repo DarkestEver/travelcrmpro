@@ -397,6 +397,12 @@ const addDay = asyncHandler(async (req, res) => {
     throw new AppError('You do not have permission to modify this itinerary', 403);
   }
 
+  // Validate max days limit (reasonable limit for trip planning)
+  const MAX_DAYS = 365; // One year maximum
+  if (itinerary.days.length >= MAX_DAYS) {
+    throw new AppError(`Cannot add more days. Maximum limit is ${MAX_DAYS} days`, 400);
+  }
+
   const dayNumber = itinerary.days.length + 1;
   const newDay = {
     dayNumber,
@@ -411,7 +417,13 @@ const addDay = asyncHandler(async (req, res) => {
   itinerary.days.push(newDay);
   await itinerary.save();
 
-  successResponse(res, 201, 'Day added successfully', { day: itinerary.days[itinerary.days.length - 1] });
+  // Return the full updated itinerary
+  const updatedItinerary = await Itinerary.findById(req.params.id)
+    .populate('createdBy', 'firstName lastName email')
+    .populate('assignedTo', 'firstName lastName email')
+    .populate('customerId', 'firstName lastName email phone');
+
+  successResponse(res, 201, 'Day added successfully', { itinerary: updatedItinerary });
 });
 
 // @desc    Update day
