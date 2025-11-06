@@ -50,6 +50,31 @@ const Itineraries = () => {
     },
   });
 
+  // Quick create and go to builder
+  const quickCreateMutation = useMutation({
+    mutationFn: () => itinerariesAPI.create({
+      title: 'New Itinerary',
+      overview: 'Click here to add description',
+      destination: {
+        country: 'India',
+        city: 'New Delhi'
+      },
+      startDate: new Date().toISOString().split('T')[0],
+      endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      numberOfDays: 7,
+      numberOfNights: 6,
+      status: 'draft'
+    }),
+    onSuccess: (response) => {
+      const itineraryId = response.data.data._id;
+      toast.success('Itinerary created! Opening builder...');
+      navigate(`/itineraries/${itineraryId}/build`);
+    },
+    onError: (error) => {
+      toast.error(error.response?.data?.message || 'Failed to create itinerary');
+    },
+  });
+
   // Delete mutation
   const deleteMutation = useMutation({
     mutationFn: (id) => itinerariesAPI.delete(id),
@@ -177,16 +202,26 @@ const Itineraries = () => {
           <h1 className="text-2xl font-bold text-gray-900">Itineraries</h1>
           <p className="text-gray-600 mt-1">Create and manage travel itineraries</p>
         </div>
-        <button
-          onClick={() => {
-            setSelectedItinerary(null);
-            setShowModal(true);
-          }}
-          className="btn btn-primary flex items-center gap-2"
-        >
-          <FiPlus className="w-4 h-4" />
-          Create Itinerary
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={() => quickCreateMutation.mutate()}
+            className="btn btn-primary flex items-center gap-2"
+            disabled={quickCreateMutation.isLoading}
+          >
+            <FiLayers className="w-4 h-4" />
+            {quickCreateMutation.isLoading ? 'Creating...' : 'Quick Start Builder'}
+          </button>
+          <button
+            onClick={() => {
+              setSelectedItinerary(null);
+              setShowModal(true);
+            }}
+            className="btn btn-secondary flex items-center gap-2"
+          >
+            <FiPlus className="w-4 h-4" />
+            Create with Form
+          </button>
+        </div>
       </div>
 
       {/* Table */}
@@ -244,27 +279,32 @@ const Itineraries = () => {
 const ItineraryFormModal = ({ isOpen, onClose, itinerary, onSubmit, isLoading }) => {
   const [formData, setFormData] = useState({
     title: itinerary?.title || '',
-    description: itinerary?.description || '',
-    destinations: itinerary?.destinations?.join(', ') || '',
+    overview: itinerary?.overview || '',
+    country: itinerary?.destination?.country || '',
+    city: itinerary?.destination?.city || '',
+    startDate: itinerary?.startDate?.split('T')[0] || '',
+    endDate: itinerary?.endDate?.split('T')[0] || '',
+    numberOfDays: itinerary?.numberOfDays || 1,
+    numberOfNights: itinerary?.numberOfNights || 0,
     status: itinerary?.status || 'draft',
-    days: itinerary?.days || [
-      {
-        day: 1,
-        title: '',
-        activities: [
-          { time: '09:00', description: '', location: '' }
-        ]
-      }
-    ],
   });
 
   const handleSubmit = (e) => {
     e.preventDefault();
     
-    // Convert destinations string to array
+    // Convert to new schema format
     const payload = {
-      ...formData,
-      destinations: formData.destinations.split(',').map(d => d.trim()).filter(Boolean),
+      title: formData.title,
+      overview: formData.overview,
+      destination: {
+        country: formData.country,
+        city: formData.city
+      },
+      startDate: formData.startDate,
+      endDate: formData.endDate,
+      numberOfDays: parseInt(formData.numberOfDays),
+      numberOfNights: parseInt(formData.numberOfNights),
+      status: formData.status
     };
     
     onSubmit(payload);
@@ -275,74 +315,6 @@ const ItineraryFormModal = ({ isOpen, onClose, itinerary, onSubmit, isLoading })
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const addDay = () => {
-    setFormData(prev => ({
-      ...prev,
-      days: [
-        ...prev.days,
-        {
-          day: prev.days.length + 1,
-          title: '',
-          activities: [{ time: '09:00', description: '', location: '' }]
-        }
-      ]
-    }));
-  };
-
-  const removeDay = (index) => {
-    if (formData.days.length > 1) {
-      setFormData(prev => ({
-        ...prev,
-        days: prev.days.filter((_, i) => i !== index).map((day, i) => ({ ...day, day: i + 1 }))
-      }));
-    }
-  };
-
-  const updateDay = (index, field, value) => {
-    setFormData(prev => ({
-      ...prev,
-      days: prev.days.map((day, i) => i === index ? { ...day, [field]: value } : day)
-    }));
-  };
-
-  const addActivity = (dayIndex) => {
-    setFormData(prev => ({
-      ...prev,
-      days: prev.days.map((day, i) => 
-        i === dayIndex 
-          ? { ...day, activities: [...day.activities, { time: '09:00', description: '', location: '' }] }
-          : day
-      )
-    }));
-  };
-
-  const removeActivity = (dayIndex, activityIndex) => {
-    setFormData(prev => ({
-      ...prev,
-      days: prev.days.map((day, i) => 
-        i === dayIndex 
-          ? { ...day, activities: day.activities.filter((_, ai) => ai !== activityIndex) }
-          : day
-      )
-    }));
-  };
-
-  const updateActivity = (dayIndex, activityIndex, field, value) => {
-    setFormData(prev => ({
-      ...prev,
-      days: prev.days.map((day, i) => 
-        i === dayIndex 
-          ? {
-              ...day,
-              activities: day.activities.map((activity, ai) => 
-                ai === activityIndex ? { ...activity, [field]: value } : activity
-              )
-            }
-          : day
-      )
-    }));
-  };
-
   return (
     <Modal
       isOpen={isOpen}
@@ -350,7 +322,7 @@ const ItineraryFormModal = ({ isOpen, onClose, itinerary, onSubmit, isLoading })
       title={itinerary ? 'Edit Itinerary' : 'Create New Itinerary'}
       size="lg"
     >
-      <form onSubmit={handleSubmit} className="space-y-4 max-h-[70vh] overflow-y-auto">
+      <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label className="label">Title *</label>
           <input
@@ -365,10 +337,10 @@ const ItineraryFormModal = ({ isOpen, onClose, itinerary, onSubmit, isLoading })
         </div>
 
         <div>
-          <label className="label">Description</label>
+          <label className="label">Overview</label>
           <textarea
-            name="description"
-            value={formData.description}
+            name="overview"
+            value={formData.overview}
             onChange={handleChange}
             rows={3}
             className="input"
@@ -376,17 +348,83 @@ const ItineraryFormModal = ({ isOpen, onClose, itinerary, onSubmit, isLoading })
           />
         </div>
 
-        <div>
-          <label className="label">Destinations (comma-separated) *</label>
-          <input
-            type="text"
-            name="destinations"
-            value={formData.destinations}
-            onChange={handleChange}
-            required
-            className="input"
-            placeholder="Bangkok, Phuket, Singapore"
-          />
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="label">Country *</label>
+            <input
+              type="text"
+              name="country"
+              value={formData.country}
+              onChange={handleChange}
+              required
+              className="input"
+              placeholder="Thailand"
+            />
+          </div>
+          <div>
+            <label className="label">City *</label>
+            <input
+              type="text"
+              name="city"
+              value={formData.city}
+              onChange={handleChange}
+              required
+              className="input"
+              placeholder="Bangkok"
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="label">Start Date *</label>
+            <input
+              type="date"
+              name="startDate"
+              value={formData.startDate}
+              onChange={handleChange}
+              required
+              className="input"
+            />
+          </div>
+          <div>
+            <label className="label">End Date *</label>
+            <input
+              type="date"
+              name="endDate"
+              value={formData.endDate}
+              onChange={handleChange}
+              required
+              className="input"
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="label">Number of Days *</label>
+            <input
+              type="number"
+              name="numberOfDays"
+              value={formData.numberOfDays}
+              onChange={handleChange}
+              required
+              min="1"
+              className="input"
+            />
+          </div>
+          <div>
+            <label className="label">Number of Nights *</label>
+            <input
+              type="number"
+              name="numberOfNights"
+              value={formData.numberOfNights}
+              onChange={handleChange}
+              required
+              min="0"
+              className="input"
+            />
+          </div>
         </div>
 
         <div>
@@ -402,96 +440,6 @@ const ItineraryFormModal = ({ isOpen, onClose, itinerary, onSubmit, isLoading })
             <option value="published">Published</option>
             <option value="archived">Archived</option>
           </select>
-        </div>
-
-        {/* Day-by-Day Planner */}
-        <div className="border-t pt-4">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="font-medium text-gray-900">Day-by-Day Activities</h3>
-            <button
-              type="button"
-              onClick={addDay}
-              className="btn-secondary flex items-center gap-2 text-sm"
-            >
-              <FiPlus className="w-3 h-3" />
-              Add Day
-            </button>
-          </div>
-
-          {formData.days.map((day, dayIndex) => (
-            <div key={dayIndex} className="mb-6 p-4 bg-gray-50 rounded-lg">
-              <div className="flex justify-between items-center mb-3">
-                <h4 className="font-medium text-gray-800">Day {day.day}</h4>
-                {formData.days.length > 1 && (
-                  <button
-                    type="button"
-                    onClick={() => removeDay(dayIndex)}
-                    className="text-red-600 hover:text-red-800 text-sm"
-                  >
-                    Remove Day
-                  </button>
-                )}
-              </div>
-
-              <div className="mb-3">
-                <label className="label text-sm">Day Title</label>
-                <input
-                  type="text"
-                  value={day.title}
-                  onChange={(e) => updateDay(dayIndex, 'title', e.target.value)}
-                  className="input input-sm"
-                  placeholder="Arrival in Bangkok"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <div className="flex justify-between items-center">
-                  <label className="label text-sm">Activities</label>
-                  <button
-                    type="button"
-                    onClick={() => addActivity(dayIndex)}
-                    className="text-blue-600 hover:text-blue-800 text-sm"
-                  >
-                    + Add Activity
-                  </button>
-                </div>
-
-                {day.activities.map((activity, activityIndex) => (
-                  <div key={activityIndex} className="flex gap-2 bg-white p-2 rounded">
-                    <input
-                      type="time"
-                      value={activity.time}
-                      onChange={(e) => updateActivity(dayIndex, activityIndex, 'time', e.target.value)}
-                      className="input input-sm w-32"
-                    />
-                    <input
-                      type="text"
-                      value={activity.description}
-                      onChange={(e) => updateActivity(dayIndex, activityIndex, 'description', e.target.value)}
-                      placeholder="Activity description"
-                      className="input input-sm flex-1"
-                    />
-                    <input
-                      type="text"
-                      value={activity.location}
-                      onChange={(e) => updateActivity(dayIndex, activityIndex, 'location', e.target.value)}
-                      placeholder="Location"
-                      className="input input-sm w-40"
-                    />
-                    {day.activities.length > 1 && (
-                      <button
-                        type="button"
-                        onClick={() => removeActivity(dayIndex, activityIndex)}
-                        className="text-red-600 hover:text-red-800"
-                      >
-                        <FiTrash2 className="w-4 h-4" />
-                      </button>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          ))}
         </div>
 
         <div className="flex gap-3 justify-end pt-4 border-t">
