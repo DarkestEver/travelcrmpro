@@ -16,10 +16,13 @@ exports.identifyTenant = async (req, res, next) => {
         const token = authHeader.substring(7);
         const jwt = require('jsonwebtoken');
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        console.log('🔍 Decoded JWT:', { id: decoded.id, role: decoded.role, tenantId: decoded.tenantId });
         if (decoded.tenantId) {
           tenant = await Tenant.findById(decoded.tenantId);
+          console.log('✅ Tenant found from JWT:', tenant ? tenant._id : 'null');
         }
       } catch (err) {
+        console.log('❌ JWT decode error:', err.message);
         // Token invalid or expired, continue to other methods
       }
     }

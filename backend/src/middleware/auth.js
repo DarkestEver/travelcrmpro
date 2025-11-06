@@ -47,17 +47,30 @@ exports.protect = async (req, res, next) => {
             message: 'User no longer exists.',
           });
         }
-        
-        // Verify user belongs to the current tenant (if tenant context exists)
-        if (req.tenantId && user.tenantId.toString() !== req.tenantId.toString()) {
-          return res.status(403).json({
-            success: false,
-            message: 'Access denied. User does not belong to this tenant.',
-          });
-        }
 
         // Cache user data for 1 hour
         await setAsync(`user_${decoded.id}`, JSON.stringify(user), 3600);
+      }
+      
+      // SIMPLIFIED TENANT VALIDATION:
+      // Since JWT already contains tenantId and is signed, we can trust it
+      // We only need to verify the JWT tenantId matches the user's tenantId
+      // This prevents token reuse across tenants
+      
+      const userTenantId = user.tenantId ? user.tenantId.toString() : null;
+      const jwtTenantId = decoded.tenantId ? decoded.tenantId.toString() : null;
+      
+      // If both exist, they must match
+      if (jwtTenantId && userTenantId && jwtTenantId !== userTenantId) {
+        console.log('🚫 Tenant mismatch! JWT tenantId does not match user tenantId', { 
+          jwtTenantId, 
+          userTenantId,
+          userEmail: user.email 
+        });
+        return res.status(403).json({
+          success: false,
+          message: 'Access denied. User does not belong to this tenant.',
+        });
       }
 
       // Check if user is active

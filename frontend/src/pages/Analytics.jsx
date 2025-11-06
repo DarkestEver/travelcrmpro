@@ -10,6 +10,7 @@ import {
   Calendar
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+import PageWrapper from '../components/PageWrapper';
 import { analyticsAPI } from '../services/apiEndpoints';
 import {
   Chart as ChartJS,
@@ -53,6 +54,7 @@ const Analytics = () => {
   const [systemHealth, setSystemHealth] = useState(null);
   const [settings, setSettings] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [dateRange, setDateRange] = useState({
     startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
     endDate: new Date().toISOString().split('T')[0]
@@ -65,62 +67,51 @@ const Analytics = () => {
   const loadAnalytics = async () => {
     try {
       setLoading(true);
+      setError(null);
       
       switch (activeTab) {
         case 'overview':
-          try {
-            const [dashData, healthData] = await Promise.all([
-              analyticsAPI.getDashboard(dateRange).catch(err => {
-                console.error('Dashboard error:', err);
-                return { data: { totalRevenue: 0, totalBookings: 0, activeCustomers: 0, conversionRate: 0 } };
-              }),
-              analyticsAPI.getSystemHealth().catch(err => {
-                console.error('System health error:', err);
-                return { data: { status: 'unknown', database: { connected: false } } };
-              })
-            ]);
-            setDashboard(dashData.data);
-            setSystemHealth(healthData.data);
-          } catch (err) {
-            console.error('Overview error:', err);
-            setDashboard({ totalRevenue: 0, totalBookings: 0, activeCustomers: 0, conversionRate: 0 });
-            setSystemHealth({ status: 'unknown', database: { connected: false } });
-          }
+          const [dashData, healthData] = await Promise.all([
+            analyticsAPI.getDashboard(dateRange),
+            analyticsAPI.getSystemHealth()
+          ]);
+          setDashboard(dashData.data);
+          setSystemHealth(healthData.data);
           break;
           
         case 'revenue':
-          const revData = await analyticsAPI.getRevenue(dateRange).catch(() => ({ data: {} }));
+          const revData = await analyticsAPI.getRevenue(dateRange);
           setRevenue(revData.data);
           break;
           
         case 'agents':
-          const agentData = await analyticsAPI.getAgentPerformance(dateRange).catch(() => ({ data: {} }));
+          const agentData = await analyticsAPI.getAgentPerformance(dateRange);
           setAgentPerformance(agentData.data);
           break;
           
         case 'bookings':
-          const bookingData = await analyticsAPI.getBookingTrends(dateRange).catch(() => ({ data: {} }));
+          const bookingData = await analyticsAPI.getBookingTrends(dateRange);
           setBookingTrends(bookingData.data);
           break;
           
         case 'forecast':
-          const forecastData = await analyticsAPI.getForecast(dateRange).catch(() => ({ data: {} }));
+          const forecastData = await analyticsAPI.getForecast(dateRange);
           setForecast(forecastData.data);
           break;
           
         case 'activity':
-          const activityData = await analyticsAPI.getUserActivity(dateRange).catch(() => ({ data: {} }));
+          const activityData = await analyticsAPI.getUserActivity(dateRange);
           setUserActivity(activityData.data);
           break;
           
         case 'settings':
-          const settingsData = await analyticsAPI.getSettings().catch(() => ({ data: {} }));
+          const settingsData = await analyticsAPI.getSettings();
           setSettings(settingsData.data);
           break;
       }
-    } catch (error) {
-      console.error('Error loading analytics:', error);
-      toast.error('Failed to load analytics data');
+    } catch (err) {
+      console.error('Error loading analytics:', err);
+      setError(err);
     } finally {
       setLoading(false);
     }
@@ -137,17 +128,18 @@ const Analytics = () => {
   ];
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Analytics Dashboard</h1>
-          <p className="text-gray-600 mt-1">Comprehensive insights and performance metrics</p>
-        </div>
-        
-        {/* Date Range Picker */}
-        <div className="flex items-center gap-2">
-          <Calendar className="w-5 h-5 text-gray-400" />
+    <PageWrapper loading={loading} error={error} onRetry={loadAnalytics}>
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Analytics Dashboard</h1>
+            <p className="text-gray-600 mt-1">Comprehensive insights and performance metrics</p>
+          </div>
+          
+          {/* Date Range Picker */}
+          <div className="flex items-center gap-2">
+            <Calendar className="w-5 h-5 text-gray-400" />
           <input
             type="date"
             value={dateRange.startDate}
@@ -219,7 +211,8 @@ const Analytics = () => {
           )}
         </>
       )}
-    </div>
+      </div>
+    </PageWrapper>
   );
 };
 

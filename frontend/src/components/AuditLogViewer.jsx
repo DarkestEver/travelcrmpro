@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Search, Filter, Download, Calendar } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import DataTable from './DataTable';
+import ErrorDisplay from './ErrorDisplay';
 import { auditLogsAPI } from '../services/apiEndpoints';
 
 /**
@@ -17,6 +18,7 @@ const AuditLogViewer = ({
   const [logs, setLogs] = useState([]);
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [filters, setFilters] = useState({
     action: '',
     user: userId || '',
@@ -38,21 +40,67 @@ const AuditLogViewer = ({
   const loadLogs = async () => {
     try {
       setLoading(true);
+      setError(null);
       let response;
       
       if (resourceType && resourceId) {
-        response = await auditLogsAPI.getByResource(resourceType, resourceId, filters).catch(() => ({ data: { logs: [], totalPages: 1 } }));
+        response = await auditLogsAPI.getByResource(resourceType, resourceId, filters);
       } else if (userId) {
-        response = await auditLogsAPI.getByUser(userId, filters).catch(() => ({ data: { logs: [], totalPages: 1 } }));
+        response = await auditLogsAPI.getByUser(userId, filters);
       } else {
-        response = await auditLogsAPI.getAll(filters).catch(() => ({ data: { logs: [], totalPages: 1 } }));
+        response = await auditLogsAPI.getAll(filters);
       }
 
-      setLogs(response.data.logs || response.data || []);
-      setTotalPages(response.data.totalPages || 1);
+      console.log('Audit logs response:', response.data);
+      
+      // Handle different response structures
+      let logs = [];
+      let totalPages = 1;
+      
+      if (Array.isArray(response.data)) {
+        // Response is directly an array
+        logs = response.data;
+      } else if (response.data?.data) {
+        // Response has nested data property
+        if (Array.isArray(response.data.data)) {
+          logs = response.data.data;
+        } else if (response.data.data.logs) {
+          logs = response.data.data.logs;
+        }
+        totalPages = response.data.data.totalPages || response.data.totalPages || 1;
+      } else if (response.data?.logs) {
+        // Response has logs property
+        logs = response.data.logs;
+        totalPages = response.data.totalPages || 1;
+      }
+      
+      // Filter out any null/undefined items and ensure we have valid log objects
+      const validLogs = logs.filter(log => log && typeof log === 'object' && log.timestamp);
+      console.log('Valid logs:', validLogs.length, 'of', logs.length);
+      
+      setLogs(validLogs);
+      setTotalPages(totalPages);
     } catch (error) {
       console.error('Error loading audit logs:', error);
-      toast.error('Failed to load audit logs');
+      
+      // Determine error type
+      let errorType = 'general';
+      let errorMessage = 'Failed to load audit logs. Please try again.';
+      
+      if (error.response) {
+        if (error.response.status === 403) {
+          errorType = '403';
+          errorMessage = error.response.data?.message || 'You don\'t have permission to view audit logs.';
+        } else if (error.response.status === 404) {
+          errorType = '404';
+        } else if (error.response.status >= 500) {
+          errorType = '500';
+        }
+      } else if (error.request) {
+        errorType = 'network';
+      }
+      
+      setError({ type: errorType, message: errorMessage });
       setLogs([]);
     } finally {
       setLoading(false);
@@ -61,8 +109,12 @@ const AuditLogViewer = ({
 
   const loadStats = async () => {
     try {
-      const response = await auditLogsAPI.getStats(filters).catch(() => ({ data: { totalLogs: 0, uniqueUsers: 0, actionsToday: 0 } }));
-      setStats(response.data);
+      const response = await auditLogsAPI.getStats(filters);
+      console.log('Audit logs stats response:', response.data);
+      
+      // Handle different response structures
+      const stats = response.data?.data || response.data || { totalLogs: 0, uniqueUsers: 0, actionsToday: 0 };
+      setStats(stats);
     } catch (error) {
       console.error('Error loading stats:', error);
       setStats({ totalLogs: 0, uniqueUsers: 0, actionsToday: 0 });
@@ -146,69 +198,69 @@ const AuditLogViewer = ({
 
   const columns = compact ? [
     {
-      key: 'timestamp',
-      label: 'Time',
-      render: (log) => new Date(log.timestamp).toLocaleString('en-US', {
+      accessor: 'timestamp',
+      header: 'Time',
+      render: (value, log) => log?.timestamp ? new Date(log.timestamp).toLocaleString('en-US', {
         month: 'short',
         day: 'numeric',
         hour: '2-digit',
         minute: '2-digit'
-      })
+      }) : '-'
     },
     {
-      key: 'action',
-      label: 'Action',
-      render: (log) => (
+      accessor: 'action',
+      header: 'Action',
+      render: (value, log) => log?.action ? (
         <span className={`px-2 py-1 rounded-full text-xs font-medium ${getActionBadgeColor(log.action)}`}>
           {log.action}
         </span>
-      )
+      ) : '-'
     },
     {
-      key: 'user',
-      label: 'User',
-      render: (log) => log.user?.name || log.userId || 'System'
+      accessor: 'user',
+      header: 'User',
+      render: (value, log) => log?.user?.name || log?.userId || 'System'
     },
     {
-      key: 'details',
-      label: 'Details',
-      render: (log) => (
+      accessor: 'details',
+      header: 'Details',
+      render: (value, log) => (
         <span className="text-sm text-gray-600 truncate max-w-xs">
-          {log.details ? JSON.stringify(log.details).slice(0, 50) : '-'}
+          {log?.details ? JSON.stringify(log.details).slice(0, 50) : '-'}
         </span>
       )
     }
   ] : [
     {
-      key: 'timestamp',
-      label: 'Timestamp',
-      render: (log) => new Date(log.timestamp).toLocaleString()
+      accessor: 'timestamp',
+      header: 'Timestamp',
+      render: (value, log) => log?.timestamp ? new Date(log.timestamp).toLocaleString() : '-'
     },
     {
-      key: 'user',
-      label: 'User',
-      render: (log) => (
+      accessor: 'user',
+      header: 'User',
+      render: (value, log) => (
         <div>
-          <div className="font-medium">{log.user?.name || 'System'}</div>
-          {log.user?.email && (
+          <div className="font-medium">{log?.user?.name || 'System'}</div>
+          {log?.user?.email && (
             <div className="text-sm text-gray-500">{log.user.email}</div>
           )}
         </div>
       )
     },
     {
-      key: 'action',
-      label: 'Action',
-      render: (log) => (
+      accessor: 'action',
+      header: 'Action',
+      render: (value, log) => log?.action ? (
         <span className={`px-2 py-1 rounded-full text-xs font-medium ${getActionBadgeColor(log.action)}`}>
           {log.action}
         </span>
-      )
+      ) : '-'
     },
     {
-      key: 'resource',
-      label: 'Resource',
-      render: (log) => log.resourceType ? (
+      accessor: 'resourceType',
+      header: 'Resource',
+      render: (value, log) => log?.resourceType ? (
         <div>
           <div className="font-medium">{log.resourceType}</div>
           {log.resourceId && (
@@ -218,14 +270,14 @@ const AuditLogViewer = ({
       ) : '-'
     },
     {
-      key: 'ipAddress',
-      label: 'IP Address',
-      render: (log) => log.ipAddress || '-'
+      accessor: 'ipAddress',
+      header: 'IP Address',
+      render: (value, log) => log?.ipAddress || '-'
     },
     {
-      key: 'details',
-      label: 'Details',
-      render: (log) => log.details ? (
+      accessor: 'details',
+      header: 'Details',
+      render: (value, log) => log?.details ? (
         <details className="text-sm">
           <summary className="cursor-pointer text-blue-600 hover:text-blue-800">
             View
@@ -240,8 +292,18 @@ const AuditLogViewer = ({
 
   return (
     <div className="space-y-4">
+      {/* Error Display */}
+      {error && !loading && (
+        <ErrorDisplay
+          type={error.type}
+          message={error.message}
+          onRetry={loadLogs}
+          showHomeButton={!compact}
+        />
+      )}
+
       {/* Statistics Cards */}
-      {stats && !compact && (
+      {stats && !compact && !error && (
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="bg-white p-4 rounded-lg border border-gray-200">
             <div className="text-sm text-gray-600">Total Logs</div>
@@ -265,7 +327,7 @@ const AuditLogViewer = ({
       )}
 
       {/* Filters */}
-      {!compact && (
+      {!compact && !error && (
         <div className="bg-white p-4 rounded-lg border border-gray-200">
           <div className="flex items-center justify-between mb-4">
             <button
@@ -366,16 +428,17 @@ const AuditLogViewer = ({
       )}
 
       {/* Logs Table */}
-      <div className="bg-white rounded-lg border border-gray-200">
-        <DataTable
-          columns={columns}
-          data={logs}
-          loading={loading}
-          emptyMessage="No audit logs found"
-        />
+      {!error && (
+        <div className="bg-white rounded-lg border border-gray-200">
+          <DataTable
+            columns={columns}
+            data={logs}
+            loading={loading}
+            emptyMessage="No audit logs found"
+          />
 
-        {/* Pagination */}
-        {totalPages > 1 && (
+          {/* Pagination */}
+          {totalPages > 1 && (
           <div className="flex items-center justify-between px-4 py-3 border-t border-gray-200">
             <div className="text-sm text-gray-600">
               Page {filters.page} of {totalPages}
@@ -399,6 +462,7 @@ const AuditLogViewer = ({
           </div>
         )}
       </div>
+      )}
     </div>
   );
 };

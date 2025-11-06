@@ -13,6 +13,7 @@ import {
 import DataTable from '../components/DataTable';
 import Modal from '../components/Modal';
 import ConfirmDialog from '../components/ConfirmDialog';
+import PageWrapper from '../components/PageWrapper';
 import { agentsAPI } from '../services/apiEndpoints';
 
 const Agents = () => {
@@ -25,7 +26,7 @@ const Agents = () => {
   const [actionType, setActionType] = useState('');
 
   // Fetch agents
-  const { data, isLoading, refetch } = useQuery({
+  const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ['agents', page, search],
     queryFn: () => agentsAPI.getAll({ page, limit: 10, search }),
   });
@@ -229,69 +230,71 @@ const Agents = () => {
   ];
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Agents</h1>
-          <p className="text-gray-600 mt-1">Manage travel agents and agencies</p>
+    <PageWrapper loading={isLoading} error={isError ? error : null} onRetry={refetch}>
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Agents</h1>
+            <p className="text-gray-600 mt-1">Manage travel agents and agencies</p>
+          </div>
+          <button
+            onClick={() => {
+              setSelectedAgent(null);
+              setActionType('create');
+              setShowModal(true);
+            }}
+            className="btn btn-primary flex items-center gap-2"
+          >
+            <FiPlus className="w-4 h-4" />
+            Add Agent
+          </button>
         </div>
-        <button
-          onClick={() => {
-            setSelectedAgent(null);
-            setActionType('create');
-            setShowModal(true);
-          }}
-          className="btn btn-primary flex items-center gap-2"
-        >
-          <FiPlus className="w-4 h-4" />
-          Add Agent
-        </button>
-      </div>
 
-      {/* Table */}
-      <DataTable
-        columns={columns}
-        data={data?.data || []}
-        pagination={data?.pagination}
-        onPageChange={setPage}
-        onSearch={setSearch}
-        loading={isLoading}
-        searchPlaceholder="Search agents..."
-        showSearch={true}
-      />
-
-      {/* Create/Edit/Approve Modal */}
-      {showModal && (
-        <AgentFormModal
-          isOpen={showModal}
-          onClose={() => {
-            setShowModal(false);
-            setSelectedAgent(null);
-          }}
-          agent={selectedAgent}
-          actionType={actionType}
-          onSubmit={(data) => {
-            if (actionType === 'approve') {
-              approveMutation.mutate({ id: selectedAgent._id, data });
-            } else {
-              saveMutation.mutate(data);
-            }
-          }}
-          isLoading={saveMutation.isPending || approveMutation.isPending}
+        {/* Table */}
+        <DataTable
+          columns={columns}
+          data={data?.data || []}
+          pagination={data?.pagination}
+          onPageChange={setPage}
+          onSearch={setSearch}
+          loading={isLoading}
+          searchPlaceholder="Search agents..."
+          showSearch={true}
         />
-      )}
 
-      {/* Delete/Suspend Confirm Dialog */}
-      <ConfirmDialog
-        isOpen={showConfirm}
-        onClose={() => setShowConfirm(false)}
-        onConfirm={handleConfirm}
-        title={`${actionType === 'delete' ? 'Delete' : 'Suspend'} Agent`}
-        message={`Are you sure you want to ${actionType} ${selectedAgent?.agencyName}?`}
-        type={actionType === 'delete' ? 'danger' : 'warning'}
-      />
-    </div>
+        {/* Create/Edit/Approve Modal */}
+        {showModal && (
+          <AgentFormModal
+            isOpen={showModal}
+            onClose={() => {
+              setShowModal(false);
+              setSelectedAgent(null);
+            }}
+            agent={selectedAgent}
+            actionType={actionType}
+            onSubmit={(data) => {
+              if (actionType === 'approve') {
+                approveMutation.mutate({ id: selectedAgent._id, data });
+              } else {
+                saveMutation.mutate(data);
+              }
+            }}
+            isLoading={saveMutation.isPending || approveMutation.isPending}
+          />
+        )}
+
+        {/* Delete/Suspend Confirm Dialog */}
+        <ConfirmDialog
+          isOpen={showConfirm}
+          onClose={() => setShowConfirm(false)}
+          onConfirm={handleConfirm}
+          title={`${actionType === 'delete' ? 'Delete' : 'Suspend'} Agent`}
+          message={`Are you sure you want to ${actionType} ${selectedAgent?.agencyName}?`}
+          type={actionType === 'delete' ? 'danger' : 'warning'}
+        />
+      </div>
+    </PageWrapper>
   );
 };
 
