@@ -1,6 +1,6 @@
-import { FiPlus, FiCalendar, FiMapPin, FiSun, FiCloud, FiCloudRain } from 'react-icons/fi';
+import { FiPlus, FiCalendar, FiMapPin, FiSun, FiCloud, FiCloudRain, FiTrash2 } from 'react-icons/fi';
 
-const DaySidebar = ({ days, selectedDay, onSelectDay, onAddDay, stats }) => {
+const DaySidebar = ({ days, selectedDay, onSelectDay, onAddDay, onDeleteDay, stats }) => {
   const getWeatherIcon = (condition) => {
     if (!condition) return <FiSun className="w-4 h-4" />;
     
@@ -38,15 +38,18 @@ const DaySidebar = ({ days, selectedDay, onSelectDay, onAddDay, stats }) => {
       <div className="flex-1 overflow-y-auto p-2 space-y-2">
         {days && days.length > 0 ? (
           days.map((day, index) => (
-            <button
+            <div
               key={day._id || index}
-              onClick={() => onSelectDay(day)}
-              className={`w-full text-left p-3 rounded-lg transition-all ${
+              className={`relative rounded-lg transition-all group ${
                 selectedDay?._id === day._id
                   ? 'bg-primary-50 border-2 border-primary-500 shadow-sm'
                   : 'bg-gray-50 border-2 border-transparent hover:bg-gray-100'
               }`}
             >
+              <button
+                onClick={() => onSelectDay(day)}
+                className="w-full text-left p-3"
+              >
               {/* Day Number Badge */}
               <div className="flex items-start justify-between mb-2">
                 <div
@@ -121,6 +124,23 @@ const DaySidebar = ({ days, selectedDay, onSelectDay, onAddDay, stats }) => {
                 </div>
               )}
             </button>
+            
+            {/* Delete Button - Only show on hover and if there's more than 1 day */}
+            {days.length > 1 && onDeleteDay && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (window.confirm(`Are you sure you want to delete Day ${day.dayNumber}? This will renumber all following days.`)) {
+                    onDeleteDay(day._id);
+                  }
+                }}
+                className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
+                title="Delete day"
+              >
+                <FiTrash2 className="w-3 h-3" />
+              </button>
+            )}
+          </div>
           ))
         ) : (
           <div className="text-center py-8 text-gray-400">

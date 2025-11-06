@@ -166,10 +166,10 @@ const BasicInfoModal = ({ isOpen, onClose, itinerary, onSave }) => {
   ];
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} size="2xl">
-      <div className="p-6 max-h-[90vh] overflow-y-auto">
+    <Modal isOpen={isOpen} onClose={onClose} size="2xl" showCloseButton={false}>
+      <div className="max-h-[80vh] overflow-y-auto">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6 sticky top-0 bg-white pb-4 border-b">
+        <div className="flex items-center justify-between mb-6 sticky top-0 bg-white pb-4 border-b z-10">
           <h2 className="text-2xl font-bold text-gray-900">Edit Basic Information</h2>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
             <FiX className="w-6 h-6" />

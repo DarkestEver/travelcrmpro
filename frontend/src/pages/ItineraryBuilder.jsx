@@ -15,7 +15,8 @@ import {
   FiUsers,
   FiArrowLeft,
   FiSettings,
-  FiLayers
+  FiLayers,
+  FiCopy
 } from 'react-icons/fi';
 import { itinerariesAPI } from '../services/apiEndpoints';
 import DayTimeline from '../components/itinerary/DayTimeline';
@@ -104,6 +105,25 @@ const ItineraryBuilder = () => {
     },
     onError: (error) => {
       toast.error(error.response?.data?.message || 'Failed to add day');
+    }
+  });
+
+  // Delete day mutation
+  const deleteDayMutation = useMutation({
+    mutationFn: (dayId) => itinerariesAPI.deleteDay(id, dayId),
+    onSuccess: (data) => {
+      toast.success('Day deleted successfully');
+      queryClient.invalidateQueries(['itinerary', id]);
+      setItinerary(data);
+      // Select first day if current day was deleted
+      if (data.days && data.days.length > 0) {
+        setSelectedDay(data.days[0]);
+      } else {
+        setSelectedDay(null);
+      }
+    },
+    onError: (error) => {
+      toast.error(error.response?.data?.message || 'Failed to delete day');
     }
   });
 
@@ -292,6 +312,26 @@ const ItineraryBuilder = () => {
     window.open(`/itinerary-preview/${id}`, '_blank');
   };
 
+  // Duplicate itinerary mutation
+  const duplicateItineraryMutation = useMutation({
+    mutationFn: () => itinerariesAPI.clone(id),
+    onSuccess: (data) => {
+      toast.success('Itinerary duplicated successfully');
+      // Navigate to the new duplicated itinerary
+      navigate(`/itineraries/${data._id}/build`);
+    },
+    onError: (error) => {
+      toast.error(error.response?.data?.message || 'Failed to duplicate itinerary');
+    }
+  });
+
+  // Handle duplicate
+  const handleDuplicate = () => {
+    if (window.confirm('Are you sure you want to duplicate this itinerary?')) {
+      duplicateItineraryMutation.mutate();
+    }
+  };
+
   // Handle basic info save
   const handleSaveBasicInfo = (basicInfoData) => {
     const updatedItinerary = {
@@ -413,6 +453,14 @@ const ItineraryBuilder = () => {
             </div>
 
             <button
+              onClick={handleDuplicate}
+              className="btn btn-secondary"
+              disabled={duplicateItineraryMutation.isLoading}
+            >
+              <FiCopy className="w-4 h-4 mr-2" />
+              {duplicateItineraryMutation.isLoading ? 'Duplicating...' : 'Duplicate'}
+            </button>
+            <button
               onClick={handlePreview}
               className="btn btn-secondary"
             >
@@ -453,6 +501,7 @@ const ItineraryBuilder = () => {
           selectedDay={selectedDay}
           onSelectDay={setSelectedDay}
           onAddDay={handleAddDay}
+          onDeleteDay={(dayId) => deleteDayMutation.mutate(dayId)}
           stats={stats}
         />
 

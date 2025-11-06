@@ -468,10 +468,27 @@ const deleteDay = asyncHandler(async (req, res) => {
     throw new AppError('Day not found', 404);
   }
 
+  const deletedDayNumber = day.dayNumber;
+
+  // Remove the day
   day.remove();
+
+  // Renumber all subsequent days
+  itinerary.days.forEach(d => {
+    if (d.dayNumber > deletedDayNumber) {
+      d.dayNumber = d.dayNumber - 1;
+    }
+  });
+
   await itinerary.save();
 
-  successResponse(res, 200, 'Day deleted successfully');
+  // Return the updated itinerary
+  const updatedItinerary = await Itinerary.findById(req.params.id)
+    .populate('createdBy', 'firstName lastName email')
+    .populate('assignedTo', 'firstName lastName email')
+    .populate('customerId', 'firstName lastName email phone');
+
+  successResponse(res, 200, 'Day deleted successfully', { itinerary: updatedItinerary });
 });
 
 // @desc    Add component to day
