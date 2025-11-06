@@ -69,7 +69,13 @@ const Itineraries = () => {
       return response.data;
     },
     onSuccess: (data) => {
-      const itineraryId = data.data._id;
+      // API returns data.itinerary, not data.data
+      const itineraryId = data.itinerary?._id || data.data?._id;
+      if (!itineraryId) {
+        console.error('No itinerary ID in response:', data);
+        toast.error('Failed to get itinerary ID');
+        return;
+      }
       toast.success('Itinerary created! Opening builder...');
       queryClient.invalidateQueries(['itineraries']);
       navigate(`/itineraries/${itineraryId}/build`);
