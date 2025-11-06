@@ -10,13 +10,14 @@ class AnalyticsService {
    */
   async getDashboardAnalytics(filters = {}) {
     try {
-      const { startDate, endDate, agentId } = filters;
+      const { startDate, endDate, agentId, tenantId } = filters;
 
       const dateFilter = {};
       if (startDate) dateFilter.$gte = new Date(startDate);
       if (endDate) dateFilter.$lte = new Date(endDate);
 
       const matchFilter = {};
+      if (tenantId) matchFilter.tenantId = tenantId;
       if (Object.keys(dateFilter).length > 0) {
         matchFilter.createdAt = dateFilter;
       }
@@ -106,7 +107,7 @@ class AnalyticsService {
   /**
    * Get booking trends (daily/weekly/monthly)
    */
-  async getBookingTrends(period = 'daily', limit = 30) {
+  async getBookingTrends(period = 'daily', limit = 30, tenantId) {
     try {
       const groupByFormat =
         period === 'daily'
@@ -115,7 +116,11 @@ class AnalyticsService {
           ? { $dateToString: { format: '%Y-W%U', date: '$createdAt' } }
           : { $dateToString: { format: '%Y-%m', date: '$createdAt' } };
 
+      const matchFilter = {};
+      if (tenantId) matchFilter.tenantId = tenantId;
+
       const trends = await Booking.aggregate([
+        { $match: matchFilter },
         {
           $group: {
             _id: groupByFormat,
@@ -140,9 +145,10 @@ class AnalyticsService {
    */
   async getRevenueBreakdown(filters = {}) {
     try {
-      const { startDate, endDate, agentId } = filters;
+      const { startDate, endDate, agentId, tenantId } = filters;
 
       const matchFilter = { status: { $in: ['confirmed', 'completed'] } };
+      if (tenantId) matchFilter.tenantId = tenantId;
       if (startDate && endDate) {
         matchFilter.createdAt = {
           $gte: new Date(startDate),
@@ -191,10 +197,13 @@ class AnalyticsService {
   /**
    * Get top performing agents
    */
-  async getTopAgents(limit = 10) {
+  async getTopAgents(limit = 10, tenantId) {
     try {
+      const matchFilter = { status: { $in: ['confirmed', 'completed'] } };
+      if (tenantId) matchFilter.tenantId = tenantId;
+
       const topAgents = await Booking.aggregate([
-        { $match: { status: { $in: ['confirmed', 'completed'] } } },
+        { $match: matchFilter },
         {
           $group: {
             _id: '$agent',
@@ -245,9 +254,10 @@ class AnalyticsService {
   /**
    * Get customer analytics
    */
-  async getCustomerAnalytics(agentId = null) {
+  async getCustomerAnalytics(agentId = null, tenantId) {
     try {
       const matchFilter = {};
+      if (tenantId) matchFilter.tenantId = tenantId;
       if (agentId) {
         matchFilter.agent = agentId;
       }
@@ -269,6 +279,7 @@ class AnalyticsService {
 
       // Get customer distribution by booking count
       const distribution = await Customer.aggregate([
+        { $match: matchFilter },
         { $match: matchFilter },
         {
           $bucket: {
@@ -307,7 +318,7 @@ class AnalyticsService {
    */
   async getConversionFunnel(filters = {}) {
     try {
-      const { startDate, endDate, agentId } = filters;
+      const { startDate, endDate, agentId, tenantId } = filters;
 
       const dateFilter = {};
       if (startDate && endDate) {
@@ -317,7 +328,9 @@ class AnalyticsService {
         };
       }
 
-      const matchFilter = agentId ? { agent: agentId, ...dateFilter } : dateFilter;
+      const matchFilter = { ...dateFilter };
+      if (tenantId) matchFilter.tenantId = tenantId;
+      if (agentId) matchFilter.agent = agentId;
 
       const quotes = await Quote.countDocuments(matchFilter);
       const sent = await Quote.countDocuments({
@@ -365,10 +378,13 @@ class AnalyticsService {
   /**
    * Get agent performance report
    */
-  async getAgentPerformanceReport(agentId) {
+  async getAgentPerformanceReport(agentId, tenantId) {
     try {
+      const matchFilter = { agent: agentId };
+      if (tenantId) matchFilter.tenantId = tenantId;
+
       const bookingStats = await Booking.aggregate([
-        { $match: { agent: agentId } },
+        { $match: matchFilter },
         {
           $group: {
             _id: null,
@@ -383,7 +399,7 @@ class AnalyticsService {
       ]);
 
       const quoteStats = await Quote.aggregate([
-        { $match: { agent: agentId } },
+        { $match: matchFilter },
         {
           $group: {
             _id: null,
@@ -395,7 +411,9 @@ class AnalyticsService {
         },
       ]);
 
-      const customerCount = await Customer.countDocuments({ agent: agentId });
+      const customerMatchFilter = { agent: agentId };
+      if (tenantId) customerMatchFilter.tenantId = tenantId;
+      const customerCount = await Customer.countDocuments(customerMatchFilter);
 
       const booking = bookingStats[0] || {};
       const quote = quoteStats[0] || {};

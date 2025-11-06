@@ -25,7 +25,9 @@ const getAllQuotes = asyncHandler(async (req, res) => {
   const { status, agentId } = req.query;
 
   // Build query
-  const query = {};
+  const query = {
+    tenantId: req.tenantId, // Multi-tenant filter
+  };
   if (status) query.status = status;
 
   // Agents can only see their own quotes
@@ -160,12 +162,13 @@ const createQuote = asyncHandler(async (req, res) => {
   }
 
   // Generate quote number
-  const count = await Quote.countDocuments();
+  const count = await Quote.countDocuments({ tenantId: req.tenantId });
   const year = new Date().getFullYear();
   const quoteNumber = `Q${year}-${String(count + 1).padStart(6, '0')}`;
 
   // Create quote
   const quote = await Quote.create({
+    tenantId: req.tenantId,
     quoteNumber,
     itineraryId,
     agentId,
@@ -379,7 +382,9 @@ const deleteQuote = asyncHandler(async (req, res) => {
 // @route   GET /api/v1/quotes/stats
 // @access  Private
 const getQuoteStats = asyncHandler(async (req, res) => {
-  const query = {};
+  const query = {
+    tenantId: req.tenantId, // Multi-tenant filter
+  };
 
   // Agents can only see their own stats
   if (req.user.role === 'agent') {

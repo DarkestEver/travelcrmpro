@@ -12,7 +12,9 @@ const getAllSuppliers = asyncHandler(async (req, res) => {
   const { status, country, serviceTypes, search } = req.query;
 
   // Build query
-  const query = {};
+  const query = {
+    tenantId: req.tenantId,
+  };
   if (status) query.status = status;
   if (country) query.country = country;
   if (serviceTypes) query.serviceTypes = { $in: serviceTypes.split(',') };
@@ -80,7 +82,7 @@ const createSupplier = asyncHandler(async (req, res) => {
   } = req.body;
 
   // Check if supplier already exists for this user
-  const existingSupplier = await Supplier.findOne({ userId });
+  const existingSupplier = await Supplier.findOne({ tenantId: req.tenantId, userId });
   if (existingSupplier) {
     throw new AppError('Supplier profile already exists for this user', 400);
   }
@@ -98,6 +100,7 @@ const createSupplier = asyncHandler(async (req, res) => {
 
   // Create supplier
   const supplier = await Supplier.create({
+    tenantId: req.tenantId,
     userId,
     companyName,
     email,
@@ -271,9 +274,10 @@ const getSupplierStats = asyncHandler(async (req, res) => {
   // If no ID provided, return general statistics
   if (!req.params.id || req.params.id === 'stats') {
     const [totalSuppliers, activeSuppliers, avgRating] = await Promise.all([
-      Supplier.countDocuments(),
-      Supplier.countDocuments({ status: 'active' }),
+      Supplier.countDocuments({ tenantId: req.tenantId }),
+      Supplier.countDocuments({ tenantId: req.tenantId, status: 'active' }),
       Supplier.aggregate([
+        { $match: { tenantId: req.tenantId } },
         { $group: { _id: null, avgRating: { $avg: '$rating' } } }
       ])
     ]);

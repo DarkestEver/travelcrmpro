@@ -13,7 +13,9 @@ const getAllAgents = asyncHandler(async (req, res) => {
   const { status, tier, search } = req.query;
 
   // Build query
-  const query = {};
+  const query = {
+    tenantId: req.tenantId,
+  };
   if (status) query.status = status;
   if (tier) query.tier = tier;
   if (search) {
@@ -69,7 +71,7 @@ const createAgent = asyncHandler(async (req, res) => {
   } = req.body;
 
   // Check if agent already exists for this user
-  const existingAgent = await Agent.findOne({ userId });
+  const existingAgent = await Agent.findOne({ tenantId: req.tenantId, userId });
   if (existingAgent) {
     throw new AppError('Agent profile already exists for this user', 400);
   }
@@ -87,6 +89,7 @@ const createAgent = asyncHandler(async (req, res) => {
 
   // Create agent
   const agent = await Agent.create({
+    tenantId: req.tenantId,
     userId,
     agencyName,
     contactPerson,
@@ -232,9 +235,10 @@ const getAgentStats = asyncHandler(async (req, res) => {
   // If no ID provided, return general statistics
   if (!req.params.id || req.params.id === 'stats') {
     const [totalAgents, activeAgents, totalRevenue] = await Promise.all([
-      Agent.countDocuments(),
-      Agent.countDocuments({ status: 'active' }),
+      Agent.countDocuments({ tenantId: req.tenantId }),
+      Agent.countDocuments({ tenantId: req.tenantId, status: 'active' }),
       Agent.aggregate([
+        { $match: { tenantId: req.tenantId } },
         { $group: { _id: null, total: { $sum: '$totalRevenue' } } }
       ])
     ]);

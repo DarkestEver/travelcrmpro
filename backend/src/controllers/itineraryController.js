@@ -12,7 +12,9 @@ const getAllItineraries = asyncHandler(async (req, res) => {
   const { status, travelStyle, search, tags } = req.query;
 
   // Build query
-  const query = {};
+  const query = {
+    tenantId: req.tenantId,
+  };
   if (status) query.status = status;
   if (travelStyle) query.travelStyle = travelStyle;
   if (tags) query.tags = { $in: tags.split(',') };
@@ -70,6 +72,7 @@ const getItinerary = asyncHandler(async (req, res) => {
 // @access  Private (agent, operator, super_admin)
 const createItinerary = asyncHandler(async (req, res) => {
   const itineraryData = {
+    tenantId: req.tenantId,
     ...req.body,
     createdBy: req.user._id,
   };
@@ -155,6 +158,7 @@ const duplicateItinerary = asyncHandler(async (req, res) => {
   delete duplicateData.updatedAt;
   delete duplicateData.versions;
 
+  duplicateData.tenantId = req.tenantId;
   duplicateData.title = `${duplicateData.title} (Copy)`;
   duplicateData.createdBy = req.user._id;
   duplicateData.status = 'draft';
@@ -275,6 +279,7 @@ const getTemplates = asyncHandler(async (req, res) => {
   const { travelStyle, search } = req.query;
 
   const query = {
+    tenantId: req.tenantId,
     isTemplate: true,
     templateVisibility: 'public',
     status: 'published',

@@ -24,7 +24,9 @@ const getAllCustomers = asyncHandler(async (req, res) => {
   const { search, tags } = req.query;
 
   // Build query
-  const query = {};
+  const query = {
+    tenantId: req.tenantId, // Multi-tenant filter
+  };
 
   // Agent users can only see their own customers
   if (req.user.role === 'agent') {
@@ -103,13 +105,18 @@ const createCustomer = asyncHandler(async (req, res) => {
   }
 
   // Check if customer already exists for this agent
-  const existingCustomer = await Customer.findOne({ agentId, email });
+  const existingCustomer = await Customer.findOne({ 
+    tenantId: req.tenantId,
+    agentId, 
+    email 
+  });
   if (existingCustomer) {
     throw new AppError('Customer with this email already exists for this agent', 400);
   }
 
   // Create customer
   const customer = await Customer.create({
+    tenantId: req.tenantId,
     agentId,
     name,
     email,
@@ -246,7 +253,9 @@ const getCustomerNotes = asyncHandler(async (req, res) => {
 const getCustomerStats = asyncHandler(async (req, res) => {
   // If no ID provided, return general statistics
   if (!req.params.id || req.params.id === 'stats') {
-    const query = {};
+    const query = {
+      tenantId: req.tenantId, // Multi-tenant filter
+    };
     
     // Agent users can only view their own customers' stats
     if (req.user.role === 'agent') {
@@ -328,9 +337,13 @@ const bulkImportCustomers = asyncHandler(async (req, res) => {
       if (agentId) {
         customerData.agentId = agentId;
       }
+      
+      // Set tenantId
+      customerData.tenantId = req.tenantId;
 
       // Check if customer already exists
       const existing = await Customer.findOne({
+        tenantId: req.tenantId,
         agentId: customerData.agentId,
         email: customerData.email,
       });

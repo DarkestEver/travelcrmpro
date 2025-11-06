@@ -25,7 +25,9 @@ const getAllBookings = asyncHandler(async (req, res) => {
   const { bookingStatus, paymentStatus, agentId } = req.query;
 
   // Build query
-  const query = {};
+  const query = {
+    tenantId: req.tenantId, // Multi-tenant filter
+  };
   if (bookingStatus) query.bookingStatus = bookingStatus;
   if (paymentStatus) query.paymentStatus = paymentStatus;
 
@@ -120,6 +122,7 @@ const createBooking = asyncHandler(async (req, res) => {
 
   // Create booking
   const booking = await Booking.create({
+    tenantId: req.tenantId,
     quoteId,
     agentId: quote.agentId._id,
     customerId: quote.customerId._id,

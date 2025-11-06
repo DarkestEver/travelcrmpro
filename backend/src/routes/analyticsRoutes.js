@@ -20,6 +20,7 @@ router.get(
       const filters = {
         startDate,
         endDate,
+        tenantId: req.tenantId,
       };
 
       // If user is agent, filter by their ID
@@ -58,7 +59,7 @@ router.get(
     try {
       const { period = 'daily', limit = 30 } = req.query;
 
-      const trends = await analyticsService.getBookingTrends(period, parseInt(limit));
+      const trends = await analyticsService.getBookingTrends(period, parseInt(limit), req.tenantId);
 
       return successResponse(res, trends, 'Booking trends fetched successfully');
     } catch (error) {
@@ -83,6 +84,7 @@ router.get(
       const breakdown = await analyticsService.getRevenueBreakdown({
         startDate,
         endDate,
+        tenantId: req.tenantId,
       });
 
       return successResponse(
@@ -109,7 +111,7 @@ router.get(
     try {
       const { limit = 10 } = req.query;
 
-      const topAgents = await analyticsService.getTopAgents(parseInt(limit));
+      const topAgents = await analyticsService.getTopAgents(parseInt(limit), req.tenantId);
 
       return successResponse(
         res,
@@ -144,7 +146,7 @@ router.get(
         }
       }
 
-      const analytics = await analyticsService.getCustomerAnalytics(agentId);
+      const analytics = await analyticsService.getCustomerAnalytics(agentId, req.tenantId);
 
       return successResponse(
         res,
@@ -173,6 +175,7 @@ router.get(
       const filters = {
         startDate,
         endDate,
+        tenantId: req.tenantId,
       };
 
       // If user is agent, filter by their ID
@@ -223,7 +226,7 @@ router.get(
         }
       }
 
-      const report = await analyticsService.getAgentPerformanceReport(agentId);
+      const report = await analyticsService.getAgentPerformanceReport(agentId, req.tenantId);
 
       return successResponse(
         res,
