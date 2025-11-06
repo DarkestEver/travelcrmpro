@@ -302,6 +302,408 @@ const getTemplates = asyncHandler(async (req, res) => {
   paginatedResponse(res, 200, templates, page, limit, total);
 });
 
+// @desc    Generate shareable link
+// @route   POST /api/v1/itineraries/:id/share
+// @access  Private
+const generateShareLink = asyncHandler(async (req, res) => {
+  const { expiryDays = 30, password } = req.body;
+  
+  const itinerary = await Itinerary.findById(req.params.id);
+
+  if (!itinerary) {
+    throw new AppError('Itinerary not found', 404);
+  }
+
+  // Check permissions
+  const isOwner = itinerary.createdBy.toString() === req.user._id.toString();
+  const isAdmin = ['super_admin', 'operator'].includes(req.user.role);
+
+  if (!isOwner && !isAdmin) {
+    throw new AppError('You do not have permission to share this itinerary', 403);
+  }
+
+  // Generate shareable link
+  const token = itinerary.generateShareableLink(expiryDays, password);
+  await itinerary.save();
+
+  const shareUrl = `${req.protocol}://${req.get('host')}/share/itinerary/${token}`;
+
+  successResponse(res, 200, 'Shareable link generated successfully', { 
+    shareUrl,
+    token,
+    expiresAt: itinerary.shareableLink.expiresAt,
+    hasPassword: !!password
+  });
+});
+
+// @desc    Get itinerary by share token
+// @route   GET /api/v1/itineraries/share/:token
+// @access  Public
+const getSharedItinerary = asyncHandler(async (req, res) => {
+  const { token } = req.params;
+  const { password } = req.body;
+
+  const itinerary = await Itinerary.findOne({ 'shareableLink.token': token })
+    .populate('createdBy', 'name email')
+    .populate('days.components.supplierId', 'companyName');
+
+  if (!itinerary) {
+    throw new AppError('Itinerary not found or link expired', 404);
+  }
+
+  // Check if link expired
+  if (itinerary.shareableLink.expiresAt < new Date()) {
+    throw new AppError('Share link has expired', 403);
+  }
+
+  // Check password if required
+  if (itinerary.shareableLink.password) {
+    if (!password) {
+      throw new AppError('Password required to access this itinerary', 401);
+    }
+    
+    const crypto = require('crypto');
+    const hashedPassword = crypto.createHash('sha256').update(password).digest('hex');
+    
+    if (hashedPassword !== itinerary.shareableLink.password) {
+      throw new AppError('Incorrect password', 401);
+    }
+  }
+
+  // Increment view count
+  itinerary.shareableLink.views += 1;
+  itinerary.viewCount += 1;
+  itinerary.lastViewedAt = new Date();
+  await itinerary.save();
+
+  successResponse(res, 200, 'Itinerary fetched successfully', { itinerary });
+});
+
+// @desc    Add day to itinerary
+// @route   POST /api/v1/itineraries/:id/days
+// @access  Private
+const addDay = asyncHandler(async (req, res) => {
+  const itinerary = await Itinerary.findById(req.params.id);
+
+  if (!itinerary) {
+    throw new AppError('Itinerary not found', 404);
+  }
+
+  // Check permissions
+  const isOwner = itinerary.createdBy.toString() === req.user._id.toString();
+  const isAdmin = ['super_admin', 'operator'].includes(req.user.role);
+
+  if (!isOwner && !isAdmin) {
+    throw new AppError('You do not have permission to modify this itinerary', 403);
+  }
+
+  const dayNumber = itinerary.days.length + 1;
+  const newDay = {
+    dayNumber,
+    title: req.body.title || `Day ${dayNumber}`,
+    date: req.body.date,
+    location: req.body.location,
+    weather: req.body.weather,
+    components: req.body.components || [],
+    ...req.body
+  };
+
+  itinerary.days.push(newDay);
+  await itinerary.save();
+
+  successResponse(res, 201, 'Day added successfully', { day: itinerary.days[itinerary.days.length - 1] });
+});
+
+// @desc    Update day
+// @route   PUT /api/v1/itineraries/:id/days/:dayId
+// @access  Private
+const updateDay = asyncHandler(async (req, res) => {
+  const itinerary = await Itinerary.findById(req.params.id);
+
+  if (!itinerary) {
+    throw new AppError('Itinerary not found', 404);
+  }
+
+  // Check permissions
+  const isOwner = itinerary.createdBy.toString() === req.user._id.toString();
+  const isAdmin = ['super_admin', 'operator'].includes(req.user.role);
+
+  if (!isOwner && !isAdmin) {
+    throw new AppError('You do not have permission to modify this itinerary', 403);
+  }
+
+  const day = itinerary.days.id(req.params.dayId);
+  
+  if (!day) {
+    throw new AppError('Day not found', 404);
+  }
+
+  Object.assign(day, req.body);
+  await itinerary.save();
+
+  successResponse(res, 200, 'Day updated successfully', { day });
+});
+
+// @desc    Delete day
+// @route   DELETE /api/v1/itineraries/:id/days/:dayId
+// @access  Private
+const deleteDay = asyncHandler(async (req, res) => {
+  const itinerary = await Itinerary.findById(req.params.id);
+
+  if (!itinerary) {
+    throw new AppError('Itinerary not found', 404);
+  }
+
+  // Check permissions
+  const isOwner = itinerary.createdBy.toString() === req.user._id.toString();
+  const isAdmin = ['super_admin', 'operator'].includes(req.user.role);
+
+  if (!isOwner && !isAdmin) {
+    throw new AppError('You do not have permission to modify this itinerary', 403);
+  }
+
+  const day = itinerary.days.id(req.params.dayId);
+  
+  if (!day) {
+    throw new AppError('Day not found', 404);
+  }
+
+  day.remove();
+  await itinerary.save();
+
+  successResponse(res, 200, 'Day deleted successfully');
+});
+
+// @desc    Add component to day
+// @route   POST /api/v1/itineraries/:id/days/:dayId/components
+// @access  Private
+const addComponent = asyncHandler(async (req, res) => {
+  const itinerary = await Itinerary.findById(req.params.id);
+
+  if (!itinerary) {
+    throw new AppError('Itinerary not found', 404);
+  }
+
+  // Check permissions
+  const isOwner = itinerary.createdBy.toString() === req.user._id.toString();
+  const isAdmin = ['super_admin', 'operator'].includes(req.user.role);
+
+  if (!isOwner && !isAdmin) {
+    throw new AppError('You do not have permission to modify this itinerary', 403);
+  }
+
+  const day = itinerary.days.id(req.params.dayId);
+  
+  if (!day) {
+    throw new AppError('Day not found', 404);
+  }
+
+  const component = {
+    type: req.body.type,
+    title: req.body.title,
+    startTime: req.body.startTime,
+    endTime: req.body.endTime,
+    location: req.body.location,
+    cost: req.body.cost,
+    order: day.components.length,
+    ...req.body
+  };
+
+  day.components.push(component);
+  await itinerary.save();
+
+  const addedComponent = day.components[day.components.length - 1];
+  successResponse(res, 201, 'Component added successfully', { component: addedComponent });
+});
+
+// @desc    Update component
+// @route   PUT /api/v1/itineraries/:id/days/:dayId/components/:componentId
+// @access  Private
+const updateComponent = asyncHandler(async (req, res) => {
+  const itinerary = await Itinerary.findById(req.params.id);
+
+  if (!itinerary) {
+    throw new AppError('Itinerary not found', 404);
+  }
+
+  // Check permissions
+  const isOwner = itinerary.createdBy.toString() === req.user._id.toString();
+  const isAdmin = ['super_admin', 'operator'].includes(req.user.role);
+
+  if (!isOwner && !isAdmin) {
+    throw new AppError('You do not have permission to modify this itinerary', 403);
+  }
+
+  const day = itinerary.days.id(req.params.dayId);
+  
+  if (!day) {
+    throw new AppError('Day not found', 404);
+  }
+
+  const component = day.components.id(req.params.componentId);
+  
+  if (!component) {
+    throw new AppError('Component not found', 404);
+  }
+
+  Object.assign(component, req.body);
+  await itinerary.save();
+
+  successResponse(res, 200, 'Component updated successfully', { component });
+});
+
+// @desc    Delete component
+// @route   DELETE /api/v1/itineraries/:id/days/:dayId/components/:componentId
+// @access  Private
+const deleteComponent = asyncHandler(async (req, res) => {
+  const itinerary = await Itinerary.findById(req.params.id);
+
+  if (!itinerary) {
+    throw new AppError('Itinerary not found', 404);
+  }
+
+  // Check permissions
+  const isOwner = itinerary.createdBy.toString() === req.user._id.toString();
+  const isAdmin = ['super_admin', 'operator'].includes(req.user.role);
+
+  if (!isOwner && !isAdmin) {
+    throw new AppError('You do not have permission to modify this itinerary', 403);
+  }
+
+  const day = itinerary.days.id(req.params.dayId);
+  
+  if (!day) {
+    throw new AppError('Day not found', 404);
+  }
+
+  const component = day.components.id(req.params.componentId);
+  
+  if (!component) {
+    throw new AppError('Component not found', 404);
+  }
+
+  component.remove();
+  await itinerary.save();
+
+  successResponse(res, 200, 'Component deleted successfully');
+});
+
+// @desc    Reorder components within a day
+// @route   PUT /api/v1/itineraries/:id/days/:dayId/reorder
+// @access  Private
+const reorderComponents = asyncHandler(async (req, res) => {
+  const { componentIds } = req.body; // Array of component IDs in new order
+
+  if (!Array.isArray(componentIds)) {
+    throw new AppError('componentIds must be an array', 400);
+  }
+
+  const itinerary = await Itinerary.findById(req.params.id);
+
+  if (!itinerary) {
+    throw new AppError('Itinerary not found', 404);
+  }
+
+  // Check permissions
+  const isOwner = itinerary.createdBy.toString() === req.user._id.toString();
+  const isAdmin = ['super_admin', 'operator'].includes(req.user.role);
+
+  if (!isOwner && !isAdmin) {
+    throw new AppError('You do not have permission to modify this itinerary', 403);
+  }
+
+  const day = itinerary.days.id(req.params.dayId);
+  
+  if (!day) {
+    throw new AppError('Day not found', 404);
+  }
+
+  // Update order for each component
+  componentIds.forEach((id, index) => {
+    const component = day.components.id(id);
+    if (component) {
+      component.order = index;
+    }
+  });
+
+  // Sort components by order
+  day.components.sort((a, b) => a.order - b.order);
+  
+  await itinerary.save();
+
+  successResponse(res, 200, 'Components reordered successfully', { components: day.components });
+});
+
+// @desc    Get itinerary statistics
+// @route   GET /api/v1/itineraries/:id/stats
+// @access  Private
+const getItineraryStats = asyncHandler(async (req, res) => {
+  const itinerary = await Itinerary.findById(req.params.id);
+
+  if (!itinerary) {
+    throw new AppError('Itinerary not found', 404);
+  }
+
+  // Check permissions
+  const isOwner = itinerary.createdBy.toString() === req.user._id.toString();
+  const isAdmin = ['super_admin', 'operator'].includes(req.user.role);
+
+  if (!isOwner && !isAdmin) {
+    throw new AppError('You do not have permission to view this itinerary', 403);
+  }
+
+  const stats = {
+    totalDays: itinerary.days.length,
+    totalNights: Math.max(0, itinerary.days.length - 1),
+    totalComponents: itinerary.getTotalComponents(),
+    componentsByType: {
+      stays: itinerary.getComponentsByType('stay').length,
+      transfers: itinerary.getComponentsByType('transfer').length,
+      activities: itinerary.getComponentsByType('activity').length,
+      meals: itinerary.getComponentsByType('meal').length,
+      notes: itinerary.getComponentsByType('note').length,
+    },
+    estimatedCost: itinerary.estimatedCost,
+    viewCount: itinerary.viewCount,
+    downloadCount: itinerary.downloadCount,
+    destinations: itinerary.destinations,
+    status: itinerary.status,
+    version: itinerary.version,
+  };
+
+  successResponse(res, 200, 'Statistics fetched successfully', { stats });
+});
+
+// @desc    Clone itinerary (using instance method)
+// @route   POST /api/v1/itineraries/:id/clone
+// @access  Private
+const cloneItinerary = asyncHandler(async (req, res) => {
+  const originalItinerary = await Itinerary.findById(req.params.id);
+
+  if (!originalItinerary) {
+    throw new AppError('Itinerary not found', 404);
+  }
+
+  // Check permissions
+  const isOwner = originalItinerary.createdBy.toString() === req.user._id.toString();
+  const isPublicTemplate = originalItinerary.isTemplate;
+  const isAdmin = ['super_admin', 'operator'].includes(req.user.role);
+
+  if (!isOwner && !isPublicTemplate && !isAdmin) {
+    throw new AppError('You do not have permission to clone this itinerary', 403);
+  }
+
+  // Use instance method to clone
+  const clonedData = originalItinerary.clone();
+  clonedData.tenantId = req.tenantId;
+  clonedData.createdBy = req.user._id;
+
+  const newItinerary = await Itinerary.create(clonedData);
+  await newItinerary.populate('createdBy', 'name email');
+
+  successResponse(res, 201, 'Itinerary cloned successfully', { itinerary: newItinerary });
+});
+
 module.exports = {
   getAllItineraries,
   getItinerary,
@@ -313,4 +715,15 @@ module.exports = {
   publishAsTemplate,
   calculateCost,
   getTemplates,
+  generateShareLink,
+  getSharedItinerary,
+  addDay,
+  updateDay,
+  deleteDay,
+  addComponent,
+  updateComponent,
+  deleteComponent,
+  reorderComponents,
+  getItineraryStats,
+  cloneItinerary,
 };

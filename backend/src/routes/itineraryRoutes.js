@@ -11,11 +11,24 @@ const {
   publishAsTemplate,
   calculateCost,
   getTemplates,
+  generateShareLink,
+  getSharedItinerary,
+  addDay,
+  updateDay,
+  deleteDay,
+  addComponent,
+  updateComponent,
+  deleteComponent,
+  reorderComponents,
+  getItineraryStats,
+  cloneItinerary,
 } = require('../controllers/itineraryController');
 const { protect, restrictTo, loadAgent } = require('../middleware/auth');
 const { auditLogger } = require('../middleware/auditLogger');
 
-// All routes require authentication
+// All routes require authentication except shared links
+router.get('/share/:token', getSharedItinerary);
+
 router.use(protect);
 
 // Template routes
@@ -31,61 +44,24 @@ router.delete('/:id', auditLogger('delete', 'itinerary'), deleteItinerary);
 
 // Additional operations
 router.post('/:id/duplicate', auditLogger('create', 'itinerary'), duplicateItinerary);
+router.post('/:id/clone', auditLogger('create', 'itinerary'), cloneItinerary);
 router.patch('/:id/archive', auditLogger('update', 'itinerary'), archiveItinerary);
 router.patch('/:id/publish-template', restrictTo('super_admin', 'operator'), auditLogger('update', 'itinerary'), publishAsTemplate);
 router.get('/:id/calculate-cost', calculateCost);
+router.get('/:id/stats', getItineraryStats);
 
-// Extended itinerary routes
-router.get('/:id/activities', async (req, res, next) => {
-  try {
-    const { Itinerary } = require('../models');
-    const itinerary = await Itinerary.findById(req.params.id).select('activities');
-    
-    if (!itinerary) {
-      return res.status(404).json({ success: false, message: 'Itinerary not found' });
-    }
-    
-    res.json({ success: true, data: itinerary.activities || [] });
-  } catch (error) {
-    next(error);
-  }
-});
+// Sharing
+router.post('/:id/share', generateShareLink);
 
-router.get('/:id/accommodations', async (req, res, next) => {
-  try {
-    const { Itinerary } = require('../models');
-    const itinerary = await Itinerary.findById(req.params.id).select('accommodations');
-    
-    if (!itinerary) {
-      return res.status(404).json({ success: false, message: 'Itinerary not found' });
-    }
-    
-    res.json({ success: true, data: itinerary.accommodations || [] });
-  } catch (error) {
-    next(error);
-  }
-});
+// Day management
+router.post('/:id/days', auditLogger('update', 'itinerary'), addDay);
+router.put('/:id/days/:dayId', auditLogger('update', 'itinerary'), updateDay);
+router.delete('/:id/days/:dayId', auditLogger('update', 'itinerary'), deleteDay);
 
-router.get('/:id/pricing', async (req, res, next) => {
-  try {
-    const { Itinerary } = require('../models');
-    const itinerary = await Itinerary.findById(req.params.id).select('estimatedCost');
-    
-    if (!itinerary) {
-      return res.status(404).json({ success: false, message: 'Itinerary not found' });
-    }
-    
-    res.json({ 
-      success: true, 
-      data: {
-        estimatedCost: itinerary.estimatedCost,
-        breakdown: itinerary.estimatedCost?.breakdown || {},
-        total: itinerary.estimatedCost?.total || 0
-      }
-    });
-  } catch (error) {
-    next(error);
-  }
-});
+// Component management
+router.post('/:id/days/:dayId/components', auditLogger('update', 'itinerary'), addComponent);
+router.put('/:id/days/:dayId/components/:componentId', auditLogger('update', 'itinerary'), updateComponent);
+router.delete('/:id/days/:dayId/components/:componentId', auditLogger('update', 'itinerary'), deleteComponent);
+router.put('/:id/days/:dayId/reorder', auditLogger('update', 'itinerary'), reorderComponents);
 
 module.exports = router;
