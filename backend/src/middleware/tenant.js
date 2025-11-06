@@ -9,13 +9,30 @@ exports.identifyTenant = async (req, res, next) => {
   try {
     let tenant = null;
     
-    // Method 1: Check X-Tenant-ID header (useful for API clients)
-    const tenantIdHeader = req.headers['x-tenant-id'];
-    if (tenantIdHeader) {
-      tenant = await Tenant.findById(tenantIdHeader);
+    // Method 1: Check if user is authenticated and has tenantId in JWT
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      try {
+        const token = authHeader.substring(7);
+        const jwt = require('jsonwebtoken');
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        if (decoded.tenantId) {
+          tenant = await Tenant.findById(decoded.tenantId);
+        }
+      } catch (err) {
+        // Token invalid or expired, continue to other methods
+      }
     }
     
-    // Method 2: Extract from subdomain or custom domain
+    // Method 2: Check X-Tenant-ID header (useful for API clients)
+    if (!tenant) {
+      const tenantIdHeader = req.headers['x-tenant-id'];
+      if (tenantIdHeader) {
+        tenant = await Tenant.findById(tenantIdHeader);
+      }
+    }
+    
+    // Method 3: Extract from subdomain or custom domain
     if (!tenant) {
       const host = req.headers.host || req.hostname;
       const hostParts = host.split('.');
@@ -32,7 +49,7 @@ exports.identifyTenant = async (req, res, next) => {
       }
     }
     
-    // If no tenant found, try to use a default tenant for local development
+    // Method 4: If no tenant found, try to use a default tenant for local development
     if (!tenant && (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test')) {
       // Use default tenant ID or create one
       const defaultTenantId = process.env.DEFAULT_TENANT_ID;

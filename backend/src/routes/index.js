@@ -1,4 +1,5 @@
 const express = require('express');
+const { identifyTenant, requireTenant } = require('../middleware/tenant');
 const authRoutes = require('./authRoutes');
 const tenantRoutes = require('./tenantRoutes');
 const agentRoutes = require('./agentRoutes');
@@ -22,8 +23,12 @@ router.get('/health', (req, res) => {
   });
 });
 
+// Apply tenant middleware to all routes except auth and health
+router.use(identifyTenant);
+router.use('/auth', authRoutes); // Auth routes don't need requireTenant yet
+router.use(requireTenant); // Require valid tenant for all routes below
+
 // API routes
-router.use('/auth', authRoutes);
 router.use('/tenants', tenantRoutes);
 router.use('/agents', agentRoutes);
 router.use('/customers', customerRoutes);

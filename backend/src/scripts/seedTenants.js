@@ -1,5 +1,4 @@
 const mongoose = require('mongoose');
-const bcrypt = require('bcryptjs');
 require('dotenv').config();
 
 const { Tenant, User } = require('../models');
@@ -13,6 +12,9 @@ const seedTenants = async () => {
     // await Tenant.deleteMany({});
     // await User.deleteMany({});
     // console.log('Cleared existing data');
+
+    // Create a temporary placeholder ObjectId for ownerId
+    const tempOwnerId = new mongoose.Types.ObjectId();
 
     // Create default/demo tenant
     const demoTenant = await Tenant.create({
@@ -53,23 +55,22 @@ const seedTenants = async () => {
         timezone: 'America/New_York',
         currency: 'USD',
       },
-      ownerId: null, // Will be set after creating user
+      ownerId: tempOwnerId, // Temporary ID
     });
 
     // Create owner user for demo tenant
-    const hashedPassword = await bcrypt.hash('Demo@123', 10);
     const demoOwner = await User.create({
       tenantId: demoTenant._id,
       name: 'Demo Admin',
       email: 'admin@demo.travelcrm.com',
-      password: hashedPassword,
+      password: 'Demo@123', // Plain password - will be hashed by pre-save hook
       phone: '+1234567890',
       role: 'super_admin',
       isActive: true,
       emailVerified: true,
     });
 
-    // Update tenant with owner ID
+    // Update tenant with actual owner ID
     demoTenant.ownerId = demoOwner._id;
     demoTenant.usage.users = 1;
     await demoTenant.save();
@@ -82,6 +83,8 @@ const seedTenants = async () => {
 
     // Create test tenant for development
     if (process.env.NODE_ENV === 'development') {
+      const tempTestOwnerId = new mongoose.Types.ObjectId();
+      
       const testTenant = await Tenant.create({
         name: 'Test Travel Co',
         subdomain: 'test',
@@ -113,14 +116,14 @@ const seedTenants = async () => {
           timezone: 'Europe/London',
           currency: 'GBP',
         },
-        ownerId: null,
+        ownerId: tempTestOwnerId,
       });
 
       const testOwner = await User.create({
         tenantId: testTenant._id,
         name: 'Test User',
         email: 'test@test.travelcrm.com',
-        password: hashedPassword,
+        password: 'Demo@123', // Plain password - will be hashed by pre-save hook
         phone: '+4412345678',
         role: 'super_admin',
         isActive: true,
