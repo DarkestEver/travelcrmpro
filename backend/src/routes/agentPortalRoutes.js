@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { protect } = require('../middleware/auth');
 const { requireAgent } = require('../middleware/agentAuth');
+const { requireMainAgent } = require('../middleware/subUserAuth');
 const {
   getDashboardStats,
   getRecentActivity,
@@ -31,6 +32,17 @@ const {
   getBookingStats,
   downloadVoucher,
 } = require('../controllers/agentBookingController');
+const {
+  createSubUser,
+  getMySubUsers,
+  getSubUserById,
+  updateSubUser,
+  deleteSubUser,
+  updatePermissions,
+  toggleStatus,
+  getSubUserStats,
+  getSubUserActivityLogs,
+} = require('../controllers/agentSubUserController');
 
 // Apply authentication middleware to all routes
 router.use(protect);
@@ -73,5 +85,19 @@ router.get('/bookings/stats', getBookingStats);
 router.get('/bookings', getMyBookings);
 router.get('/bookings/:id', getBookingById);
 router.get('/bookings/:id/voucher', downloadVoucher);
+
+/**
+ * Agent Sub-User Routes
+ * Only main agents can manage sub-users
+ */
+router.get('/sub-users/stats', requireMainAgent, getSubUserStats);
+router.get('/sub-users', requireMainAgent, getMySubUsers);
+router.post('/sub-users', requireMainAgent, createSubUser);
+router.get('/sub-users/:id', requireMainAgent, getSubUserById);
+router.get('/sub-users/:id/activity-logs', requireMainAgent, getSubUserActivityLogs);
+router.put('/sub-users/:id', requireMainAgent, updateSubUser);
+router.delete('/sub-users/:id', requireMainAgent, deleteSubUser);
+router.patch('/sub-users/:id/permissions', requireMainAgent, updatePermissions);
+router.patch('/sub-users/:id/toggle-status', requireMainAgent, toggleStatus);
 
 module.exports = router;
