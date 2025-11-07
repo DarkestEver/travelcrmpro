@@ -57,32 +57,35 @@ exports.createSubUser = asyncHandler(async (req, res) => {
  * @access  Private (Agent only)
  */
 exports.getMySubUsers = asyncHandler(async (req, res) => {
-  const agentId = req.user._id;
-  const tenantId = req.user.tenantId;
+  try {
+    const agentId = req.user._id;
+    const tenantId = req.user.tenantId;
 
-  const {
-    page = 1,
-    limit = 10,
-    search,
-    role,
-    isActive,
-    sortBy = '-createdAt',
-  } = req.query;
+    console.log('👥 Fetching sub-users for agent:', agentId, 'tenant:', tenantId);
 
-  const query = { parentAgentId: agentId, tenantId };
+    const {
+      page = 1,
+      limit = 10,
+      search,
+      role,
+      isActive,
+      sortBy = '-createdAt',
+    } = req.query;
 
-  // Filter by role
-  if (role) {
-    query.role = role;
-  }
+    const query = { parentAgentId: agentId, tenantId };
 
-  // Filter by active status
-  if (isActive !== undefined) {
+    // Filter by role
+    if (role && role.trim()) {
+      query.role = role;
+    }
+
+    // Filter by active status
+    if (isActive !== undefined && isActive !== '') {
     query.isActive = isActive === 'true';
   }
 
   // Search by name or email
-  if (search) {
+  if (search && search.trim()) {
     query.$or = [
       { name: { $regex: search, $options: 'i' } },
       { email: { $regex: search, $options: 'i' } },
@@ -90,6 +93,8 @@ exports.getMySubUsers = asyncHandler(async (req, res) => {
   }
 
   const skip = (page - 1) * limit;
+
+  console.log('👥 Sub-user query:', JSON.stringify(query));
 
   const [subUsers, total] = await Promise.all([
     SubUser.find(query)
@@ -99,6 +104,8 @@ exports.getMySubUsers = asyncHandler(async (req, res) => {
       .lean(),
     SubUser.countDocuments(query),
   ]);
+
+  console.log('👥 Found sub-users:', total);
 
   const pagination = {
     page: parseInt(page),
@@ -111,6 +118,10 @@ exports.getMySubUsers = asyncHandler(async (req, res) => {
     subUsers,
     pagination,
   });
+  } catch (error) {
+    console.error('❌ Sub-user fetch error:', error);
+    throw error;
+  }
 });
 
 /**

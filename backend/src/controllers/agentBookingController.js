@@ -9,56 +9,68 @@ const Customer = require('../models/Customer');
  * @access  Private (Agent only)
  */
 exports.getMyBookings = asyncHandler(async (req, res) => {
-  const agentId = req.user._id;
-  const tenantId = req.user.tenantId;
+  try {
+    const agentId = req.user._id;
+    const tenantId = req.user.tenantId;
 
-  const {
-    page = 1,
-    limit = 10,
-    status,
-    search,
-    dateFrom,
-    dateTo,
-    sortBy = '-createdAt',
-  } = req.query;
+    console.log('📦 Fetching bookings for agent:', agentId, 'tenant:', tenantId);
 
-  const query = { agentId, tenantId };
+    const {
+      page = 1,
+      limit = 10,
+      status,
+      search,
+      dateFrom,
+      dateTo,
+      sortBy = '-createdAt',
+    } = req.query;
 
-  // Filter by status
-  if (status) {
-    query.bookingStatus = status;
-  }
+    const query = { agentId, tenantId };
 
-  // Filter by date range
-  if (dateFrom || dateTo) {
-    query.createdAt = {};
-    if (dateFrom) {
-      query.createdAt.$gte = new Date(dateFrom);
+    // Filter by status
+    if (status && status.trim()) {
+      query.bookingStatus = status;
     }
-    if (dateTo) {
-      query.createdAt.$lte = new Date(dateTo);
+
+    // Filter by date range
+    if (dateFrom || dateTo) {
+      query.createdAt = {};
+      if (dateFrom && dateFrom.trim()) {
+        query.createdAt.$gte = new Date(dateFrom);
+      }
+      if (dateTo && dateTo.trim()) {
+        query.createdAt.$lte = new Date(dateTo);
+      }
     }
-  }
 
   // Search by customer name or booking number
-  if (search) {
-    const customers = await Customer.find({
-      agentId,
-      tenantId,
-      $or: [
-        { firstName: { $regex: search, $options: 'i' } },
-        { lastName: { $regex: search, $options: 'i' } },
-        { email: { $regex: search, $options: 'i' } },
-      ],
-    }).select('_id');
+  if (search && search.trim()) {
+    try {
+      const customers = await Customer.find({
+        agentId,
+        tenantId,
+        $or: [
+          { firstName: { $regex: search, $options: 'i' } },
+          { lastName: { $regex: search, $options: 'i' } },
+          { email: { $regex: search, $options: 'i' } },
+        ],
+      }).select('_id');
 
-    query.$or = [
-      { customerId: { $in: customers.map((c) => c._id) } },
-      { bookingNumber: { $regex: search, $options: 'i' } },
-    ];
+      const customerIds = customers.map((c) => c._id);
+      
+      query.$or = [
+        ...(customerIds.length > 0 ? [{ customerId: { $in: customerIds } }] : []),
+        { bookingNumber: { $regex: search, $options: 'i' } },
+      ];
+    } catch (searchError) {
+      console.log('Search error:', searchError);
+      // Continue without search filter if there's an error
+    }
   }
 
   const skip = (page - 1) * limit;
+
+  console.log('📦 Booking query:', JSON.stringify(query));
 
   const [bookings, total] = await Promise.all([
     Booking.find(query)
@@ -71,6 +83,8 @@ exports.getMyBookings = asyncHandler(async (req, res) => {
     Booking.countDocuments(query),
   ]);
 
+  console.log('📦 Found bookings:', total);
+
   const pagination = {
     page: parseInt(page),
     limit: parseInt(limit),
@@ -82,6 +96,10 @@ exports.getMyBookings = asyncHandler(async (req, res) => {
     bookings,
     pagination,
   });
+  } catch (error) {
+    console.error('❌ Booking fetch error:', error);
+    throw error;
+  }
 });
 
 /**
