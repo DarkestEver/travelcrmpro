@@ -42,12 +42,21 @@ const ProtectedRoute = ({ children }) => {
   return children
 }
 
+// Smart Redirect based on role
+const SmartRedirect = () => {
+  const { user } = useAuthStore()
+  const redirectPath = user?.role === 'agent' ? '/agent/dashboard' : '/dashboard'
+  return <Navigate to={redirectPath} replace />
+}
+
 // Public Route Component (redirect if authenticated)
 const PublicRoute = ({ children }) => {
-  const { accessToken } = useAuthStore()
+  const { accessToken, user } = useAuthStore()
 
-  if (accessToken) {
-    return <Navigate to="/dashboard" replace />
+  if (accessToken && user) {
+    // Smart redirect based on role
+    const redirectPath = user.role === 'agent' ? '/agent/dashboard' : '/dashboard'
+    return <Navigate to={redirectPath} replace />
   }
 
   return children
@@ -88,7 +97,7 @@ function App() {
           </ProtectedRoute>
         }
       >
-        <Route index element={<Navigate to="/dashboard" replace />} />
+        <Route index element={<SmartRedirect />} />
         <Route path="dashboard" element={<Dashboard />} />
         <Route path="agents" element={<Agents />} />
         <Route path="customers" element={<Customers />} />

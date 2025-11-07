@@ -31,7 +31,13 @@ const Login = () => {
 
       setAuth(user, accessToken, refreshToken)
       toast.success('Login successful!')
-      navigate('/dashboard')
+      
+      // Smart redirect based on user role
+      if (user.role === 'agent') {
+        navigate('/agent/dashboard')
+      } else {
+        navigate('/dashboard')
+      }
     } catch (error) {
       console.error('Login error:', error)
       // Error toast is handled by axios interceptor
