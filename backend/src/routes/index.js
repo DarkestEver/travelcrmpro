@@ -3,6 +3,7 @@ const { identifyTenant, requireTenant } = require('../middleware/tenant');
 const authRoutes = require('./authRoutes');
 const tenantRoutes = require('./tenantRoutes');
 const agentRoutes = require('./agentRoutes');
+const agentPortalRoutes = require('./agentPortalRoutes');
 const customerRoutes = require('./customerRoutes');
 const supplierRoutes = require('./supplierRoutes');
 const itineraryRoutes = require('./itineraryRoutes');
@@ -32,6 +33,7 @@ router.use(requireTenant); // Require valid tenant for all routes below
 // API routes
 router.use('/tenants', tenantRoutes);
 router.use('/agents', agentRoutes);
+router.use('/agent-portal', agentPortalRoutes); // Agent self-service portal
 router.use('/customers', customerRoutes);
 router.use('/suppliers', supplierRoutes);
 router.use('/itineraries', itineraryRoutes);

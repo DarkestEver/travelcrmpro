@@ -44,6 +44,35 @@ const userSchema = new mongoose.Schema({
     type: Boolean,
     default: true,
   },
+  // Agent-specific fields
+  agentCode: {
+    type: String,
+    trim: true,
+    sparse: true, // Allows null for non-agents
+    unique: true,
+  },
+  agentLevel: {
+    type: String,
+    enum: ['bronze', 'silver', 'gold', 'platinum'],
+    default: 'bronze',
+  },
+  creditLimit: {
+    type: Number,
+    default: 0,
+    min: 0,
+  },
+  commissionRate: {
+    type: Number,
+    default: 10, // Default 10% commission
+    min: 0,
+    max: 100,
+  },
+  // Supplier-specific fields
+  supplierId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Supplier',
+    sparse: true,
+  },
   emailVerified: {
     type: Boolean,
     default: false,

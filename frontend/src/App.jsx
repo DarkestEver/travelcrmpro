@@ -4,6 +4,7 @@ import { useAuthStore } from './stores/authStore'
 // Layouts
 import AppLayout from './components/layouts/AppLayout'
 import AuthLayout from './components/layouts/AuthLayout'
+import AgentLayout from './layouts/AgentLayout'
 
 // Pages
 import Login from './pages/auth/Login'
@@ -21,6 +22,14 @@ import Profile from './pages/Profile'
 import Analytics from './pages/Analytics'
 import AuditLogs from './pages/AuditLogs'
 import NotFound from './pages/NotFound'
+
+// Agent Portal Pages
+import AgentDashboard from './pages/agent/Dashboard'
+import AgentCustomers from './pages/agent/Customers'
+import AgentQuoteRequests from './pages/agent/QuoteRequests'
+import RequestQuote from './pages/agent/RequestQuote'
+import AgentBookings from './pages/agent/Bookings'
+import AgentSubUsers from './pages/agent/SubUsers'
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
@@ -92,6 +101,24 @@ function App() {
         <Route path="analytics" element={<Analytics />} />
         <Route path="audit-logs" element={<AuditLogs />} />
         <Route path="profile" element={<Profile />} />
+      </Route>
+
+      {/* Agent Portal Routes */}
+      <Route
+        path="/agent"
+        element={
+          <ProtectedRoute>
+            <AgentLayout />
+          </ProtectedRoute>
+        }
+      >
+        <Route index element={<Navigate to="/agent/dashboard" replace />} />
+        <Route path="dashboard" element={<AgentDashboard />} />
+        <Route path="customers" element={<AgentCustomers />} />
+        <Route path="quotes" element={<AgentQuoteRequests />} />
+        <Route path="quotes/new" element={<RequestQuote />} />
+        <Route path="bookings" element={<AgentBookings />} />
+        <Route path="sub-users" element={<AgentSubUsers />} />
       </Route>
 
       {/* 404 */}
