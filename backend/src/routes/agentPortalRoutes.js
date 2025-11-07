@@ -25,6 +25,12 @@ const {
   cancelQuoteRequest,
   getQuoteRequestStats,
 } = require('../controllers/agentQuoteRequestController');
+const {
+  getMyBookings,
+  getBookingById,
+  getBookingStats,
+  downloadVoucher,
+} = require('../controllers/agentBookingController');
 
 // Apply authentication middleware to all routes
 router.use(protect);
@@ -59,5 +65,13 @@ router.get('/quote-requests/:id', getQuoteRequestById);
 router.put('/quote-requests/:id/accept', acceptQuote);
 router.put('/quote-requests/:id/reject', rejectQuote);
 router.delete('/quote-requests/:id', cancelQuoteRequest);
+
+/**
+ * Agent Booking Routes
+ */
+router.get('/bookings/stats', getBookingStats);
+router.get('/bookings', getMyBookings);
+router.get('/bookings/:id', getBookingById);
+router.get('/bookings/:id/voucher', downloadVoucher);
 
 module.exports = router;
