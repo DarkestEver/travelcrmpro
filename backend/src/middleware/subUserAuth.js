@@ -74,8 +74,13 @@ exports.requireSubUserAdmin = asyncHandler(async (req, res, next) => {
  * Check if user can manage sub-users (main agent only)
  */
 exports.requireMainAgent = asyncHandler(async (req, res, next) => {
+  console.log('🔐 requireMainAgent middleware - req.user:', req.user?._id, 'req.subUser:', req.subUser);
+  
   if (req.subUser) {
+    console.log('❌ Sub-user trying to access main agent route');
     throw new AppError('Only main agents can manage sub-users', 403);
   }
+  
+  console.log('✅ Main agent access granted');
   next();
 });
