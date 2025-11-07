@@ -16,6 +16,15 @@ const {
   importCustomers,
   downloadCSVTemplate,
 } = require('../controllers/agentCustomerController');
+const {
+  submitQuoteRequest,
+  getMyQuoteRequests,
+  getQuoteRequestById,
+  acceptQuote,
+  rejectQuote,
+  cancelQuoteRequest,
+  getQuoteRequestStats,
+} = require('../controllers/agentQuoteRequestController');
 
 // Apply authentication middleware to all routes
 router.use(protect);
@@ -39,5 +48,16 @@ router.get('/customers/import/template', downloadCSVTemplate);
 router.get('/customers/:id', getCustomerById);
 router.put('/customers/:id', updateCustomer);
 router.delete('/customers/:id', deleteCustomer);
+
+/**
+ * Agent Quote Request Routes
+ */
+router.get('/quote-requests/stats', getQuoteRequestStats);
+router.get('/quote-requests', getMyQuoteRequests);
+router.post('/quote-requests', submitQuoteRequest);
+router.get('/quote-requests/:id', getQuoteRequestById);
+router.put('/quote-requests/:id/accept', acceptQuote);
+router.put('/quote-requests/:id/reject', rejectQuote);
+router.delete('/quote-requests/:id', cancelQuoteRequest);
 
 module.exports = router;
