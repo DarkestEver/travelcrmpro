@@ -23,6 +23,7 @@ const {
   getItineraryStats,
   cloneItinerary,
   importItinerary,
+  exportItinerary,
 } = require('../controllers/itineraryController');
 const { protect, restrictTo, loadAgent } = require('../middleware/auth');
 const { auditLogger } = require('../middleware/auditLogger');
@@ -51,6 +52,7 @@ router.patch('/:id/archive', auditLogger('update', 'itinerary'), archiveItinerar
 router.patch('/:id/publish-template', restrictTo('super_admin', 'operator'), auditLogger('update', 'itinerary'), publishAsTemplate);
 router.get('/:id/calculate-cost', calculateCost);
 router.get('/:id/stats', getItineraryStats);
+router.get('/:id/export', exportItinerary);
 
 // Sharing
 router.post('/:id/share', generateShareLink);

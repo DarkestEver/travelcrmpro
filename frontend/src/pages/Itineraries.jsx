@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tantml:invoke>
 import { toast } from 'react-hot-toast';
 import { 
   FiPlus, 
@@ -11,12 +11,14 @@ import {
   FiCalendar,
   FiMapPin,
   FiLayers,
-  FiUpload
+  FiUpload,
+  FiFilter
 } from 'react-icons/fi';
 import DataTable from '../components/DataTable';
 import Modal from '../components/Modal';
 import ConfirmDialog from '../components/ConfirmDialog';
 import ImportItineraryModal from '../components/itinerary/ImportItineraryModal';
+import ItineraryFilterPanel from '../components/itinerary/ItineraryFilterPanel';
 import { itinerariesAPI } from '../services/apiEndpoints';
 
 const Itineraries = () => {
@@ -28,13 +30,25 @@ const Itineraries = () => {
   const [showPreview, setShowPreview] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
+  const [showFilterPanel, setShowFilterPanel] = useState(false);
   const [selectedItinerary, setSelectedItinerary] = useState(null);
+  const [filters, setFilters] = useState({});
 
   // Fetch itineraries
   const { data, isLoading } = useQuery({
-    queryKey: ['itineraries', page, search],
-    queryFn: () => itinerariesAPI.getAll({ page, limit: 10, search }),
+    queryKey: ['itineraries', page, search, filters],
+    queryFn: () => itinerariesAPI.getAll({ page, limit: 10, search, ...filters }),
   });
+
+  const handleFilterChange = (newFilters) => {
+    setFilters(newFilters);
+    setPage(1); // Reset to first page when filters change
+  };
+
+  const handleResetFilters = () => {
+    setFilters({});
+    setPage(1);
+  };
 
   // Create/Update mutation
   const saveMutation = useMutation({
@@ -145,6 +159,28 @@ const Itineraries = () => {
     // TODO: Implement PDF generation
   };
 
+  const handleExportJSON = async (itinerary) => {
+    try {
+      const data = await itinerariesAPI.export(itinerary._id);
+      
+      // Create blob and download
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${itinerary.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      
+      toast.success('Itinerary exported successfully');
+    } catch (error) {
+      console.error('Export error:', error);
+      toast.error(error.response?.data?.message || 'Failed to export itinerary');
+    }
+  };
+
   const columns = [
     {
       header: 'Title',
@@ -208,6 +244,13 @@ const Itineraries = () => {
             <FiEye className="w-4 h-4" />
           </button>
           <button
+            onClick={() => handleExportJSON(row)}
+            className="text-indigo-600 hover:text-indigo-800"
+            title="Export JSON"
+          >
+            <FiDownload className="w-4 h-4" />
+          </button>
+          <button
             onClick={() => handleDownloadPDF(row)}
             className="text-purple-600 hover:text-purple-800"
             title="Download PDF"
@@ -243,6 +286,13 @@ const Itineraries = () => {
         </div>
         <div className="flex gap-2">
           <button
+            onClick={() => setShowFilterPanel(!showFilterPanel)}
+            className={`btn ${showFilterPanel ? 'btn-primary' : 'btn-outline'} flex items-center gap-2`}
+          >
+            <FiFilter className="w-4 h-4" />
+            Filters
+          </button>
+          <button
             onClick={() => setShowImportModal(true)}
             className="btn btn-outline flex items-center gap-2"
           >
@@ -270,17 +320,33 @@ const Itineraries = () => {
         </div>
       </div>
 
-      {/* Table */}
-      <DataTable
-        columns={columns}
-        data={data?.data || []}
-        pagination={data?.pagination}
-        onPageChange={setPage}
-        onSearch={setSearch}
-        loading={isLoading}
-        searchPlaceholder="Search itineraries..."
-        showSearch={true}
-      />
+      {/* Main Content with Filter Panel */}
+      <div className={`grid ${showFilterPanel ? 'grid-cols-[300px_1fr]' : 'grid-cols-1'} gap-6`}>
+        {/* Filter Panel */}
+        {showFilterPanel && (
+          <div className="sticky top-6 self-start">
+            <ItineraryFilterPanel
+              filters={filters}
+              onFilterChange={handleFilterChange}
+              onReset={handleResetFilters}
+            />
+          </div>
+        )}
+
+        {/* Table */}
+        <div>
+          <DataTable
+            columns={columns}
+            data={data?.data || []}
+            pagination={data?.pagination}
+            onPageChange={setPage}
+            onSearch={setSearch}
+            loading={isLoading}
+            searchPlaceholder="Search itineraries..."
+            showSearch={true}
+          />
+        </div>
+      </div>
 
       {/* Create/Edit Modal */}
       {showModal && (
@@ -316,6 +382,13 @@ const Itineraries = () => {
         title="Delete Itinerary"
         message={`Are you sure you want to delete "${selectedItinerary?.title}"?`}
         type="danger"
+      />
+
+      {/* Import Modal */}
+      <ImportItineraryModal
+        isOpen={showImportModal}
+        onClose={() => setShowImportModal(false)}
+        onImport={handleImport}
       />
     </div>
   );
@@ -565,16 +638,6 @@ const ItineraryPreviewModal = ({ isOpen, onClose, itinerary }) => {
         </div>
       </div>
     </Modal>
-  );
-};
-
-      {/* Import Modal */}
-      <ImportItineraryModal
-        isOpen={showImportModal}
-        onClose={() => setShowImportModal(false)}
-        onImport={handleImport}
-      />
-    </div>
   );
 };
 

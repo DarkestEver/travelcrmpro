@@ -119,6 +119,7 @@ export const itinerariesAPI = {
   getStats: (id) => api.get(`/itineraries/${id}/stats`).then(res => res.data.data),
   clone: (id) => api.post(`/itineraries/${id}/clone`).then(res => res.data.data),
   import: (itineraryData) => api.post('/itineraries/import', { itineraryData }).then(res => res.data.data),
+  export: (id) => api.get(`/itineraries/${id}/export`).then(res => res.data),
   // Detailed itinerary info (legacy)
   getActivities: (id) => api.get(`/itineraries/${id}/activities`),
   getAccommodations: (id) => api.get(`/itineraries/${id}/accommodations`),

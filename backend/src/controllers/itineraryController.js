@@ -788,6 +788,75 @@ const importItinerary = asyncHandler(async (req, res) => {
   successResponse(res, 201, 'Itinerary imported successfully', { itinerary: newItinerary });
 });
 
+// @desc    Export itinerary as JSON
+// @route   GET /api/v1/itineraries/:id/export
+// @access  Private
+const exportItinerary = asyncHandler(async (req, res) => {
+  const itinerary = await Itinerary.findById(req.params.id)
+    .populate('createdBy', 'firstName lastName email')
+    .populate('assignedTo', 'firstName lastName email')
+    .populate('customerId', 'firstName lastName email phone')
+    .lean(); // Convert to plain object
+
+  if (!itinerary) {
+    throw new AppError('Itinerary not found', 404);
+  }
+
+  // Check permissions
+  const isOwner = itinerary.createdBy._id.toString() === req.user._id.toString();
+  const isAdmin = ['super_admin', 'operator'].includes(req.user.role);
+
+  if (!isOwner && !isAdmin) {
+    throw new AppError('You do not have permission to export this itinerary', 403);
+  }
+
+  // Clean the data for export (remove internal fields)
+  const exportData = {
+    title: itinerary.title,
+    overview: itinerary.overview,
+    destination: itinerary.destination,
+    startDate: itinerary.startDate,
+    endDate: itinerary.endDate,
+    numberOfDays: itinerary.numberOfDays,
+    numberOfNights: itinerary.numberOfNights,
+    budget: itinerary.budget,
+    travelStyle: itinerary.travelStyle,
+    difficulty: itinerary.difficulty,
+    groupSize: itinerary.groupSize,
+    themes: itinerary.themes,
+    tags: itinerary.tags,
+    inclusions: itinerary.inclusions,
+    exclusions: itinerary.exclusions,
+    status: itinerary.status,
+    days: itinerary.days?.map(day => ({
+      dayNumber: day.dayNumber,
+      title: day.title,
+      date: day.date,
+      overview: day.overview,
+      accommodation: day.accommodation,
+      meals: day.meals,
+      components: day.components?.map(comp => ({
+        type: comp.type,
+        title: comp.title,
+        description: comp.description,
+        startTime: comp.startTime,
+        endTime: comp.endTime,
+        duration: comp.duration,
+        location: comp.location,
+        cost: comp.cost,
+        notes: comp.notes,
+        bookingDetails: comp.bookingDetails,
+      }))
+    }))
+  };
+
+  // Set headers for file download
+  res.setHeader('Content-Type', 'application/json');
+  res.setHeader('Content-Disposition', `attachment; filename="${itinerary.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.json"`);
+  
+  res.json(exportData);
+});
+
 module.exports = {
   getAllItineraries,
   getItinerary,
@@ -811,4 +880,5 @@ module.exports = {
   getItineraryStats,
   cloneItinerary,
   importItinerary,
+  exportItinerary,
 };
