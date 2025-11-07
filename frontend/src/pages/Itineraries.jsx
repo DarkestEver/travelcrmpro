@@ -163,6 +163,15 @@ const Itineraries = () => {
     try {
       const data = await itinerariesAPI.export(itinerary._id);
       
+      console.log('Export data received:', data);
+      
+      // Check if data is valid
+      if (!data || typeof data !== 'object') {
+        console.error('Invalid export data:', data);
+        toast.error('Invalid data received from server');
+        return;
+      }
+      
       // Create blob and download
       const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
       const url = window.URL.createObjectURL(blob);

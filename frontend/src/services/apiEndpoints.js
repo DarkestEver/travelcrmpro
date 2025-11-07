@@ -2,7 +2,12 @@ import api from './api'
 
 // Auth API
 export const authAPI = {
-  login: (credentials) => api.post('/auth/login', credentials),
+  login: (credentials) => api.post('/auth/login', cr  getStats: (id) => api.get(`/itineraries/${id}/stats`).then(res => res.data),
+  clone: (id) => api.post(`/itineraries/${id}/clone`).then(res => res.data),
+  import: (itineraryData) => api.post('/itineraries/import', { itineraryData }).then(res => res.data),
+  export: (id) => api.get(`/itineraries/${id}/export`),
+  // Detailed itinerary info (legacy)
+  getActivities: (id) => api.get(`/itineraries/${id}/activities`),als),
   register: (userData) => api.post('/auth/register', userData),
   logout: () => api.post('/auth/logout'),
   getMe: () => api.get('/auth/me'),
