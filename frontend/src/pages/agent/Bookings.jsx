@@ -275,7 +275,7 @@ const AgentBookings = () => {
                   {bookings.map((booking) => (
                     <tr key={booking._id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        {booking.bookingReference || 'N/A'}
+                        {booking.bookingNumber || 'N/A'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm font-medium text-gray-900">
@@ -291,14 +291,14 @@ const AgentBookings = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         <div>
-                          {formatDate(booking.itineraryId?.startDate)}
+                          {formatDate(booking.travelDates?.startDate || booking.itineraryId?.startDate)}
                         </div>
-                        <div>to {formatDate(booking.itineraryId?.endDate)}</div>
+                        <div>to {formatDate(booking.travelDates?.endDate || booking.itineraryId?.endDate)}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                         {formatCurrency(
-                          booking.totalAmount,
-                          booking.currency
+                          booking.financial?.totalAmount || 0,
+                          booking.financial?.currency || 'USD'
                         )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">

@@ -105,7 +105,7 @@ const BookingDetailModal = ({ isOpen, onClose, bookingId }) => {
                   <div>
                     <p className="text-sm text-gray-500">Booking Reference</p>
                     <p className="text-2xl font-bold text-gray-900">
-                      {booking.bookingReference || 'N/A'}
+                      {booking.bookingNumber || 'N/A'}
                     </p>
                   </div>
                   <div className="text-right">
@@ -195,7 +195,7 @@ const BookingDetailModal = ({ isOpen, onClose, bookingId }) => {
                             Start Date
                           </p>
                           <p className="text-base font-medium text-gray-900">
-                            {formatDate(booking.itineraryId.startDate)}
+                            {formatDate(booking.travelDates?.startDate || booking.itineraryId.startDate)}
                           </p>
                         </div>
                         <div>
@@ -204,7 +204,7 @@ const BookingDetailModal = ({ isOpen, onClose, bookingId }) => {
                             End Date
                           </p>
                           <p className="text-base font-medium text-gray-900">
-                            {formatDate(booking.itineraryId.endDate)}
+                            {formatDate(booking.travelDates?.endDate || booking.itineraryId.endDate)}
                           </p>
                         </div>
                         <div>
@@ -240,8 +240,8 @@ const BookingDetailModal = ({ isOpen, onClose, bookingId }) => {
                       <p className="text-sm text-gray-500">Total Amount</p>
                       <p className="text-2xl font-bold text-gray-900">
                         {formatCurrency(
-                          booking.totalAmount,
-                          booking.currency
+                          booking.financial?.totalAmount || 0,
+                          booking.financial?.currency || 'USD'
                         )}
                       </p>
                     </div>
@@ -260,8 +260,8 @@ const BookingDetailModal = ({ isOpen, onClose, bookingId }) => {
                       <p className="text-sm text-gray-500">Paid Amount</p>
                       <p className="text-lg font-medium text-green-600">
                         {formatCurrency(
-                          booking.paidAmount || 0,
-                          booking.currency
+                          booking.financial?.paidAmount || 0,
+                          booking.financial?.currency || 'USD'
                         )}
                       </p>
                     </div>
@@ -269,8 +269,8 @@ const BookingDetailModal = ({ isOpen, onClose, bookingId }) => {
                       <p className="text-sm text-gray-500">Balance Due</p>
                       <p className="text-lg font-medium text-orange-600">
                         {formatCurrency(
-                          booking.totalAmount - (booking.paidAmount || 0),
-                          booking.currency
+                          (booking.financial?.totalAmount || 0) - (booking.financial?.paidAmount || 0),
+                          booking.financial?.currency || 'USD'
                         )}
                       </p>
                     </div>

@@ -40,7 +40,7 @@ exports.getMyBookings = asyncHandler(async (req, res) => {
     }
   }
 
-  // Search by customer name or booking reference
+  // Search by customer name or booking number
   if (search) {
     const customers = await Customer.find({
       agentId,
@@ -54,7 +54,7 @@ exports.getMyBookings = asyncHandler(async (req, res) => {
 
     query.$or = [
       { customerId: { $in: customers.map((c) => c._id) } },
-      { bookingReference: { $regex: search, $options: 'i' } },
+      { bookingNumber: { $regex: search, $options: 'i' } },
     ];
   }
 
@@ -152,7 +152,7 @@ exports.getBookingStats = asyncHandler(async (req, res) => {
       {
         $group: {
           _id: null,
-          total: { $sum: '$totalAmount' },
+          total: { $sum: '$financial.totalAmount' },
         },
       },
     ]),
@@ -201,7 +201,7 @@ exports.downloadVoucher = asyncHandler(async (req, res) => {
   // In a real implementation, you would generate a PDF here
   // For now, we'll return booking data formatted for voucher
   const voucherData = {
-    bookingReference: booking.bookingReference,
+    bookingReference: booking.bookingNumber,
     bookingDate: booking.createdAt,
     customer: {
       name: `${booking.customerId.firstName} ${booking.customerId.lastName}`,
@@ -212,15 +212,15 @@ exports.downloadVoucher = asyncHandler(async (req, res) => {
     itinerary: {
       title: booking.itineraryId?.title,
       destination: booking.itineraryId?.destination,
-      startDate: booking.itineraryId?.startDate,
-      endDate: booking.itineraryId?.endDate,
+      startDate: booking.itineraryId?.startDate || booking.travelDates?.startDate,
+      endDate: booking.itineraryId?.endDate || booking.travelDates?.endDate,
       duration: booking.itineraryId?.duration,
     },
     payment: {
-      totalAmount: booking.totalAmount,
-      currency: booking.currency,
+      totalAmount: booking.financial.totalAmount,
+      currency: booking.financial.currency,
       paymentStatus: booking.paymentStatus,
-      paidAmount: booking.paidAmount,
+      paidAmount: booking.financial.paidAmount,
     },
     status: booking.bookingStatus,
   };
@@ -233,7 +233,7 @@ exports.downloadVoucher = asyncHandler(async (req, res) => {
     data: {
       voucher: voucherData,
       // In production, this would be a download URL or PDF buffer
-      downloadUrl: `/vouchers/${booking.bookingReference}.pdf`,
+      downloadUrl: `/vouchers/${booking.bookingNumber}.pdf`,
     },
   });
 });
