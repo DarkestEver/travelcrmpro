@@ -14,11 +14,13 @@ import {
 } from '@heroicons/react/24/outline';
 import toast from 'react-hot-toast';
 import { authAPI } from '../services/apiEndpoints';
+import { useAuthStore } from '../stores/authStore';
 
 const AgentLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   const navigate = useNavigate();
+  const logout = useAuthStore((state) => state.logout);
 
   // Get current user info
   const { data: user } = useQuery({
@@ -37,10 +39,13 @@ const AgentLayout = () => {
   const handleLogout = async () => {
     try {
       await authAPI.logout();
-      toast.success('Logged out successfully');
-      navigate('/login');
     } catch (error) {
-      toast.error('Logout failed');
+      console.error('Logout API error:', error);
+    } finally {
+      // Always clear local auth state and redirect
+      logout();
+      toast.success('Logged out successfully');
+      navigate('/login', { replace: true });
     }
   };
 

@@ -10,14 +10,14 @@ const Header = () => {
 
   const handleLogout = async () => {
     try {
-      await authAPI.logout()
-      logout()
-      toast.success('Logged out successfully')
-      navigate('/login')
+      await authAPI.logout();
     } catch (error) {
-      console.error('Logout error:', error)
-      logout()
-      navigate('/login')
+      console.error('Logout API error:', error);
+    } finally {
+      // Always clear local auth state and redirect
+      logout();
+      toast.success('Logged out successfully');
+      navigate('/login', { replace: true });
     }
   }
 
