@@ -1,5 +1,4 @@
-const asyncHandler = require('./asyncHandler');
-const ErrorResponse = require('../utils/errorResponse');
+const { asyncHandler, AppError } = require('./errorHandler');
 
 /**
  * Protect routes - require agent role
@@ -8,13 +7,13 @@ const ErrorResponse = require('../utils/errorResponse');
 exports.requireAgent = asyncHandler(async (req, res, next) => {
   // Check if user is authenticated (should be done by protect middleware first)
   if (!req.user) {
-    return next(new ErrorResponse('Not authorized to access this route', 401));
+    return next(new AppError('Not authorized to access this route', 401));
   }
 
   // Check if user has agent role
   if (req.user.role !== 'agent') {
     return next(
-      new ErrorResponse(
+      new AppError(
         `User role '${req.user.role}' is not authorized to access this route. Agent role required.`,
         403
       )
@@ -23,7 +22,7 @@ exports.requireAgent = asyncHandler(async (req, res, next) => {
 
   // Check if agent account is active
   if (!req.user.isActive) {
-    return next(new ErrorResponse('Agent account is inactive. Please contact support.', 403));
+    return next(new AppError('Agent account is inactive. Please contact support.', 403));
   }
 
   next();
@@ -36,14 +35,14 @@ exports.requireAgent = asyncHandler(async (req, res, next) => {
 exports.checkCreditLimit = (requiredAmount) => {
   return asyncHandler(async (req, res, next) => {
     if (!req.user || req.user.role !== 'agent') {
-      return next(new ErrorResponse('Agent role required', 403));
+      return next(new AppError('Agent role required', 403));
     }
 
     const { creditLimit = 0 } = req.user;
 
     if (creditLimit < requiredAmount) {
       return next(
-        new ErrorResponse(
+        new AppError(
           `Insufficient credit limit. Required: ${requiredAmount}, Available: ${creditLimit}`,
           403
         )
@@ -61,14 +60,14 @@ exports.checkCreditLimit = (requiredAmount) => {
 exports.requireAgentLevel = (allowedLevels) => {
   return asyncHandler(async (req, res, next) => {
     if (!req.user || req.user.role !== 'agent') {
-      return next(new ErrorResponse('Agent role required', 403));
+      return next(new AppError('Agent role required', 403));
     }
 
     const { agentLevel = 'bronze' } = req.user;
 
     if (!allowedLevels.includes(agentLevel)) {
       return next(
-        new ErrorResponse(
+        new AppError(
           `Agent level '${agentLevel}' is not authorized. Required levels: ${allowedLevels.join(', ')}`,
           403
         )

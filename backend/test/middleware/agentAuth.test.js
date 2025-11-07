@@ -1,5 +1,5 @@
 const { requireAgent, checkCreditLimit, requireAgentLevel, attachAgentMetadata } = require('../../src/middleware/agentAuth');
-const ErrorResponse = require('../../src/utils/errorResponse');
+const { AppError } = require('../../src/middleware/errorHandler');
 
 describe('Agent Authentication Middleware', () => {
   let req, res, next;
@@ -23,7 +23,7 @@ describe('Agent Authentication Middleware', () => {
       await requireAgent(req, res, next);
 
       expect(next).toHaveBeenCalledWith();
-      expect(next).not.toHaveBeenCalledWith(expect.any(ErrorResponse));
+      expect(next).not.toHaveBeenCalledWith(expect.any(AppError));
     });
 
     test('should fail if user is not authenticated', async () => {
@@ -31,7 +31,7 @@ describe('Agent Authentication Middleware', () => {
 
       await requireAgent(req, res, next);
 
-      expect(next).toHaveBeenCalledWith(expect.any(ErrorResponse));
+      expect(next).toHaveBeenCalledWith(expect.any(AppError));
       const error = next.mock.calls[0][0];
       expect(error.statusCode).toBe(401);
       expect(error.message).toContain('Not authorized');
@@ -46,7 +46,7 @@ describe('Agent Authentication Middleware', () => {
 
       await requireAgent(req, res, next);
 
-      expect(next).toHaveBeenCalledWith(expect.any(ErrorResponse));
+      expect(next).toHaveBeenCalledWith(expect.any(AppError));
       const error = next.mock.calls[0][0];
       expect(error.statusCode).toBe(403);
       expect(error.message).toContain('not authorized');
@@ -61,7 +61,7 @@ describe('Agent Authentication Middleware', () => {
 
       await requireAgent(req, res, next);
 
-      expect(next).toHaveBeenCalledWith(expect.any(ErrorResponse));
+      expect(next).toHaveBeenCalledWith(expect.any(AppError));
       const error = next.mock.calls[0][0];
       expect(error.statusCode).toBe(403);
       expect(error.message).toContain('inactive');
@@ -80,7 +80,7 @@ describe('Agent Authentication Middleware', () => {
       await middleware(req, res, next);
 
       expect(next).toHaveBeenCalledWith();
-      expect(next).not.toHaveBeenCalledWith(expect.any(ErrorResponse));
+      expect(next).not.toHaveBeenCalledWith(expect.any(AppError));
     });
 
     test('should fail if agent has insufficient credit', async () => {
@@ -93,7 +93,7 @@ describe('Agent Authentication Middleware', () => {
       const middleware = checkCreditLimit(5000);
       await middleware(req, res, next);
 
-      expect(next).toHaveBeenCalledWith(expect.any(ErrorResponse));
+      expect(next).toHaveBeenCalledWith(expect.any(AppError));
       const error = next.mock.calls[0][0];
       expect(error.statusCode).toBe(403);
       expect(error.message).toContain('Insufficient credit');
@@ -108,7 +108,7 @@ describe('Agent Authentication Middleware', () => {
       const middleware = checkCreditLimit(5000);
       await middleware(req, res, next);
 
-      expect(next).toHaveBeenCalledWith(expect.any(ErrorResponse));
+      expect(next).toHaveBeenCalledWith(expect.any(AppError));
     });
   });
 
@@ -124,7 +124,7 @@ describe('Agent Authentication Middleware', () => {
       await middleware(req, res, next);
 
       expect(next).toHaveBeenCalledWith();
-      expect(next).not.toHaveBeenCalledWith(expect.any(ErrorResponse));
+      expect(next).not.toHaveBeenCalledWith(expect.any(AppError));
     });
 
     test('should fail if agent level is not allowed', async () => {
@@ -137,7 +137,7 @@ describe('Agent Authentication Middleware', () => {
       const middleware = requireAgentLevel(['gold', 'platinum']);
       await middleware(req, res, next);
 
-      expect(next).toHaveBeenCalledWith(expect.any(ErrorResponse));
+      expect(next).toHaveBeenCalledWith(expect.any(AppError));
       const error = next.mock.calls[0][0];
       expect(error.statusCode).toBe(403);
       expect(error.message).toContain('not authorized');
@@ -152,7 +152,7 @@ describe('Agent Authentication Middleware', () => {
       const middleware = requireAgentLevel(['gold', 'platinum']);
       await middleware(req, res, next);
 
-      expect(next).toHaveBeenCalledWith(expect.any(ErrorResponse));
+      expect(next).toHaveBeenCalledWith(expect.any(AppError));
     });
   });
 
