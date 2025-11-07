@@ -1,5 +1,5 @@
 const { asyncHandler } = require('../middleware/errorHandler');
-const { successResponse } = require('../utils/responseHandler');
+const { successResponse } = require('../utils/response');
 const Customer = require('../models/Customer');
 const QuoteRequest = require('../models/QuoteRequest');
 const Booking = require('../models/Booking');
