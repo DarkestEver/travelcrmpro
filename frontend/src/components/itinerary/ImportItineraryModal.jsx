@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { FiUpload, FiFileText, FiX, FiCheck } from 'react-icons/fi';
-import Modal from './Modal';
+import Modal from '../Modal';
 
 const ImportItineraryModal = ({ isOpen, onClose, onImport }) => {
   const [jsonInput, setJsonInput] = useState('');
