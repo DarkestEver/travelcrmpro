@@ -1,0 +1,41 @@
+{
+  "summary": {
+    "testSuite": "Agency Admin Registration",
+    "totalTests": 3,
+    "passed": 2,
+    "failed": 1,
+    "skipped": 0,
+    "passRate": "66.67",
+    "duration": "0.45s",
+    "timestamp": "2025-11-08T22:13:40.101Z"
+  },
+  "results": [
+    {
+      "testName": "Create new agency admin user",
+      "status": "FAIL",
+      "timestamp": "2025-11-08T22:13:39.991Z",
+      "duration": 297,
+      "error": "Registration should return 201",
+      "response": null,
+      "additionalInfo": null
+    },
+    {
+      "testName": "Prevent duplicate email registration",
+      "status": "PASS",
+      "timestamp": "2025-11-08T22:13:40.020Z",
+      "duration": 25,
+      "error": null,
+      "response": null,
+      "additionalInfo": "System correctly rejected duplicate email"
+    },
+    {
+      "testName": "Reject invalid registration data",
+      "status": "PASS",
+      "timestamp": "2025-11-08T22:13:40.049Z",
+      "duration": 24,
+      "error": null,
+      "response": null,
+      "additionalInfo": "System correctly validated input data"
+    }
+  ]
+}

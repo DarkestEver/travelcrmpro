@@ -1,0 +1,41 @@
+{
+  "summary": {
+    "testSuite": "Agency Admin Registration",
+    "totalTests": 3,
+    "passed": 3,
+    "failed": 0,
+    "skipped": 0,
+    "passRate": "100.00",
+    "duration": "1.39s",
+    "timestamp": "2025-11-08T23:28:36.767Z"
+  },
+  "results": [
+    {
+      "testName": "Create new agency admin user",
+      "status": "PASS",
+      "timestamp": "2025-11-08T23:28:36.570Z",
+      "duration": 1168,
+      "error": null,
+      "response": null,
+      "additionalInfo": "Owner ID: 690fd2238edb348461df7524"
+    },
+    {
+      "testName": "Prevent duplicate subdomain registration",
+      "status": "PASS",
+      "timestamp": "2025-11-08T23:28:36.689Z",
+      "duration": 118,
+      "error": null,
+      "response": null,
+      "additionalInfo": "System correctly rejected duplicate subdomain"
+    },
+    {
+      "testName": "Reject invalid tenant creation data",
+      "status": "PASS",
+      "timestamp": "2025-11-08T23:28:36.765Z",
+      "duration": 75,
+      "error": null,
+      "response": null,
+      "additionalInfo": "System correctly validated input data"
+    }
+  ]
+}

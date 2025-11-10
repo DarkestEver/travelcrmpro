@@ -1,0 +1,77 @@
+{
+  "summary": {
+    "testSuite": "Agency Admin Workflow",
+    "totalTests": 7,
+    "passed": 0,
+    "failed": 7,
+    "skipped": 0,
+    "passRate": "0.00",
+    "duration": "1.24s",
+    "timestamp": "2025-11-08T23:48:38.900Z"
+  },
+  "results": [
+    {
+      "testName": "Create agent user",
+      "status": "FAIL",
+      "timestamp": "2025-11-08T23:48:37.759Z",
+      "duration": 87,
+      "error": "Should create agent with 201",
+      "response": null,
+      "additionalInfo": null
+    },
+    {
+      "testName": "Create customer user",
+      "status": "FAIL",
+      "timestamp": "2025-11-08T23:48:37.857Z",
+      "duration": 86,
+      "error": "Should create customer with 201",
+      "response": null,
+      "additionalInfo": null
+    },
+    {
+      "testName": "Create supplier",
+      "status": "FAIL",
+      "timestamp": "2025-11-08T23:48:38.340Z",
+      "duration": 474,
+      "error": "Should create supplier with 201",
+      "response": null,
+      "additionalInfo": null
+    },
+    {
+      "testName": "Create itinerary",
+      "status": "FAIL",
+      "timestamp": "2025-11-08T23:48:38.351Z",
+      "duration": 0,
+      "error": "Customer must be created first",
+      "response": null,
+      "additionalInfo": null
+    },
+    {
+      "testName": "Create quote",
+      "status": "FAIL",
+      "timestamp": "2025-11-08T23:48:38.360Z",
+      "duration": 0,
+      "error": "Customer must be created first",
+      "response": null,
+      "additionalInfo": null
+    },
+    {
+      "testName": "Create booking",
+      "status": "FAIL",
+      "timestamp": "2025-11-08T23:48:38.368Z",
+      "duration": 0,
+      "error": "Customer and itinerary must be created first",
+      "response": null,
+      "additionalInfo": null
+    },
+    {
+      "testName": "List all created entities",
+      "status": "FAIL",
+      "timestamp": "2025-11-08T23:48:38.803Z",
+      "duration": 430,
+      "error": "All entity lists should be accessible",
+      "response": null,
+      "additionalInfo": null
+    }
+  ]
+}

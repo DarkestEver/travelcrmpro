@@ -1,0 +1,77 @@
+{
+  "summary": {
+    "testSuite": "Agency Admin Workflow",
+    "totalTests": 7,
+    "passed": 0,
+    "failed": 7,
+    "skipped": 0,
+    "passRate": "0.00",
+    "duration": "7.78s",
+    "timestamp": "2025-11-08T23:59:42.567Z"
+  },
+  "results": [
+    {
+      "testName": "Create agent user",
+      "status": "FAIL",
+      "timestamp": "2025-11-08T23:59:36.832Z",
+      "duration": 2016,
+      "error": "User should have ID",
+      "response": null,
+      "additionalInfo": null
+    },
+    {
+      "testName": "Create customer user",
+      "status": "FAIL",
+      "timestamp": "2025-11-08T23:59:36.915Z",
+      "duration": 60,
+      "error": "Should create user with 201",
+      "response": null,
+      "additionalInfo": null
+    },
+    {
+      "testName": "Create supplier",
+      "status": "FAIL",
+      "timestamp": "2025-11-08T23:59:39.285Z",
+      "duration": 2360,
+      "error": "User should have ID",
+      "response": null,
+      "additionalInfo": null
+    },
+    {
+      "testName": "Create itinerary",
+      "status": "FAIL",
+      "timestamp": "2025-11-08T23:59:39.503Z",
+      "duration": 0,
+      "error": "Customer must be created first",
+      "response": null,
+      "additionalInfo": null
+    },
+    {
+      "testName": "Create quote",
+      "status": "FAIL",
+      "timestamp": "2025-11-08T23:59:39.622Z",
+      "duration": 0,
+      "error": "Customer must be created first",
+      "response": null,
+      "additionalInfo": null
+    },
+    {
+      "testName": "Create booking",
+      "status": "FAIL",
+      "timestamp": "2025-11-08T23:59:39.655Z",
+      "duration": 0,
+      "error": "Customer and itinerary must be created first",
+      "response": null,
+      "additionalInfo": null
+    },
+    {
+      "testName": "List all created entities",
+      "status": "FAIL",
+      "timestamp": "2025-11-08T23:59:42.191Z",
+      "duration": 2475,
+      "error": "All entity lists should be accessible",
+      "response": null,
+      "additionalInfo": null
+    }
+  ]
+}

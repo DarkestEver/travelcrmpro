@@ -1,0 +1,18 @@
+{
+  "watch": ["src/"],
+  "ignore": [
+    "test/",
+    "test/**",
+    "test/**/*",
+    "test/**/**",
+    "tests/",
+    "tests/**",
+    "tests/**/*",
+    "*.test.js",
+    "*.spec.js",
+    "**/*.test.js",
+    "**/*.spec.js"
+  ],
+  "ext": "js",
+  "delay": 2000
+}

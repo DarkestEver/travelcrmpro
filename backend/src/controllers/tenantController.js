@@ -3,6 +3,7 @@ const { asyncHandler, AppError } = require('../middleware/errorHandler');
 const { successResponse, paginatedResponse } = require('../utils/response');
 const { parsePagination, parseSort } = require('../utils/pagination');
 const bcrypt = require('bcryptjs');
+const mongoose = require('mongoose');
 
 // @desc    Get all tenants (Super Admin only)
 // @route   GET /api/v1/tenants
@@ -63,6 +64,11 @@ const createTenant = asyncHandler(async (req, res) => {
     metadata,
   } = req.body;
 
+  // Validate required fields
+  if (!name || !subdomain || !ownerName || !ownerEmail || !ownerPassword) {
+    throw new AppError('Please provide name, subdomain, ownerName, ownerEmail, and ownerPassword', 400);
+  }
+
   // Check if subdomain already exists
   const existingTenant = await Tenant.findOne({ subdomain: subdomain.toLowerCase() });
   if (existingTenant) {
@@ -77,11 +83,25 @@ const createTenant = asyncHandler(async (req, res) => {
     }
   }
 
-  // Create owner user first
-  const hashedPassword = await bcrypt.hash(ownerPassword, 10);
+  // Create owner user first (password will be hashed by User model pre-save hook)
+  // Create a temporary ObjectId for tenant
+  const tempTenantId = new mongoose.Types.ObjectId();
   
-  // Create tenant first to get the ID
+  // Create owner user with temporary tenantId
+  const owner = await User.create({
+    tenantId: tempTenantId,
+    name: ownerName,
+    email: ownerEmail,
+    password: ownerPassword, // Will be hashed by pre-save hook
+    phone: ownerPhone,
+    role: 'operator', // Tenant owner has operator role
+    isActive: true,
+    emailVerified: true,
+  });
+
+  // Now create tenant with the owner ID
   const tenant = await Tenant.create({
+    _id: tempTenantId, // Use the same ID we used for user
     name,
     subdomain: subdomain.toLowerCase(),
     customDomain: customDomain ? customDomain.toLowerCase() : undefined,
@@ -91,24 +111,8 @@ const createTenant = asyncHandler(async (req, res) => {
       plan,
       status: 'trial',
     },
-    ownerId: null, // Will update after creating user
+    ownerId: owner._id,
   });
-
-  // Create owner user
-  const owner = await User.create({
-    tenantId: tenant._id,
-    name: ownerName,
-    email: ownerEmail,
-    password: hashedPassword,
-    phone: ownerPhone,
-    role: 'super_admin', // Tenant owner has super_admin role within their tenant
-    isActive: true,
-    emailVerified: true,
-  });
-
-  // Update tenant with owner ID
-  tenant.ownerId = owner._id;
-  await tenant.save();
 
   // Update tenant usage
   tenant.usage.users = 1;

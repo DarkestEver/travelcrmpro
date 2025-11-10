@@ -1,5 +1,6 @@
 import { NavLink } from 'react-router-dom'
 import { useAuthStore } from '../stores/authStore'
+import { useTenantBranding } from '../contexts/TenantBrandingContext'
 import { 
   FiHome, 
   FiUsers, 
@@ -9,18 +10,20 @@ import {
   FiFileText, 
   FiCalendar,
   FiBarChart2,
-  FiShield
+  FiShield,
+  FiSettings
 } from 'react-icons/fi'
 
 const Sidebar = () => {
   const { user } = useAuthStore()
+  const { logo, companyName, primaryColor, isLoading } = useTenantBranding()
 
   const navItems = [
     {
       name: 'Dashboard',
       path: '/dashboard',
       icon: FiHome,
-      roles: ['super_admin', 'operator', 'agent', 'supplier'],
+      roles: ['super_admin', 'operator'],
     },
     {
       name: 'Agents',
@@ -65,6 +68,18 @@ const Sidebar = () => {
       roles: ['super_admin', 'operator'],
     },
     {
+      name: 'Tenant Settings',
+      path: '/settings',
+      icon: FiSettings,
+      roles: ['super_admin', 'operator'],
+    },
+    {
+      name: 'Tenant Management',
+      path: '/tenants',
+      icon: FiSettings,
+      roles: ['super_admin'],
+    },
+    {
       name: 'Audit Logs',
       path: '/audit-logs',
       icon: FiShield,
@@ -78,11 +93,32 @@ const Sidebar = () => {
 
   return (
     <div className="w-64 bg-white shadow-lg">
+      {/* Logo and Company Name */}
       <div className="p-6 border-b">
-        <h1 className="text-2xl font-bold text-primary-600">Travel CRM</h1>
-        <p className="text-sm text-gray-500 mt-1">
-          {user?.role?.replace('_', ' ').toUpperCase()}
-        </p>
+        <div className="flex items-center gap-3">
+          {logo ? (
+            <img 
+              src={logo} 
+              alt={companyName} 
+              className="h-10 w-10 object-contain"
+            />
+          ) : (
+            <div 
+              className="h-10 w-10 rounded-lg flex items-center justify-center text-white font-bold text-xl"
+              style={{ backgroundColor: primaryColor }}
+            >
+              {companyName?.charAt(0) || 'T'}
+            </div>
+          )}
+          <div className="flex-1 min-w-0">
+            <h1 className="text-lg font-bold text-gray-900 truncate">
+              {!isLoading ? companyName : 'Loading...'}
+            </h1>
+            <p className="text-xs text-gray-500 uppercase">
+              {user?.role?.replace('_', ' ')}
+            </p>
+          </div>
+        </div>
       </div>
 
       <nav className="p-4">
@@ -93,10 +129,13 @@ const Sidebar = () => {
             className={({ isActive }) =>
               `flex items-center gap-3 px-4 py-3 rounded-lg mb-2 transition-colors ${
                 isActive
-                  ? 'bg-primary-500 text-white'
+                  ? 'text-white'
                   : 'text-gray-700 hover:bg-gray-100'
               }`
             }
+            style={({ isActive }) => ({
+              backgroundColor: isActive ? primaryColor : 'transparent'
+            })}
           >
             <item.icon className="text-xl" />
             <span className="font-medium">{item.name}</span>

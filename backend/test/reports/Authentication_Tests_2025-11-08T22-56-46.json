@@ -1,0 +1,41 @@
+{
+  "summary": {
+    "testSuite": "Authentication Tests",
+    "totalTests": 3,
+    "passed": 0,
+    "failed": 3,
+    "skipped": 0,
+    "passRate": "0.00",
+    "duration": "1.51s",
+    "timestamp": "2025-11-08T22:56:46.876Z"
+  },
+  "results": [
+    {
+      "testName": "Login as agency admin",
+      "status": "FAIL",
+      "timestamp": "2025-11-08T22:56:46.050Z",
+      "duration": 0,
+      "error": "Agency admin test data required",
+      "response": null,
+      "additionalInfo": null
+    },
+    {
+      "testName": "Reject invalid login credentials",
+      "status": "FAIL",
+      "timestamp": "2025-11-08T22:56:46.412Z",
+      "duration": 155,
+      "error": "Should reject invalid credentials",
+      "response": null,
+      "additionalInfo": null
+    },
+    {
+      "testName": "Validate authentication token",
+      "status": "FAIL",
+      "timestamp": "2025-11-08T22:56:46.513Z",
+      "duration": 3,
+      "error": "Agency admin token required",
+      "response": null,
+      "additionalInfo": null
+    }
+  ]
+}

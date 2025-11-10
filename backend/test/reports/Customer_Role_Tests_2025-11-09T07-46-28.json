@@ -1,0 +1,68 @@
+{
+  "summary": {
+    "testSuite": "Customer Role Tests",
+    "totalTests": 6,
+    "passed": 1,
+    "failed": 5,
+    "skipped": 0,
+    "passRate": "16.67",
+    "duration": "0.48s",
+    "timestamp": "2025-11-09T07:46:28.546Z"
+  },
+  "results": [
+    {
+      "testName": "Customer login",
+      "status": "FAIL",
+      "timestamp": "2025-11-09T07:46:28.141Z",
+      "duration": 71,
+      "error": "Login should return 200",
+      "response": null,
+      "additionalInfo": null
+    },
+    {
+      "testName": "Customer can view own profile",
+      "status": "FAIL",
+      "timestamp": "2025-11-09T07:46:28.143Z",
+      "duration": 0,
+      "error": "Customer token required",
+      "response": null,
+      "additionalInfo": null
+    },
+    {
+      "testName": "Customer can view own itineraries",
+      "status": "FAIL",
+      "timestamp": "2025-11-09T07:46:28.174Z",
+      "duration": 30,
+      "error": "Should access itineraries with 200",
+      "response": null,
+      "additionalInfo": null
+    },
+    {
+      "testName": "Customer can view own quotes",
+      "status": "FAIL",
+      "timestamp": "2025-11-09T07:46:28.225Z",
+      "duration": 51,
+      "error": "Should access quotes with 200",
+      "response": null,
+      "additionalInfo": null
+    },
+    {
+      "testName": "Customer can view own bookings",
+      "status": "FAIL",
+      "timestamp": "2025-11-09T07:46:28.286Z",
+      "duration": 61,
+      "error": "Should access bookings with 200",
+      "response": null,
+      "additionalInfo": null
+    },
+    {
+      "testName": "Customer cannot access admin resources",
+      "status": "PASS",
+      "timestamp": "2025-11-09T07:46:28.545Z",
+      "duration": 258,
+      "error": null,
+      "response": null,
+      "additionalInfo": "Access restrictions tested"
+    }
+  ]
+}

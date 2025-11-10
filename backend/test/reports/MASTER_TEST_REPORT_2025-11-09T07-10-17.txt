@@ -1,0 +1,44 @@
+TRAVEL CRM - TEST EXECUTION REPORT
+================================================================================
+
+Execution Date: 2025-11-09T07:10:17.148Z
+Total Duration: 62.05s
+
+OVERALL SUMMARY
+--------------------------------------------------------------------------------
+Total Test Suites: 7
+Total Tests: 38
+Passed: 14
+Failed: 22
+Pass Rate: 36.84%
+
+TEST SUITES
+--------------------------------------------------------------------------------
+1. Agency Admin Registration
+   Tests: 3 | Passed: 3 | Failed: 0
+   Pass Rate: 100.00% | Duration: 2.90s
+
+2. Authentication Tests
+   Tests: 3 | Passed: 3 | Failed: 0
+   Pass Rate: 100.00% | Duration: 0.85s
+
+3. Agency Admin Workflow
+   Tests: 7 | Passed: 4 | Failed: 3
+   Pass Rate: 57.14% | Duration: 9.04s
+
+4. Operator Workflow
+   Tests: 8 | Passed: 2 | Failed: 6
+   Pass Rate: 25.00% | Duration: 12.92s
+
+5. Agent Role Tests
+   Tests: 6 | Passed: 0 | Failed: 6
+   Pass Rate: 0.00% | Duration: 0.15s
+
+6. Customer Role Tests
+   Tests: 6 | Passed: 1 | Failed: 5
+   Pass Rate: 16.67% | Duration: 0.12s
+
+7. End-to-End Workflow
+   Tests: 5 | Passed: 1 | Failed: 2
+   Pass Rate: 20.00% | Duration: 0.16s
+

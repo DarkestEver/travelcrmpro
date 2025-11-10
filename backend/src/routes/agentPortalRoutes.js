@@ -43,6 +43,45 @@ const {
   getSubUserStats,
   getSubUserActivityLogs,
 } = require('../controllers/agentSubUserController');
+const {
+  getCommissionSummary,
+  getMyCommissions,
+  getCommissionById,
+  getCommissionStats,
+  createCommission,
+} = require('../controllers/agentCommissionController');
+const {
+  getCreditStatus,
+  getCreditHistory,
+  checkCredit,
+  requestCreditIncrease,
+} = require('../controllers/agentCreditController');
+const {
+  getPaymentSummary,
+  getMyPayments,
+  getPaymentById,
+  getPaymentStats,
+  requestPayout,
+} = require('../controllers/agentPaymentController');
+const {
+  getSalesReport,
+  getBookingTrends,
+  getCustomerInsights,
+  getRevenueAnalytics,
+  getPerformanceSummary,
+} = require('../controllers/agentReportController');
+const {
+  getInvoiceSummary,
+  getMyInvoices,
+  getInvoiceById,
+  createInvoice,
+  updateInvoice,
+  sendInvoice,
+  downloadInvoicePDF,
+  recordPayment,
+  cancelInvoice,
+  deleteInvoice,
+} = require('../controllers/agentInvoiceController');
 
 // Apply authentication middleware to all routes
 router.use(protect);
@@ -85,6 +124,55 @@ router.get('/bookings/stats', getBookingStats);
 router.get('/bookings', getMyBookings);
 router.get('/bookings/:id', getBookingById);
 router.get('/bookings/:id/voucher', downloadVoucher);
+
+/**
+ * Agent Commission Routes
+ */
+router.get('/commissions/summary', getCommissionSummary);
+router.get('/commissions/stats', getCommissionStats);
+router.get('/commissions', getMyCommissions);
+router.post('/commissions', createCommission); // Internal/system use
+router.get('/commissions/:id', getCommissionById);
+
+/**
+ * Agent Credit Management Routes
+ */
+router.get('/credit/status', getCreditStatus);
+router.get('/credit/history', getCreditHistory);
+router.post('/credit/check', checkCredit);
+router.post('/credit/request-increase', requestCreditIncrease);
+
+/**
+ * Agent Payment Routes
+ */
+router.get('/payments/summary', getPaymentSummary);
+router.get('/payments/stats', getPaymentStats);
+router.get('/payments', getMyPayments);
+router.post('/payments/request-payout', requestPayout);
+router.get('/payments/:id', getPaymentById);
+
+/**
+ * Agent Reports & Analytics Routes
+ */
+router.get('/reports/sales', getSalesReport);
+router.get('/reports/booking-trends', getBookingTrends);
+router.get('/reports/customer-insights', getCustomerInsights);
+router.get('/reports/revenue', getRevenueAnalytics);
+router.get('/reports/performance', getPerformanceSummary);
+
+/**
+ * Agent Invoice Routes
+ */
+router.get('/invoices/summary', getInvoiceSummary);
+router.get('/invoices', getMyInvoices);
+router.post('/invoices', createInvoice);
+router.get('/invoices/:id', getInvoiceById);
+router.put('/invoices/:id', updateInvoice);
+router.delete('/invoices/:id', deleteInvoice);
+router.post('/invoices/:id/send', sendInvoice);
+router.get('/invoices/:id/pdf', downloadInvoicePDF);
+router.post('/invoices/:id/payment', recordPayment);
+router.post('/invoices/:id/cancel', cancelInvoice);
 
 /**
  * Agent Sub-User Routes

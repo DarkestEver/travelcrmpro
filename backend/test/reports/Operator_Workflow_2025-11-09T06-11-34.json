@@ -1,0 +1,86 @@
+{
+  "summary": {
+    "testSuite": "Operator Workflow",
+    "totalTests": 8,
+    "passed": 2,
+    "failed": 6,
+    "skipped": 0,
+    "passRate": "25.00",
+    "duration": "14.30s",
+    "timestamp": "2025-11-09T06:11:34.762Z"
+  },
+  "results": [
+    {
+      "testName": "Create operator user (as agency admin)",
+      "status": "PASS",
+      "timestamp": "2025-11-09T06:11:28.995Z",
+      "duration": 8217,
+      "error": null,
+      "response": null,
+      "additionalInfo": "Operator ID: 69103088b819ee413c171d6e"
+    },
+    {
+      "testName": "Login as operator",
+      "status": "PASS",
+      "timestamp": "2025-11-09T06:11:29.381Z",
+      "duration": 385,
+      "error": null,
+      "response": null,
+      "additionalInfo": "Token obtained"
+    },
+    {
+      "testName": "Operator creates agent",
+      "status": "FAIL",
+      "timestamp": "2025-11-09T06:11:30.965Z",
+      "duration": 1581,
+      "error": "Should create agent profile with 201",
+      "response": null,
+      "additionalInfo": null
+    },
+    {
+      "testName": "Operator creates customer",
+      "status": "FAIL",
+      "timestamp": "2025-11-09T06:11:32.427Z",
+      "duration": 1452,
+      "error": "Should create customer profile with 201",
+      "response": null,
+      "additionalInfo": null
+    },
+    {
+      "testName": "Operator creates supplier",
+      "status": "FAIL",
+      "timestamp": "2025-11-09T06:11:34.701Z",
+      "duration": 2270,
+      "error": "Should create supplier with 201",
+      "response": null,
+      "additionalInfo": null
+    },
+    {
+      "testName": "Operator creates itinerary",
+      "status": "FAIL",
+      "timestamp": "2025-11-09T06:11:34.709Z",
+      "duration": 0,
+      "error": "Customer must be created first",
+      "response": null,
+      "additionalInfo": null
+    },
+    {
+      "testName": "Operator creates quote",
+      "status": "FAIL",
+      "timestamp": "2025-11-09T06:11:34.711Z",
+      "duration": 0,
+      "error": "Customer must be created first",
+      "response": null,
+      "additionalInfo": null
+    },
+    {
+      "testName": "Operator creates booking",
+      "status": "FAIL",
+      "timestamp": "2025-11-09T06:11:34.720Z",
+      "duration": 1,
+      "error": "Customer and itinerary must be created first",
+      "response": null,
+      "additionalInfo": null
+    }
+  ]
+}

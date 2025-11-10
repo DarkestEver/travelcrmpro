@@ -15,6 +15,7 @@ const setupSwagger = require('./config/swagger');
 const { initCronJobs } = require('./jobs');
 // const getWebSocketService = require('./services/websocketService'); // Temporarily disabled
 const getPDFService = require('./services/pdfService');
+const { verifyConnection } = require('./config/emailConfig');
 
 // Initialize Express app
 const app = express();
@@ -33,6 +34,11 @@ getPDFService().catch(err => {
   logger.error('Failed to initialize PDF service:', err);
 });
 
+// Verify email service connection
+verifyConnection().catch(err => {
+  logger.warn('Email service verification failed - emails may not work:', err.message);
+});
+
 // Initialize cron jobs
 initCronJobs();
 
@@ -43,9 +49,11 @@ app.use(helmet());
 const allowedOrigins = [
   'http://localhost:5173',
   'http://localhost:5174',
+  'http://localhost:5175', // Additional Vite port
   'http://localhost:3000',
   'http://localhost:4173', // Vite preview
   process.env.FRONTEND_URL,
+  process.env.CUSTOMER_PORTAL_URL,
 ].filter(Boolean); // Remove undefined values
 
 app.use(
@@ -54,23 +62,32 @@ app.use(
       // Allow requests with no origin (like mobile apps, Postman, curl)
       if (!origin) return callback(null, true);
       
-      // Allow any localhost origin in development
-      if (process.env.NODE_ENV === 'development' && origin.includes('localhost')) {
-        return callback(null, true);
+      // In development: Allow any localhost/127.0.0.1 origin
+      if (process.env.NODE_ENV === 'development') {
+        if (origin.includes('localhost') || origin.includes('127.0.0.1')) {
+          return callback(null, true);
+        }
       }
       
       // Check against allowed origins
       if (allowedOrigins.indexOf(origin) !== -1) {
         callback(null, true);
       } else {
+        console.warn(`CORS blocked origin: ${origin}`);
         callback(new Error('Not allowed by CORS'));
       }
     },
     credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Tenant-ID'],
+    exposedHeaders: ['X-Total-Count', 'X-Page', 'X-Per-Page'],
   })
 );
 
 // Body parser middleware
+// Special handling for Stripe webhooks - they need raw body
+app.use('/api/v1/payments/webhook', express.raw({ type: 'application/json' }));
+// Regular JSON parsing for all other routes
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
@@ -95,18 +112,23 @@ const limiter = rateLimit({
   message: 'Too many requests from this IP, please try again later.',
 });
 
-app.use('/api', limiter);
+// Disable rate limiting in development/test mode for easier testing
+if (process.env.NODE_ENV === 'production') {
+  app.use('/api', limiter);
+}
 
-// Stricter rate limit for auth routes
-const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 5,
-  message: 'Too many authentication attempts, please try again later.',
-});
+// Stricter rate limit for auth routes (disabled in test/development mode)
+if (process.env.NODE_ENV === 'production') {
+  const authLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 5,
+    message: 'Too many authentication attempts, please try again later.',
+  });
 
-app.use('/api/v1/auth/login', authLimiter);
-app.use('/api/v1/auth/register', authLimiter);
-app.use('/api/v1/auth/forgot-password', authLimiter);
+  app.use('/api/v1/auth/login', authLimiter);
+  app.use('/api/v1/auth/register', authLimiter);
+  app.use('/api/v1/auth/forgot-password', authLimiter);
+}
 
 // Serve uploaded files
 app.use('/uploads', express.static('uploads'));

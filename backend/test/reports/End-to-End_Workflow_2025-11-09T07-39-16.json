@@ -1,0 +1,59 @@
+{
+  "summary": {
+    "testSuite": "End-to-End Workflow",
+    "totalTests": 5,
+    "passed": 1,
+    "failed": 3,
+    "skipped": 1,
+    "passRate": "20.00",
+    "duration": "0.85s",
+    "timestamp": "2025-11-09T07:39:16.972Z"
+  },
+  "results": [
+    {
+      "testName": "Verify tenant data isolation",
+      "status": "FAIL",
+      "timestamp": "2025-11-09T07:39:16.416Z",
+      "duration": 107,
+      "error": "Failed to fetch customers",
+      "response": null,
+      "additionalInfo": null
+    },
+    {
+      "testName": "Data flow: Admin creates data for customer",
+      "status": "FAIL",
+      "timestamp": "2025-11-09T07:39:16.557Z",
+      "duration": 136,
+      "error": "Should create itinerary",
+      "response": null,
+      "additionalInfo": null
+    },
+    {
+      "testName": "Data flow: Customer data visible to admin",
+      "status": "PASS",
+      "timestamp": "2025-11-09T07:39:16.672Z",
+      "duration": 72,
+      "error": null,
+      "response": null,
+      "additionalInfo": "Customer data is visible to admin"
+    },
+    {
+      "testName": "Booking lifecycle: Create -> Update -> Complete",
+      "status": "SKIP",
+      "timestamp": "2025-11-09T07:39:16.682Z",
+      "duration": 0,
+      "error": null,
+      "response": null,
+      "additionalInfo": "No booking available for lifecycle test"
+    },
+    {
+      "testName": "Quote to booking conversion flow",
+      "status": "FAIL",
+      "timestamp": "2025-11-09T07:39:16.901Z",
+      "duration": 212,
+      "error": "Quote should be accepted",
+      "response": null,
+      "additionalInfo": null
+    }
+  ]
+}

@@ -9,7 +9,6 @@ const quoteSchema = new mongoose.Schema({
   },
   quoteNumber: {
     type: String,
-    unique: true,
     required: true,
   },
   itineraryId: {
@@ -104,7 +103,7 @@ const quoteSchema = new mongoose.Schema({
 });
 
 // Indexes
-quoteSchema.index({ quoteNumber: 1 });
+quoteSchema.index({ tenantId: 1, quoteNumber: 1 }, { unique: true });
 quoteSchema.index({ agentId: 1, status: 1 });
 quoteSchema.index({ customerId: 1 });
 quoteSchema.index({ status: 1, validUntil: 1 });

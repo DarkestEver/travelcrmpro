@@ -1,0 +1,68 @@
+{
+  "summary": {
+    "testSuite": "Agent Role Tests",
+    "totalTests": 6,
+    "passed": 0,
+    "failed": 6,
+    "skipped": 0,
+    "passRate": "0.00",
+    "duration": "0.29s",
+    "timestamp": "2025-11-09T07:46:22.893Z"
+  },
+  "results": [
+    {
+      "testName": "Agent login",
+      "status": "FAIL",
+      "timestamp": "2025-11-09T07:46:22.677Z",
+      "duration": 59,
+      "error": "Login should return 200",
+      "response": null,
+      "additionalInfo": null
+    },
+    {
+      "testName": "Agent can view customers",
+      "status": "FAIL",
+      "timestamp": "2025-11-09T07:46:22.677Z",
+      "duration": 0,
+      "error": "Agent token required",
+      "response": null,
+      "additionalInfo": null
+    },
+    {
+      "testName": "Agent can view itineraries",
+      "status": "FAIL",
+      "timestamp": "2025-11-09T07:46:22.716Z",
+      "duration": 38,
+      "error": "Should access itineraries with 200",
+      "response": null,
+      "additionalInfo": null
+    },
+    {
+      "testName": "Agent can view quotes",
+      "status": "FAIL",
+      "timestamp": "2025-11-09T07:46:22.774Z",
+      "duration": 57,
+      "error": "Should access quotes with 200",
+      "response": null,
+      "additionalInfo": null
+    },
+    {
+      "testName": "Agent can view bookings",
+      "status": "FAIL",
+      "timestamp": "2025-11-09T07:46:22.797Z",
+      "duration": 23,
+      "error": "Should access bookings with 200",
+      "response": null,
+      "additionalInfo": null
+    },
+    {
+      "testName": "Agent cannot access admin-only endpoints",
+      "status": "FAIL",
+      "timestamp": "2025-11-09T07:46:22.892Z",
+      "duration": 95,
+      "error": "Unexpected response: 404",
+      "response": null,
+      "additionalInfo": null
+    }
+  ]
+}

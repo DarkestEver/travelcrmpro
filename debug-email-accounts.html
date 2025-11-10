@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Accounts Debug</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .debug-section {
+            background: #f5f5f5;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
+        .account-card {
+            background: white;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border: 1px solid #e0e0e0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .primary {
+            border-left: 4px solid #4CAF50;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            margin: 5px 5px 5px 0;
+        }
+        .success { background: #4CAF50; color: white; }
+        .failed { background: #f44336; color: white; }
+        .not-tested { background: #9E9E9E; color: white; }
+        button {
+            background: #2196F3;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #1976D2;
+        }
+        pre {
+            background: #263238;
+            color: #aed581;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+        .error {
+            background: #ffebee;
+            color: #c62828;
+            padding: 15px;
+            border-radius: 5px;
+            border: 1px solid #ef5350;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 Email Accounts Debug Tool</h1>
+    
+    <div class="debug-section">
+        <h3>Connection Info:</h3>
+        <p>API Base: <strong id="api-base">http://localhost:5000/api/v1</strong></p>
+        <p>Token: <strong id="token-status">Checking...</strong></p>
+        <p>User: <strong id="user-info">Checking...</strong></p>
+    </div>
+
+    <button onclick="fetchAccounts()">🔄 Fetch Accounts</button>
+    <button onclick="clearConsole()">🗑️ Clear Console</button>
+
+    <div id="results"></div>
+
+    <script>
+        const API_BASE = 'http://localhost:5000/api/v1';
+        
+        // Check token and user
+        function checkAuth() {
+            const token = localStorage.getItem('token');
+            const user = localStorage.getItem('user');
+            
+            document.getElementById('token-status').textContent = token ? 
+                `${token.substring(0, 20)}... (${token.length} chars)` : 
+                '❌ No token found!';
+            
+            if (user) {
+                const userData = JSON.parse(user);
+                document.getElementById('user-info').textContent = 
+                    `${userData.name} (${userData.email}) - ${userData.role}`;
+            } else {
+                document.getElementById('user-info').textContent = '❌ No user data!';
+            }
+            
+            return token;
+        }
+
+        async function fetchAccounts() {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '<p>Loading...</p>';
+            
+            const token = checkAuth();
+            if (!token) {
+                resultsDiv.innerHTML = `
+                    <div class="error">
+                        <h3>❌ No Authentication Token</h3>
+                        <p>Please login at <a href="http://localhost:5174">http://localhost:5174</a> first!</p>
+                    </div>
+                `;
+                return;
+            }
+
+            console.log('🚀 Fetching accounts from:', `${API_BASE}/email-accounts`);
+            console.log('🔑 Using token:', token.substring(0, 20) + '...');
+
+            try {
+                const response = await fetch(`${API_BASE}/email-accounts`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                console.log('📡 Response status:', response.status);
+                console.log('📡 Response headers:', response.headers);
+
+                const data = await response.json();
+                console.log('📦 Response data:', data);
+
+                if (!response.ok) {
+                    resultsDiv.innerHTML = `
+                        <div class="error">
+                            <h3>❌ API Error (${response.status})</h3>
+                            <p>${data.message || 'Unknown error'}</p>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </div>
+                    `;
+                    return;
+                }
+
+                // Display results
+                let html = `
+                    <div class="debug-section">
+                        <h3>✅ API Response:</h3>
+                        <p>Success: <strong>${data.success}</strong></p>
+                        <p>Count: <strong>${data.count}</strong></p>
+                        <p>Data Array Length: <strong>${data.data?.length || 0}</strong></p>
+                    </div>
+                `;
+
+                if (data.data && data.data.length > 0) {
+                    html += '<h2>📧 Email Accounts:</h2>';
+                    
+                    data.data.forEach((account, index) => {
+                        const imapStatus = account.imap?.lastTestStatus || 'not_tested';
+                        const smtpStatus = account.smtp?.lastTestStatus || 'not_tested';
+                        
+                        html += `
+                            <div class="account-card ${account.isPrimary ? 'primary' : ''}">
+                                <h3>${index + 1}. ${account.accountName} ${account.isPrimary ? '⭐' : ''}</h3>
+                                <p><strong>Email:</strong> ${account.email}</p>
+                                <p><strong>Provider:</strong> ${account.provider}</p>
+                                <p><strong>Primary:</strong> ${account.isPrimary ? 'Yes' : 'No'}</p>
+                                <p><strong>Active:</strong> ${account.isActive ? 'Yes' : 'No'}</p>
+                                
+                                <h4>IMAP Configuration:</h4>
+                                <p>Host: ${account.imap?.host}:${account.imap?.port} (${account.imap?.secure ? 'SSL' : 'Non-SSL'})</p>
+                                <span class="status-badge ${imapStatus}"}>IMAP: ${imapStatus.toUpperCase()}</span>
+                                ${account.imap?.lastTestedAt ? `<p><small>Last tested: ${new Date(account.imap.lastTestedAt).toLocaleString()}</small></p>` : ''}
+                                ${account.imap?.lastTestError ? `<p style="color: red;"><small>Error: ${account.imap.lastTestError}</small></p>` : ''}
+                                
+                                <h4>SMTP Configuration:</h4>
+                                <p>Host: ${account.smtp?.host}:${account.smtp?.port} (${account.smtp?.secure ? 'SSL' : 'Non-SSL'})</p>
+                                <span class="status-badge ${smtpStatus}">SMTP: ${smtpStatus.toUpperCase()}</span>
+                                ${account.smtp?.lastTestedAt ? `<p><small>Last tested: ${new Date(account.smtp.lastTestedAt).toLocaleString()}</small></p>` : ''}
+                                ${account.smtp?.lastTestError ? `<p style="color: red;"><small>Error: ${account.smtp.lastTestError}</small></p>` : ''}
+                                
+                                <p><small>ID: ${account._id}</small></p>
+                                <p><small>Created: ${new Date(account.createdAt).toLocaleString()}</small></p>
+                            </div>
+                        `;
+                    });
+                } else {
+                    html += `
+                        <div class="debug-section">
+                            <p>⚠️ No email accounts found in the response.</p>
+                        </div>
+                    `;
+                }
+
+                html += `
+                    <div class="debug-section">
+                        <h3>📄 Raw JSON Response:</h3>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    </div>
+                `;
+
+                resultsDiv.innerHTML = html;
+
+            } catch (error) {
+                console.error('❌ Fetch error:', error);
+                resultsDiv.innerHTML = `
+                    <div class="error">
+                        <h3>❌ Network Error</h3>
+                        <p>${error.message}</p>
+                        <p>Make sure:</p>
+                        <ul>
+                            <li>Backend is running on http://localhost:5000</li>
+                            <li>You're logged in at http://localhost:5174</li>
+                            <li>CORS is enabled</li>
+                        </ul>
+                    </div>
+                `;
+            }
+        }
+
+        function clearConsole() {
+            console.clear();
+            alert('Console cleared!');
+        }
+
+        // Auto-check auth on load
+        window.addEventListener('load', () => {
+            checkAuth();
+            console.log('🔍 Debug tool loaded. Click "Fetch Accounts" to test the API.');
+        });
+    </script>
+</body>
+</html>

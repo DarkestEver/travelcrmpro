@@ -8,7 +8,39 @@ Welcome to the Travel CRM comprehensive documentation. All documents have been c
 
 ---
 
-## 📑 Document List
+## � Authentication & Login (NEW)
+
+### **LOGIN_ENDPOINTS_AND_CREDENTIALS.md** ⭐ NEW
+**Purpose**: Complete authentication API documentation with demo credentials  
+**Location**: `/docs/LOGIN_ENDPOINTS_AND_CREDENTIALS.md`  
+**Contents**:
+- All authentication endpoints (Main Portal + Customer Portal)
+- Demo credentials for all 5 portals
+- API request examples (cURL, JavaScript, Postman)
+- Frontend URLs
+- Security notes and best practices
+- Troubleshooting guide
+- Authentication flow diagrams
+
+**Quick Access:** [LOGIN_ENDPOINTS_AND_CREDENTIALS.md](./LOGIN_ENDPOINTS_AND_CREDENTIALS.md)
+
+---
+
+### **QUICK_LOGIN_REFERENCE.md** ⭐ NEW
+**Purpose**: Quick reference card for login credentials and endpoints  
+**Location**: `/docs/QUICK_LOGIN_REFERENCE.md`  
+**Contents**:
+- Quick copy-paste login endpoints
+- All demo credentials at a glance
+- Quick test commands (cURL)
+- All available endpoints list
+- Fast reference for developers
+
+**Quick Access:** [QUICK_LOGIN_REFERENCE.md](./QUICK_LOGIN_REFERENCE.md)
+
+---
+
+## 📑 Core Documentation
 
 ### 1. **README.md** (Root)
 **Purpose**: Main project overview and entry point  

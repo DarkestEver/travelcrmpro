@@ -11,14 +11,21 @@ const { setAsync, delAsync } = require('../config/database');
 const register = asyncHandler(async (req, res) => {
   const { name, email, password, role, phone } = req.body;
 
-  // Check if user exists
-  const existingUser = await User.findOne({ email });
+  // Get tenantId from request (set by identifyTenant middleware)
+  const tenantId = req.tenantId;
+  if (!tenantId) {
+    throw new AppError('Tenant context is required for registration', 400);
+  }
+
+  // Check if user exists in this tenant
+  const existingUser = await User.findOne({ email, tenantId });
   if (existingUser) {
-    throw new AppError('Email already registered', 400);
+    throw new AppError('Email already registered in this tenant', 400);
   }
 
   // Create user
   const user = await User.create({
+    tenantId,
     name,
     email,
     password,

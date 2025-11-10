@@ -1,0 +1,77 @@
+{
+  "summary": {
+    "testSuite": "Agency Admin Workflow",
+    "totalTests": 7,
+    "passed": 2,
+    "failed": 5,
+    "skipped": 0,
+    "passRate": "28.57",
+    "duration": "9.64s",
+    "timestamp": "2025-11-09T00:13:11.232Z"
+  },
+  "results": [
+    {
+      "testName": "Create agent user",
+      "status": "PASS",
+      "timestamp": "2025-11-09T00:13:09.001Z",
+      "duration": 7397,
+      "error": null,
+      "response": null,
+      "additionalInfo": "User ID: 690fdc8d22eee181017323ad, Agent ID: 690fdc9422eee181017323b3"
+    },
+    {
+      "testName": "Create customer user",
+      "status": "FAIL",
+      "timestamp": "2025-11-09T00:13:09.080Z",
+      "duration": 74,
+      "error": "Should create user with 201",
+      "response": null,
+      "additionalInfo": null
+    },
+    {
+      "testName": "Create supplier",
+      "status": "PASS",
+      "timestamp": "2025-11-09T00:13:10.957Z",
+      "duration": 1873,
+      "error": null,
+      "response": null,
+      "additionalInfo": "User ID: 690fdc9522eee181017323b9, Supplier ID: 690fdc9622eee181017323bf"
+    },
+    {
+      "testName": "Create itinerary",
+      "status": "FAIL",
+      "timestamp": "2025-11-09T00:13:10.964Z",
+      "duration": 0,
+      "error": "Customer must be created first",
+      "response": null,
+      "additionalInfo": null
+    },
+    {
+      "testName": "Create quote",
+      "status": "FAIL",
+      "timestamp": "2025-11-09T00:13:10.968Z",
+      "duration": 0,
+      "error": "Customer must be created first",
+      "response": null,
+      "additionalInfo": null
+    },
+    {
+      "testName": "Create booking",
+      "status": "FAIL",
+      "timestamp": "2025-11-09T00:13:10.976Z",
+      "duration": 0,
+      "error": "Customer and itinerary must be created first",
+      "response": null,
+      "additionalInfo": null
+    },
+    {
+      "testName": "List all created entities",
+      "status": "FAIL",
+      "timestamp": "2025-11-09T00:13:11.215Z",
+      "duration": 234,
+      "error": "All entity lists should be accessible",
+      "response": null,
+      "additionalInfo": null
+    }
+  ]
+}

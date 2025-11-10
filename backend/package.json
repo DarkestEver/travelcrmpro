@@ -7,6 +7,8 @@
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
     "test": "jest --coverage",
+    "test:api": "node test/run-all-tests.js",
+    "test:quick": "node test/quick-test.js",
     "seed:tenants": "node src/scripts/seedTenants.js",
     "migrate:tenants": "node src/scripts/migrateTenantData.js"
   },
@@ -21,6 +23,7 @@
   "dependencies": {
     "bcryptjs": "^2.4.3",
     "chart.js": "^4.5.1",
+    "colors": "^1.4.0",
     "compression": "^1.7.4",
     "cors": "^2.8.5",
     "csv-parser": "^3.2.0",
@@ -29,6 +32,7 @@
     "express-rate-limit": "^7.1.5",
     "express-validator": "^7.0.1",
     "helmet": "^7.1.0",
+    "imap": "^0.8.19",
     "joi": "^17.11.0",
     "jsonwebtoken": "^9.0.2",
     "lucide-react": "^0.552.0",
@@ -36,7 +40,7 @@
     "morgan": "^1.10.0",
     "multer": "^1.4.5-lts.1",
     "node-cron": "^4.2.1",
-    "nodemailer": "^6.9.7",
+    "nodemailer": "^6.10.1",
     "pdfkit": "^0.17.2",
     "puppeteer": "^21.6.1",
     "qrcode": "^1.5.3",

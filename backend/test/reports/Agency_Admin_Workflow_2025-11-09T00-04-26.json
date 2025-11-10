@@ -1,0 +1,77 @@
+{
+  "summary": {
+    "testSuite": "Agency Admin Workflow",
+    "totalTests": 7,
+    "passed": 0,
+    "failed": 7,
+    "skipped": 0,
+    "passRate": "0.00",
+    "duration": "12.91s",
+    "timestamp": "2025-11-09T00:04:26.373Z"
+  },
+  "results": [
+    {
+      "testName": "Create agent user",
+      "status": "FAIL",
+      "timestamp": "2025-11-09T00:04:17.187Z",
+      "duration": 3407,
+      "error": "Agent should have ID",
+      "response": null,
+      "additionalInfo": null
+    },
+    {
+      "testName": "Create customer user",
+      "status": "FAIL",
+      "timestamp": "2025-11-09T00:04:17.279Z",
+      "duration": 83,
+      "error": "Should create user with 201",
+      "response": null,
+      "additionalInfo": null
+    },
+    {
+      "testName": "Create supplier",
+      "status": "FAIL",
+      "timestamp": "2025-11-09T00:04:25.919Z",
+      "duration": 8634,
+      "error": "Supplier should have ID",
+      "response": null,
+      "additionalInfo": null
+    },
+    {
+      "testName": "Create itinerary",
+      "status": "FAIL",
+      "timestamp": "2025-11-09T00:04:25.923Z",
+      "duration": 0,
+      "error": "Customer must be created first",
+      "response": null,
+      "additionalInfo": null
+    },
+    {
+      "testName": "Create quote",
+      "status": "FAIL",
+      "timestamp": "2025-11-09T00:04:25.935Z",
+      "duration": 0,
+      "error": "Customer must be created first",
+      "response": null,
+      "additionalInfo": null
+    },
+    {
+      "testName": "Create booking",
+      "status": "FAIL",
+      "timestamp": "2025-11-09T00:04:25.951Z",
+      "duration": 0,
+      "error": "Customer and itinerary must be created first",
+      "response": null,
+      "additionalInfo": null
+    },
+    {
+      "testName": "List all created entities",
+      "status": "FAIL",
+      "timestamp": "2025-11-09T00:04:26.330Z",
+      "duration": 368,
+      "error": "All entity lists should be accessible",
+      "response": null,
+      "additionalInfo": null
+    }
+  ]
+}

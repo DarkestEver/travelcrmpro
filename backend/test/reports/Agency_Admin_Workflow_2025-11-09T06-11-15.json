@@ -1,0 +1,77 @@
+{
+  "summary": {
+    "testSuite": "Agency Admin Workflow",
+    "totalTests": 7,
+    "passed": 3,
+    "failed": 4,
+    "skipped": 0,
+    "passRate": "42.86",
+    "duration": "12.44s",
+    "timestamp": "2025-11-09T06:11:15.064Z"
+  },
+  "results": [
+    {
+      "testName": "Create agent user",
+      "status": "PASS",
+      "timestamp": "2025-11-09T06:11:05.086Z",
+      "duration": 2340,
+      "error": null,
+      "response": null,
+      "additionalInfo": "User ID: 69103076b819ee413c171d34, Agent ID: 69103078b819ee413c171d3a"
+    },
+    {
+      "testName": "Create customer user",
+      "status": "PASS",
+      "timestamp": "2025-11-09T06:11:11.946Z",
+      "duration": 6852,
+      "error": null,
+      "response": null,
+      "additionalInfo": "User ID: 69103079b819ee413c171d3f, Customer ID: 6910307fb819ee413c171d44"
+    },
+    {
+      "testName": "Create supplier",
+      "status": "PASS",
+      "timestamp": "2025-11-09T06:11:14.301Z",
+      "duration": 2351,
+      "error": null,
+      "response": null,
+      "additionalInfo": "User ID: 69103080b819ee413c171d49, Supplier ID: 69103081b819ee413c171d4f"
+    },
+    {
+      "testName": "Create itinerary",
+      "status": "FAIL",
+      "timestamp": "2025-11-09T06:11:14.458Z",
+      "duration": 128,
+      "error": "Should create itinerary with 201",
+      "response": null,
+      "additionalInfo": null
+    },
+    {
+      "testName": "Create quote",
+      "status": "FAIL",
+      "timestamp": "2025-11-09T06:11:14.589Z",
+      "duration": 125,
+      "error": "Should create quote with 201",
+      "response": null,
+      "additionalInfo": null
+    },
+    {
+      "testName": "Create booking",
+      "status": "FAIL",
+      "timestamp": "2025-11-09T06:11:14.601Z",
+      "duration": 1,
+      "error": "Customer and itinerary must be created first",
+      "response": null,
+      "additionalInfo": null
+    },
+    {
+      "testName": "List all created entities",
+      "status": "FAIL",
+      "timestamp": "2025-11-09T06:11:14.986Z",
+      "duration": 375,
+      "error": "All entity lists should be accessible",
+      "response": null,
+      "additionalInfo": null
+    }
+  ]
+}

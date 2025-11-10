@@ -3,6 +3,8 @@ const { asyncHandler, AppError } = require('../middleware/errorHandler');
 const { successResponse, paginatedResponse } = require('../utils/response');
 const { parsePagination, parseSort } = require('../utils/pagination');
 const { sendBookingConfirmationEmail } = require('../utils/email');
+const commissionService = require('../services/commissionService');
+const creditService = require('../services/creditService');
 
 // Helper function to ensure agent profile exists
 const ensureAgentProfile = (req, res) => {
@@ -120,6 +122,19 @@ const createBooking = asyncHandler(async (req, res) => {
     throw new AppError('A booking already exists for this quote', 400);
   }
 
+  // For agents: Check credit limit before creating booking
+  if (req.user.role === 'agent') {
+    const bookingAmount = quote.pricing.totalPrice;
+    const creditCheck = await creditService.canMakeBooking(req.agent._id, bookingAmount);
+    
+    if (!creditCheck.canBook) {
+      throw new AppError(
+        `Insufficient credit limit. Required: ${creditCheck.required}, Available: ${creditCheck.available}`,
+        400
+      );
+    }
+  }
+
   // Create booking
   const booking = await Booking.create({
     tenantId: req.tenantId,
@@ -154,6 +169,71 @@ const createBooking = asyncHandler(async (req, res) => {
   await Customer.findByIdAndUpdate(quote.customerId._id, {
     $inc: { totalBookings: 1 },
   });
+
+  // For agents: Reserve credit for this booking
+  if (req.user.role === 'agent') {
+    try {
+      await creditService.reserveCredit(
+        req.agent._id,
+        quote.pricing.totalPrice,
+        booking._id
+      );
+    } catch (error) {
+      console.error('Failed to reserve credit:', error);
+      // If credit reservation fails, we should rollback the booking
+      await Booking.findByIdAndDelete(booking._id);
+      throw new AppError('Failed to reserve credit for booking', 500);
+    }
+  }
+
+  // Send booking confirmation email
+  try {
+    const emailService = require('../services/emailService');
+    const advancedNotificationService = require('../services/advancedNotificationService');
+    
+    if (quote.customerId && quote.customerId.email) {
+      const bookingData = {
+        bookingNumber: booking.bookingNumber,
+        destination: quote.itineraryId?.destination || 'N/A',
+        startDate: booking.travelDates?.startDate || new Date(),
+        endDate: booking.travelDates?.endDate || new Date(),
+        totalAmount: quote.pricing.totalPrice,
+        status: booking.bookingStatus
+      };
+
+      // Send booking confirmation email to customer
+      await emailService.sendBookingConfirmationEmail({
+        to: quote.customerId.email,
+        customerName: quote.customerId.name || `${quote.customerId.firstName} ${quote.customerId.lastName}`,
+        booking: bookingData
+      });
+
+      console.log('✅ Booking confirmation email sent to:', quote.customerId.email);
+    }
+
+    // Create notification for agent
+    if (req.user.role === 'agent') {
+      await advancedNotificationService.createNotification({
+        userId: req.agent._id,
+        tenantId: req.tenantId,
+        type: 'booking',
+        priority: 'high',
+        title: 'New Booking Created',
+        message: `Booking ${booking.bookingNumber} created successfully for ${quote.customerId.name || quote.customerId.firstName}`,
+        metadata: {
+          bookingId: booking._id,
+          bookingNumber: booking.bookingNumber,
+          customerId: quote.customerId._id,
+          customerName: quote.customerId.name || `${quote.customerId.firstName} ${quote.customerId.lastName}`,
+          amount: quote.pricing.totalPrice
+        },
+        link: `/agent/bookings/${booking._id}`
+      });
+    }
+  } catch (emailError) {
+    console.error('❌ Failed to send booking confirmation email:', emailError);
+    // Don't fail the booking creation if email fails
+  }
 
   successResponse(res, 201, 'Booking created successfully', { booking });
 });
@@ -355,6 +435,28 @@ const cancelBooking = asyncHandler(async (req, res) => {
     });
   }
 
+  // Cancel any pending/approved commissions for this booking
+  try {
+    await commissionService.cancelCommission(booking._id);
+  } catch (error) {
+    console.error('Failed to cancel commission:', error);
+    // Don't fail the cancellation if commission cancellation fails
+  }
+
+  // Release credit for agent bookings
+  if (booking.agentId) {
+    try {
+      await creditService.releaseCredit(
+        booking.agentId._id,
+        booking.financial.totalAmount,
+        booking._id
+      );
+    } catch (error) {
+      console.error('Failed to release credit:', error);
+      // Don't fail the cancellation if credit release fails
+    }
+  }
+
   successResponse(res, 200, 'Booking cancelled successfully', { booking });
 });
 
@@ -380,6 +482,29 @@ const completeBooking = asyncHandler(async (req, res) => {
 
   booking.bookingStatus = 'completed';
   await booking.save();
+
+  // Automatically create commission for agent if applicable
+  try {
+    await commissionService.createCommissionForBooking(booking._id);
+  } catch (error) {
+    console.error('Failed to create commission:', error);
+    // Don't fail the booking completion if commission creation fails
+    // Just log the error for manual intervention
+  }
+
+  // Release credit for agent bookings (credit is no longer "held")
+  if (booking.agentId) {
+    try {
+      await creditService.releaseCredit(
+        booking.agentId._id,
+        booking.financial.totalAmount,
+        booking._id
+      );
+    } catch (error) {
+      console.error('Failed to release credit:', error);
+      // Don't fail the completion if credit release fails
+    }
+  }
 
   successResponse(res, 200, 'Booking completed successfully', { booking });
 });

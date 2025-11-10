@@ -1,11 +1,14 @@
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../stores/authStore'
+import { useTenantBranding } from '../contexts/TenantBrandingContext'
 import { authAPI } from '../services/apiEndpoints'
-import { FiUser, FiLogOut, FiBell } from 'react-icons/fi'
+import { FiUser, FiLogOut } from 'react-icons/fi'
+import NotificationBell from './NotificationBell'
 import toast from 'react-hot-toast'
 
 const Header = () => {
   const { user, logout } = useAuthStore()
+  const { companyName, primaryColor } = useTenantBranding()
   const navigate = useNavigate()
 
   const handleLogout = async () => {
@@ -28,14 +31,12 @@ const Header = () => {
           <h2 className="text-xl font-semibold text-gray-800">
             Welcome back, {user?.name}!
           </h2>
+          <p className="text-sm text-gray-500">{companyName}</p>
         </div>
 
         <div className="flex items-center gap-4">
           {/* Notifications */}
-          <button className="p-2 rounded-lg hover:bg-gray-100 relative">
-            <FiBell className="text-xl text-gray-600" />
-            <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-          </button>
+          <NotificationBell />
 
           {/* Profile dropdown */}
           <div className="flex items-center gap-3">
@@ -43,7 +44,10 @@ const Header = () => {
               to="/profile"
               className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors"
             >
-              <div className="w-8 h-8 rounded-full bg-primary-500 flex items-center justify-center text-white font-medium">
+              <div 
+                className="w-8 h-8 rounded-full flex items-center justify-center text-white font-medium"
+                style={{ backgroundColor: primaryColor }}
+              >
                 {user?.name?.charAt(0).toUpperCase()}
               </div>
               <span className="text-sm font-medium text-gray-700">

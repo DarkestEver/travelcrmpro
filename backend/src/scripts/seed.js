@@ -1,6 +1,6 @@
 require('dotenv').config();
 const { connectDB } = require('../config/database');
-const { User, Agent } = require('../models');
+const { User, Agent, Supplier } = require('../models');
 
 const seedDatabase = async () => {
   try {
@@ -71,7 +71,28 @@ const seedDatabase = async () => {
 
     console.log('✅ Agent created:', agent.agencyName);
 
-    // Create sample supplier user
+    // Create sample supplier profile first
+    const supplier = await Supplier.create({
+      name: 'Demo Hotel',
+      type: 'hotel',
+      contactPerson: 'Hotel Manager',
+      email: 'supplier@travelcrm.com',
+      phone: '+1234567893',
+      address: {
+        street: '456 Beach Blvd',
+        city: 'Miami',
+        state: 'FL',
+        country: 'USA',
+        zipCode: '33139',
+      },
+      services: ['hotel', 'accommodation'],
+      rating: 4.5,
+      status: 'active',
+    });
+
+    console.log('✅ Supplier profile created:', supplier.name);
+
+    // Create sample supplier user linked to supplier profile
     const supplierUser = await User.create({
       name: 'Demo Supplier',
       email: 'supplier@travelcrm.com',
@@ -80,9 +101,16 @@ const seedDatabase = async () => {
       phone: '+1234567893',
       emailVerified: true,
       isActive: true,
+      supplierId: supplier._id, // Link user to supplier profile
     });
 
-    console.log('✅ Supplier created:', supplierUser.email);
+    console.log('✅ Supplier user created:', supplierUser.email);
+
+    // Update supplier with userId reference
+    supplier.userId = supplierUser._id;
+    await supplier.save();
+
+    console.log('✅ Supplier linked to user');
 
     console.log('\n🎉 Database seeding completed!');
     console.log('\n📋 Default credentials:');

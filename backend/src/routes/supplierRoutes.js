@@ -12,6 +12,11 @@ const {
   updateSupplierRating,
   getSupplierStats,
 } = require('../controllers/supplierController');
+const {
+  getSupplierDashboardStats,
+  getSupplierBookings,
+  updateBookingStatus,
+} = require('../controllers/supplierPortalController');
 const { protect, restrictTo, loadSupplier } = require('../middleware/auth');
 const { auditLogger } = require('../middleware/auditLogger');
 
@@ -20,6 +25,11 @@ router.use(protect);
 
 // Stats route - MUST be before /:id routes
 router.get('/stats', restrictTo('super_admin', 'operator'), getSupplierStats);
+
+// Supplier portal routes - for logged-in suppliers
+router.get('/dashboard-stats', restrictTo('supplier'), getSupplierDashboardStats);
+router.get('/my-bookings', restrictTo('supplier'), getSupplierBookings);
+router.put('/bookings/:bookingId/status', restrictTo('supplier'), auditLogger('update', 'booking'), updateBookingStatus);
 
 // Public supplier routes
 router.get('/', getAllSuppliers);

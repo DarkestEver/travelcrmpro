@@ -9,7 +9,6 @@ const bookingSchema = new mongoose.Schema({
   },
   bookingNumber: {
     type: String,
-    unique: true,
   },
   quoteId: {
     type: mongoose.Schema.Types.ObjectId,
@@ -133,7 +132,7 @@ const bookingSchema = new mongoose.Schema({
 });
 
 // Indexes
-bookingSchema.index({ bookingNumber: 1 });
+bookingSchema.index({ tenantId: 1, bookingNumber: 1 }, { unique: true });
 bookingSchema.index({ agentId: 1, bookingStatus: 1 });
 bookingSchema.index({ customerId: 1 });
 bookingSchema.index({ 'travelDates.startDate': 1 });

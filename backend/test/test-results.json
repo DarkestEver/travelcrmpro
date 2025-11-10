@@ -1,0 +1,156 @@
+{
+  "tenants": [
+    {
+      "id": "690fb6c9bf30d721336dcbe4",
+      "name": "Demo Travel Agency",
+      "subdomain": "demo-agency",
+      "ownerId": "690fb6c9bf30d721336dcbe5",
+      "ownerEmail": "admin@demoagency.com"
+    }
+  ],
+  "users": {
+    "operator": [
+      {
+        "email": "admin@demoagency.com",
+        "role": "operator"
+      }
+    ]
+  },
+  "customers": [
+    {
+      "id": "690fb6d2bf30d721336dcc02",
+      "firstName": "Alice",
+      "lastName": "Johnson",
+      "email": "customer1@test.com",
+      "passportNumber": "P1234567"
+    },
+    {
+      "id": "690fb6d3bf30d721336dcc08",
+      "firstName": "Bob",
+      "lastName": "Smith",
+      "email": "customer2@test.com",
+      "passportNumber": "P2345678"
+    },
+    {
+      "id": "690fb6d3bf30d721336dcc0e",
+      "firstName": "Carol",
+      "lastName": "Williams",
+      "email": "customer3@test.com",
+      "passportNumber": "P3456789"
+    },
+    {
+      "id": "690fb6d4bf30d721336dcc14",
+      "firstName": "David",
+      "lastName": "Brown",
+      "email": "customer4@test.com",
+      "passportNumber": "P4567890"
+    },
+    {
+      "id": "690fb6d5bf30d721336dcc1a",
+      "firstName": "Emma",
+      "lastName": "Davis",
+      "email": "customer5@test.com",
+      "passportNumber": "P5678901"
+    }
+  ],
+  "suppliers": [],
+  "itineraries": [
+    {
+      "id": "690fb6dabf30d721336dcc28",
+      "title": "Paris Romance 7D/6N",
+      "destination": {
+        "city": "Paris",
+        "country": "France"
+      },
+      "price": 150000,
+      "duration": 7
+    },
+    {
+      "id": "690fb6ddbf30d721336dcc2e",
+      "title": "Bali Adventure 5D/4N",
+      "destination": {
+        "city": "Bali",
+        "country": "Indonesia"
+      },
+      "price": 80000,
+      "duration": 5
+    },
+    {
+      "id": "690fb6ddbf30d721336dcc34",
+      "title": "Goa Beach Escape 3D/2N",
+      "destination": {
+        "city": "Goa",
+        "country": "India"
+      },
+      "price": 25000,
+      "duration": 3
+    }
+  ],
+  "quotes": [],
+  "bookings": [],
+  "invoices": [],
+  "payments": [],
+  "agents": [],
+  "testResults": [
+    {
+      "test": "Test 0: Server Health Check",
+      "status": "PASS",
+      "error": null,
+      "timestamp": "2025-11-08T21:31:51.096Z"
+    },
+    {
+      "test": "Test 1: Create Demo Tenant",
+      "status": "PASS",
+      "error": null,
+      "timestamp": "2025-11-08T21:31:54.125Z"
+    },
+    {
+      "test": "Test 2: Agency Admin Login",
+      "status": "PASS",
+      "error": null,
+      "timestamp": "2025-11-08T21:31:57.769Z"
+    },
+    {
+      "test": "Test 3: Create Agents",
+      "status": "FAIL",
+      "error": null,
+      "timestamp": "2025-11-08T21:32:01.302Z"
+    },
+    {
+      "test": "Test 4: Create Customers",
+      "status": "PASS",
+      "error": null,
+      "timestamp": "2025-11-08T21:32:05.920Z"
+    },
+    {
+      "test": "Test 5: Create Suppliers",
+      "status": "FAIL",
+      "error": null,
+      "timestamp": "2025-11-08T21:32:09.731Z"
+    },
+    {
+      "test": "Test 6: Create Itineraries",
+      "status": "PASS",
+      "error": null,
+      "timestamp": "2025-11-08T21:32:14.419Z"
+    },
+    {
+      "test": "Test 7: Create Quotes",
+      "status": "FAIL",
+      "error": null,
+      "timestamp": "2025-11-08T21:32:17.347Z"
+    },
+    {
+      "test": "Test 8: Create Bookings",
+      "status": "FAIL",
+      "error": "Insufficient quotes",
+      "timestamp": "2025-11-08T21:32:18.387Z"
+    },
+    {
+      "test": "Test 9: Operator Functionality",
+      "status": "PASS",
+      "error": null,
+      "timestamp": "2025-11-08T21:32:20.320Z"
+    }
+  ]
+}

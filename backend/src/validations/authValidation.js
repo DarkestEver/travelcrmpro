@@ -9,7 +9,7 @@ const registerValidation = [
     .withMessage('Password must be at least 8 characters')
     .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)
     .withMessage('Password must contain at least one uppercase letter, one lowercase letter, and one number'),
-  body('role').optional().isIn(['agent', 'supplier', 'operator', 'super_admin']),
+  body('role').optional().isIn(['agent', 'customer', 'supplier', 'operator', 'super_admin']),
   body('phone').optional().trim(),
 ];
 

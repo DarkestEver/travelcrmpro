@@ -11,21 +11,39 @@ import {
   Bars3Icon,
   XMarkIcon,
   ChevronDownIcon,
+  CurrencyDollarIcon,
+  BanknotesIcon,
+  ChartBarIcon,
+  ReceiptPercentIcon,
 } from '@heroicons/react/24/outline';
 import toast from 'react-hot-toast';
 import { authAPI } from '../services/apiEndpoints';
 import { useAuthStore } from '../stores/authStore';
+import { useTenantBranding } from '../contexts/TenantBrandingContext';
 
 const AgentLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   const navigate = useNavigate();
   const logout = useAuthStore((state) => state.logout);
+  const { user: authUser } = useAuthStore();
+  const { logo, companyName, primaryColor, isLoading } = useTenantBranding();
 
-  // Get current user info
+  // Get current user info - with fallback to authStore
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
     queryFn: authAPI.getMe,
+    retry: 1,
+    staleTime: 5 * 60 * 1000,
+    initialData: authUser, // Use auth store user as fallback
+    onError: (error) => {
+      console.error('Failed to fetch user in AgentLayout:', error);
+      // If unauthorized, logout and redirect
+      if (error.response?.status === 401) {
+        logout();
+        navigate('/login');
+      }
+    }
   });
 
   const navigation = [
@@ -33,6 +51,10 @@ const AgentLayout = () => {
     { name: 'Customers', href: '/agent/customers', icon: UsersIcon },
     { name: 'Quote Requests', href: '/agent/quotes', icon: DocumentTextIcon },
     { name: 'Bookings', href: '/agent/bookings', icon: CalendarIcon },
+    { name: 'Commissions', href: '/agent/commissions', icon: CurrencyDollarIcon },
+    { name: 'Payments', href: '/agent/payments', icon: BanknotesIcon },
+    { name: 'Invoices', href: '/agent/invoices', icon: ReceiptPercentIcon },
+    { name: 'Reports', href: '/agent/reports', icon: ChartBarIcon },
     { name: 'Sub Users', href: '/agent/sub-users', icon: UserGroupIcon },
   ];
 
@@ -67,7 +89,28 @@ const AgentLayout = () => {
       >
         {/* Sidebar header */}
         <div className="flex items-center justify-between h-16 px-4 border-b">
-          <h1 className="text-xl font-bold text-indigo-600">Agent Portal</h1>
+          <div className="flex items-center gap-3">
+            {logo ? (
+              <img 
+                src={logo} 
+                alt={companyName} 
+                className="h-8 w-8 object-contain"
+              />
+            ) : (
+              <div 
+                className="h-8 w-8 rounded-lg flex items-center justify-center text-white font-bold text-sm"
+                style={{ backgroundColor: primaryColor }}
+              >
+                {companyName?.charAt(0) || 'T'}
+              </div>
+            )}
+            <div>
+              <h1 className="text-lg font-bold text-gray-900">
+                {!isLoading ? companyName : 'Loading...'}
+              </h1>
+              <p className="text-xs text-gray-500">Agent Portal</p>
+            </div>
+          </div>
           <button
             onClick={() => setSidebarOpen(false)}
             className="lg:hidden text-gray-500 hover:text-gray-700"
@@ -79,8 +122,11 @@ const AgentLayout = () => {
         {/* Agent profile section */}
         <div className="p-4 border-b">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center">
-              <span className="text-indigo-600 font-semibold">
+            <div 
+              className="w-10 h-10 rounded-full flex items-center justify-center text-white"
+              style={{ backgroundColor: primaryColor }}
+            >
+              <span className="font-semibold">
                 {user?.name?.charAt(0).toUpperCase()}
               </span>
             </div>
@@ -110,10 +156,13 @@ const AgentLayout = () => {
               className={({ isActive }) =>
                 `flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
                   isActive
-                    ? 'bg-indigo-50 text-indigo-600'
+                    ? 'text-white'
                     : 'text-gray-700 hover:bg-gray-50'
                 }`
               }
+              style={({ isActive }) => ({
+                backgroundColor: isActive ? primaryColor : 'transparent'
+              })}
             >
               <item.icon className="h-5 w-5 mr-3" />
               {item.name}

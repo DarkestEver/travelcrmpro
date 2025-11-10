@@ -10,6 +10,7 @@ import {
 } from '@heroicons/react/24/outline';
 import toast from 'react-hot-toast';
 import KPICard from '../../components/agent/KPICard';
+import CreditUsageCard from '../../components/agent/CreditUsageCard';
 import { agentPortalAPI } from '../../services/agentPortalAPI';
 
 const AgentDashboard = () => {
@@ -139,28 +140,29 @@ const AgentDashboard = () => {
         />
       </div>
 
-      {/* Agent info card */}
-      <div className="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-lg shadow-lg p-6 text-white">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div>
-            <p className="text-indigo-100 text-sm">Agent Level</p>
-            <p className="text-2xl font-bold capitalize mt-1">
-              {stats.agent?.level || 'Bronze'}
-            </p>
-          </div>
-          <div>
-            <p className="text-indigo-100 text-sm">Credit Limit</p>
-            <p className="text-2xl font-bold mt-1">
-              ${(stats.agent?.creditLimit || 0).toLocaleString()}
-            </p>
-          </div>
-          <div>
-            <p className="text-indigo-100 text-sm">Commission Rate</p>
-            <p className="text-2xl font-bold mt-1">
-              {stats.agent?.commissionRate || 10}%
-            </p>
+      {/* Agent info and Credit Usage */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Agent Info Card */}
+        <div className="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-lg shadow-lg p-6 text-white">
+          <h3 className="text-lg font-semibold mb-4">Agent Information</h3>
+          <div className="space-y-4">
+            <div>
+              <p className="text-indigo-100 text-sm">Agent Level</p>
+              <p className="text-2xl font-bold capitalize mt-1">
+                {stats.agent?.level || 'Bronze'}
+              </p>
+            </div>
+            <div>
+              <p className="text-indigo-100 text-sm">Commission Rate</p>
+              <p className="text-2xl font-bold mt-1">
+                {stats.agent?.commissionRate || 10}%
+              </p>
+            </div>
           </div>
         </div>
+
+        {/* Credit Usage Card */}
+        <CreditUsageCard />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const bcrypt = require('bcryptjs');
 
 const customerSchema = new mongoose.Schema({
   tenantId: {
@@ -15,7 +16,15 @@ const customerSchema = new mongoose.Schema({
   },
   name: {
     type: String,
-    required: [true, 'Please provide customer name'],
+    required: false, // Made optional since we'll use firstName/lastName
+    trim: true,
+  },
+  firstName: {
+    type: String,
+    trim: true,
+  },
+  lastName: {
+    type: String,
     trim: true,
   },
   email: {
@@ -24,10 +33,28 @@ const customerSchema = new mongoose.Schema({
     lowercase: true,
     trim: true,
   },
+  password: {
+    type: String,
+    select: false, // Don't return password by default
+  },
   phone: {
     type: String,
     required: true,
   },
+  // Portal access fields
+  portalAccess: {
+    type: Boolean,
+    default: false,
+  },
+  emailVerified: {
+    type: Boolean,
+    default: false,
+  },
+  emailVerificationToken: String,
+  emailVerificationExpires: Date,
+  resetPasswordToken: String,
+  resetPasswordExpires: Date,
+  lastLogin: Date,
   passportInfo: {
     number: String,
     country: String,
@@ -92,6 +119,35 @@ const customerSchema = new mongoose.Schema({
 customerSchema.index({ agentId: 1, email: 1 });
 customerSchema.index({ name: 'text', email: 'text' });
 customerSchema.index({ tags: 1 });
+
+// Hash password before saving
+customerSchema.pre('save', async function (next) {
+  // Only hash if password is modified
+  if (!this.isModified('password') || !this.password) {
+    return next();
+  }
+
+  try {
+    const salt = await bcrypt.genSalt(10);
+    this.password = await bcrypt.hash(this.password, salt);
+    next();
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Compare password method
+customerSchema.methods.comparePassword = async function (candidatePassword) {
+  return await bcrypt.compare(candidatePassword, this.password);
+};
+
+// Virtual for full name
+customerSchema.virtual('fullName').get(function () {
+  if (this.firstName && this.lastName) {
+    return `${this.firstName} ${this.lastName}`;
+  }
+  return this.name || '';
+});
 
 const Customer = mongoose.model('Customer', customerSchema);
 

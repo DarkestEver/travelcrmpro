@@ -1,0 +1,96 @@
+{
+  "timestamp": "2025-11-09T07:37:19.516Z",
+  "overallSummary": {
+    "totalTests": 38,
+    "totalPassed": 14,
+    "totalFailed": 22,
+    "passRate": "36.84",
+    "testSuites": 7,
+    "duration": "84.58s"
+  },
+  "testSuites": [
+    {
+      "testSuite": "Agency Admin Registration",
+      "totalTests": 3,
+      "passed": 3,
+      "failed": 0,
+      "skipped": 0,
+      "passRate": "100.00",
+      "duration": "2.03s",
+      "timestamp": "2025-11-09T07:35:56.990Z"
+    },
+    {
+      "testSuite": "Authentication Tests",
+      "totalTests": 3,
+      "passed": 3,
+      "failed": 0,
+      "skipped": 0,
+      "passRate": "100.00",
+      "duration": "0.86s",
+      "timestamp": "2025-11-09T07:36:08.294Z"
+    },
+    {
+      "testSuite": "Agency Admin Workflow",
+      "totalTests": 7,
+      "passed": 4,
+      "failed": 3,
+      "skipped": 0,
+      "passRate": "57.14",
+      "duration": "13.19s",
+      "timestamp": "2025-11-09T07:36:26.497Z"
+    },
+    {
+      "testSuite": "Operator Workflow",
+      "totalTests": 8,
+      "passed": 2,
+      "failed": 6,
+      "skipped": 0,
+      "passRate": "25.00",
+      "duration": "32.33s",
+      "timestamp": "2025-11-09T07:37:03.851Z"
+    },
+    {
+      "testSuite": "Agent Role Tests",
+      "totalTests": 6,
+      "passed": 0,
+      "failed": 6,
+      "skipped": 0,
+      "passRate": "0.00",
+      "duration": "0.24s",
+      "timestamp": "2025-11-09T07:37:09.105Z"
+    },
+    {
+      "testSuite": "Customer Role Tests",
+      "totalTests": 6,
+      "passed": 1,
+      "failed": 5,
+      "skipped": 0,
+      "passRate": "16.67",
+      "duration": "0.15s",
+      "timestamp": "2025-11-09T07:37:14.269Z"
+    },
+    {
+      "testSuite": "End-to-End Workflow",
+      "totalTests": 5,
+      "passed": 1,
+      "failed": 2,
+      "skipped": 2,
+      "passRate": "20.00",
+      "duration": "0.23s",
+      "timestamp": "2025-11-09T07:37:19.513Z"
+    }
+  ],
+  "testData": {
+    "agencyAdmin": {
+      "email": "admin.1762673754968@test-agency.com",
+      "tenantId": "6910445b771362133a2bd192"
+    },
+    "operator": {
+      "email": "operator.1762673791523.7noios@test.com"
+    },
+    "createdEntities": {
+      "agent": "agent.1762673773325.y8n6qb@test.com",
+      "customer": "customer.1762673780467.e2w3jn@test.com"
+    }
+  }
+}

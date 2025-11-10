@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useAuthStore } from '../../stores/authStore'
+import { useTenantBranding } from '../../contexts/TenantBrandingContext'
 import { authAPI } from '../../services/apiEndpoints'
 import toast from 'react-hot-toast'
 import { FiMail, FiLock } from 'react-icons/fi'
@@ -12,6 +13,7 @@ const Login = () => {
   })
   const [loading, setLoading] = useState(false)
   const { setAuth } = useAuthStore()
+  const { logo, companyName, primaryColor } = useTenantBranding()
   const navigate = useNavigate()
 
   const handleChange = (e) => {
@@ -33,10 +35,24 @@ const Login = () => {
       toast.success('Login successful!')
       
       // Smart redirect based on user role
-      if (user.role === 'agent') {
-        navigate('/agent/dashboard')
-      } else {
-        navigate('/dashboard')
+      switch (user.role) {
+        case 'agent':
+          navigate('/agent/dashboard')
+          break
+        case 'supplier':
+          navigate('/supplier/dashboard')
+          break
+        case 'customer':
+          navigate('/customer/dashboard')
+          break
+        case 'finance':
+          navigate('/finance/dashboard')
+          break
+        case 'super_admin':
+        case 'operator':
+        default:
+          navigate('/dashboard')
+          break
       }
     } catch (error) {
       console.error('Login error:', error)
@@ -53,9 +69,30 @@ const Login = () => {
 
   return (
     <div className="bg-white rounded-lg shadow-xl p-8">
-      <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">
-        Sign In
+      {/* Tenant Logo */}
+      <div className="flex justify-center mb-6">
+        {logo ? (
+          <img 
+            src={logo} 
+            alt={companyName} 
+            className="h-16 w-auto object-contain"
+          />
+        ) : (
+          <div 
+            className="h-16 w-16 rounded-lg flex items-center justify-center text-white font-bold text-2xl"
+            style={{ backgroundColor: primaryColor }}
+          >
+            {companyName?.charAt(0) || 'T'}
+          </div>
+        )}
+      </div>
+
+      <h2 className="text-2xl font-bold text-gray-800 mb-2 text-center">
+        Welcome Back
       </h2>
+      <p className="text-gray-600 text-center mb-6">
+        Sign in to {companyName}
+      </p>
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
@@ -92,8 +129,11 @@ const Login = () => {
 
         <button
           type="submit"
-          className="w-full btn btn-primary"
+          className="w-full btn text-white font-medium py-3 rounded-lg transition-colors"
           disabled={loading}
+          style={{ backgroundColor: primaryColor }}
+          onMouseOver={(e) => e.target.style.opacity = '0.9'}
+          onMouseOut={(e) => e.target.style.opacity = '1'}
         >
           {loading ? (
             <span className="flex items-center justify-center gap-2">
@@ -127,11 +167,17 @@ const Login = () => {
           >
             Agent
           </button>
+          <button
+            onClick={() => quickLogin('supplier@travelcrm.com', 'Supplier@123')}
+            className="px-3 py-1 text-xs bg-orange-100 text-orange-700 rounded hover:bg-orange-200"
+          >
+            Supplier
+          </button>
         </div>
       </div>
 
       <div className="mt-6 text-center">
-        <a href="#" className="text-sm text-primary-600 hover:underline">
+        <a href="#" className="text-sm hover:underline" style={{ color: primaryColor }}>
           Forgot password?
         </a>
       </div>
@@ -139,7 +185,7 @@ const Login = () => {
       <div className="mt-4 text-center">
         <p className="text-sm text-gray-600">
           Don't have an account?{' '}
-          <Link to="/register" className="text-primary-600 hover:underline font-medium">
+          <Link to="/register" className="hover:underline font-medium" style={{ color: primaryColor }}>
             Sign up here
           </Link>
         </p>

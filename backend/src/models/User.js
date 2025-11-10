@@ -30,7 +30,7 @@ const userSchema = new mongoose.Schema({
   },
   role: {
     type: String,
-    enum: ['super_admin', 'operator', 'agent', 'supplier', 'auditor'],
+    enum: ['super_admin', 'operator', 'agent', 'supplier', 'customer', 'auditor', 'finance'],
     default: 'agent',
   },
   phone: {
@@ -57,6 +57,11 @@ const userSchema = new mongoose.Schema({
     default: 'bronze',
   },
   creditLimit: {
+    type: Number,
+    default: 0,
+    min: 0,
+  },
+  creditUsed: {
     type: Number,
     default: 0,
     min: 0,
@@ -158,6 +163,40 @@ userSchema.methods.changedPasswordAfter = function(JWTTimestamp) {
     return JWTTimestamp < changedTimestamp;
   }
   return false;
+};
+
+// Virtual field: Available credit
+userSchema.virtual('availableCredit').get(function() {
+  if (this.role !== 'agent') return 0;
+  return Math.max(0, this.creditLimit - this.creditUsed);
+});
+
+// Method: Check if agent has sufficient credit
+userSchema.methods.hasSufficientCredit = function(amount) {
+  if (this.role !== 'agent') return true;
+  return this.availableCredit >= amount;
+};
+
+// Method: Reserve credit (for pending bookings)
+userSchema.methods.reserveCredit = async function(amount) {
+  if (this.role !== 'agent') return true;
+  
+  if (!this.hasSufficientCredit(amount)) {
+    return false;
+  }
+  
+  this.creditUsed += amount;
+  await this.save();
+  return true;
+};
+
+// Method: Release credit (when booking is cancelled)
+userSchema.methods.releaseCredit = async function(amount) {
+  if (this.role !== 'agent') return true;
+  
+  this.creditUsed = Math.max(0, this.creditUsed - amount);
+  await this.save();
+  return true;
 };
 
 const User = mongoose.model('User', userSchema);
