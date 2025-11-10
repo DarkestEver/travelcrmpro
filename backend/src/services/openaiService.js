@@ -1,47 +1,107 @@
 const OpenAI = require('openai');
 const AIProcessingLog = require('../models/AIProcessingLog');
+const Tenant = require('../models/Tenant');
 
 class OpenAIService {
   constructor() {
-    // Check if OpenAI API key is configured
-    if (!process.env.OPENAI_API_KEY) {
-      console.warn('⚠️  OPENAI_API_KEY not configured - AI features will be disabled');
-      console.warn('   To enable AI: Add OPENAI_API_KEY=sk-your-key to backend/.env');
-      this.enabled = false;
-      return;
+    // Global OpenAI client (fallback)
+    this.globalEnabled = false;
+    
+    if (process.env.OPENAI_API_KEY) {
+      try {
+        this.globalClient = new OpenAI({
+          apiKey: process.env.OPENAI_API_KEY
+        });
+        this.globalEnabled = true;
+        console.log('✅ Global OpenAI service initialized');
+      } catch (error) {
+        console.error('❌ Failed to initialize global OpenAI:', error.message);
+      }
+    } else {
+      console.warn('⚠️  Global OPENAI_API_KEY not configured');
+      console.warn('   Tenants can configure their own API keys in settings');
+    }
+    
+    // Tenant-specific clients cache
+    this.tenantClients = new Map();
+    
+    this.models = {
+      categorization: 'gpt-4-turbo-preview',
+      extraction: 'gpt-4-turbo-preview',
+      response: 'gpt-4-turbo-preview',
+      sentiment: 'gpt-3.5-turbo'
+    };
+    
+    // Pricing per 1K tokens (as of Nov 2024)
+    this.pricing = {
+      'gpt-4-turbo-preview': { input: 0.01, output: 0.03 },
+      'gpt-3.5-turbo': { input: 0.0005, output: 0.0015 }
+    };
+  }
+
+  /**
+   * Get OpenAI client for tenant (tenant-specific or global fallback)
+   */
+  async getClientForTenant(tenantId) {
+    // Check cache first
+    if (this.tenantClients.has(tenantId)) {
+      return this.tenantClients.get(tenantId);
     }
 
-    try {
-      this.client = new OpenAI({
-        apiKey: process.env.OPENAI_API_KEY
-      });
-      
-      this.models = {
-        categorization: 'gpt-4-turbo-preview',
-        extraction: 'gpt-4-turbo-preview',
-        response: 'gpt-4-turbo-preview',
-        sentiment: 'gpt-3.5-turbo'
-      };
-      
-      // Pricing per 1K tokens (as of Nov 2024)
-      this.pricing = {
-        'gpt-4-turbo-preview': { input: 0.01, output: 0.03 },
-        'gpt-3.5-turbo': { input: 0.0005, output: 0.0015 }
-      };
-
-      this.enabled = true;
-      console.log('✅ OpenAI service initialized');
-    } catch (error) {
-      console.error('❌ Failed to initialize OpenAI:', error.message);
-      this.enabled = false;
+    // Try to get tenant-specific API key
+    const tenant = await Tenant.findById(tenantId);
+    if (tenant && tenant.settings?.aiSettings?.enabled && tenant.settings?.aiSettings?.openaiApiKey) {
+      try {
+        const aiSettings = tenant.getDecryptedAISettings();
+        if (aiSettings.openaiApiKey) {
+          const client = new OpenAI({
+            apiKey: aiSettings.openaiApiKey
+          });
+          
+          // Cache the client
+          this.tenantClients.set(tenantId, {
+            client,
+            settings: aiSettings,
+            source: 'tenant'
+          });
+          
+          console.log(`✅ Using tenant-specific OpenAI key for tenant ${tenantId}`);
+          return { client, settings: aiSettings, source: 'tenant' };
+        }
+      } catch (error) {
+        console.error(`Failed to initialize tenant OpenAI for ${tenantId}:`, error.message);
+      }
     }
+
+    // Fallback to global client
+    if (this.globalEnabled) {
+      console.log(`✅ Using global OpenAI key for tenant ${tenantId}`);
+      return {
+        client: this.globalClient,
+        settings: { enabled: true },
+        source: 'global'
+      };
+    }
+
+    // No OpenAI available
+    return null;
+  }
+
+  /**
+   * Check if OpenAI is available for tenant
+   */
+  async isEnabledForTenant(tenantId) {
+    const clientInfo = await this.getClientForTenant(tenantId);
+    return clientInfo !== null;
   }
 
   /**
    * Categorize email using AI
    */
   async categorizeEmail(email, tenantId) {
-    if (!this.enabled) {
+    const clientInfo = await this.getClientForTenant(tenantId);
+    
+    if (!clientInfo) {
       return {
         category: 'OTHER',
         confidence: 0,
@@ -81,8 +141,9 @@ Respond with ONLY valid JSON:
 }`;
 
     try {
-      const response = await this.client.chat.completions.create({
-        model: this.models.categorization,
+      const model = clientInfo.settings?.models?.categorization || 'gpt-4-turbo-preview';
+      const response = await clientInfo.client.chat.completions.create({
+        model: model,
         messages: [
           { role: 'system', content: 'You are an expert email categorization system for a travel CRM. Always respond with valid JSON only.' },
           { role: 'user', content: prompt }
@@ -93,14 +154,14 @@ Respond with ONLY valid JSON:
 
       const result = JSON.parse(response.choices[0].message.content);
       const usage = response.usage;
-      const cost = this.calculateCost('gpt-4-turbo-preview', usage);
+      const cost = this.calculateCost(model, usage);
 
       // Log the AI processing
       await AIProcessingLog.create({
         emailLogId: email._id,
         processingType: 'categorization',
         status: 'completed',
-        model: this.models.categorization,
+        model: model,
         prompt,
         promptTokens: usage.prompt_tokens,
         completionTokens: usage.completion_tokens,
@@ -128,11 +189,12 @@ Respond with ONLY valid JSON:
     } catch (error) {
       console.error('OpenAI categorization error:', error);
       
+      const model = clientInfo.settings?.models?.categorization || 'gpt-4-turbo-preview';
       await AIProcessingLog.create({
         emailLogId: email._id,
         processingType: 'categorization',
         status: 'failed',
-        model: this.models.categorization,
+        model: model,
         prompt,
         error: error.message,
         errorCode: error.code,
@@ -149,7 +211,9 @@ Respond with ONLY valid JSON:
    * Extract structured data from customer inquiry
    */
   async extractCustomerInquiry(email, tenantId) {
-    if (!this.enabled) {
+    const clientInfo = await this.getClientForTenant(tenantId);
+    
+    if (!clientInfo) {
       return {
         destination: null,
         dates: { flexible: true },
@@ -214,8 +278,9 @@ Extract ALL available information and respond with ONLY valid JSON:
 }`;
 
     try {
-      const response = await this.client.chat.completions.create({
-        model: this.models.extraction,
+      const model = clientInfo.settings?.models?.extraction || 'gpt-4-turbo-preview';
+      const response = await clientInfo.client.chat.completions.create({
+        model: model,
         messages: [
           { role: 'system', content: 'You are an expert at extracting structured travel inquiry data. Always respond with valid JSON only.' },
           { role: 'user', content: prompt }
@@ -226,13 +291,13 @@ Extract ALL available information and respond with ONLY valid JSON:
 
       const result = JSON.parse(response.choices[0].message.content);
       const usage = response.usage;
-      const cost = this.calculateCost('gpt-4-turbo-preview', usage);
+      const cost = this.calculateCost(model, usage);
 
       await AIProcessingLog.create({
         emailLogId: email._id,
         processingType: 'extraction',
         status: 'completed',
-        model: this.models.extraction,
+        model: model,
         prompt,
         promptTokens: usage.prompt_tokens,
         completionTokens: usage.completion_tokens,
@@ -254,7 +319,7 @@ Extract ALL available information and respond with ONLY valid JSON:
         emailLogId: email._id,
         processingType: 'extraction',
         status: 'failed',
-        model: this.models.extraction,
+        model: model,
         prompt,
         error: error.message,
         tenantId
@@ -271,7 +336,9 @@ Extract ALL available information and respond with ONLY valid JSON:
    * Extract structured supplier package data
    */
   async extractSupplierPackage(email, tenantId) {
-    if (!this.enabled) {
+    const clientInfo = await this.getClientForTenant(tenantId);
+    
+    if (!clientInfo) {
       return {
         packages: [],
         confidence: 0,
@@ -325,8 +392,9 @@ Extract ALL package information and respond with ONLY valid JSON:
 }`;
 
     try {
-      const response = await this.client.chat.completions.create({
-        model: this.models.extraction,
+      const model = clientInfo.settings?.models?.extraction || 'gpt-4-turbo-preview';
+      const response = await clientInfo.client.chat.completions.create({
+        model: model,
         messages: [
           { role: 'system', content: 'You are an expert at extracting travel package information from supplier emails. Always respond with valid JSON only.' },
           { role: 'user', content: prompt }
@@ -337,13 +405,13 @@ Extract ALL package information and respond with ONLY valid JSON:
 
       const result = JSON.parse(response.choices[0].message.content);
       const usage = response.usage;
-      const cost = this.calculateCost('gpt-4-turbo-preview', usage);
+      const cost = this.calculateCost(model, usage);
 
       await AIProcessingLog.create({
         emailLogId: email._id,
         processingType: 'extraction',
         status: 'completed',
-        model: this.models.extraction,
+        model: model,
         prompt,
         promptTokens: usage.prompt_tokens,
         completionTokens: usage.completion_tokens,
@@ -365,7 +433,7 @@ Extract ALL package information and respond with ONLY valid JSON:
         emailLogId: email._id,
         processingType: 'extraction',
         status: 'failed',
-        model: this.models.extraction,
+        model: model,
         prompt,
         error: error.message,
         tenantId
@@ -379,7 +447,9 @@ Extract ALL package information and respond with ONLY valid JSON:
    * Generate response email
    */
   async generateResponse(email, context, templateType, tenantId) {
-    if (!this.enabled) {
+    const clientInfo = await this.getClientForTenant(tenantId);
+    
+    if (!clientInfo) {
       return {
         subject: 'Re: ' + email.subject,
         body: 'Thank you for your email. We will review your request and get back to you shortly.',
@@ -443,8 +513,9 @@ Respond with ONLY valid JSON:
     }
 
     try {
-      const response = await this.client.chat.completions.create({
-        model: this.models.response,
+      const model = clientInfo.settings?.models?.response || 'gpt-4-turbo-preview';
+      const response = await clientInfo.client.chat.completions.create({
+        model: model,
         messages: [
           { role: 'system', content: 'You are a professional travel consultant writing customer emails. Always respond with valid JSON only.' },
           { role: 'user', content: prompt }
@@ -455,13 +526,13 @@ Respond with ONLY valid JSON:
 
       const result = JSON.parse(response.choices[0].message.content);
       const usage = response.usage;
-      const cost = this.calculateCost('gpt-4-turbo-preview', usage);
+      const cost = this.calculateCost(model, usage);
 
       await AIProcessingLog.create({
         emailLogId: email._id,
         processingType: 'response_generation',
         status: 'completed',
-        model: this.models.response,
+        model: model,
         prompt,
         promptTokens: usage.prompt_tokens,
         completionTokens: usage.completion_tokens,

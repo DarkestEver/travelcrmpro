@@ -305,6 +305,74 @@ const tenantSchema = new mongoose.Schema(
           iban: String,
         },
       },
+      // AI Email Automation Settings
+      aiSettings: {
+        enabled: {
+          type: Boolean,
+          default: false,
+        },
+        // Tenant-specific OpenAI API key (encrypted)
+        openaiApiKey: String,  // Encrypted in pre-save hook
+        // AI Processing settings
+        autoProcessEmails: {
+          type: Boolean,
+          default: true,
+        },
+        confidenceThreshold: {
+          type: Number,
+          default: 70,
+          min: 0,
+          max: 100,
+        },
+        autoResponseEnabled: {
+          type: Boolean,
+          default: false,
+        },
+        // Cost tracking
+        monthlyCostLimit: {
+          type: Number,
+          default: 100, // USD
+        },
+        currentMonthCost: {
+          type: Number,
+          default: 0,
+        },
+        lastCostReset: {
+          type: Date,
+          default: Date.now,
+        },
+        // AI model preferences
+        models: {
+          categorization: {
+            type: String,
+            default: 'gpt-4-turbo-preview',
+          },
+          extraction: {
+            type: String,
+            default: 'gpt-4-turbo-preview',
+          },
+          response: {
+            type: String,
+            default: 'gpt-4-turbo-preview',
+          },
+        },
+        // Usage statistics
+        stats: {
+          totalEmailsProcessed: {
+            type: Number,
+            default: 0,
+          },
+          totalCost: {
+            type: Number,
+            default: 0,
+          },
+          averageCostPerEmail: {
+            type: Number,
+            default: 0,
+          },
+          lastProcessedAt: Date,
+        },
+      },
     },
     // Subscription details
     subscription: {
@@ -438,6 +506,13 @@ tenantSchema.pre('save', function(next) {
     }
   }
   
+  // Encrypt OpenAI API key if modified
+  if (this.isModified('settings.aiSettings.openaiApiKey') && this.settings?.aiSettings?.openaiApiKey) {
+    if (!this.settings.aiSettings.openaiApiKey.includes(':')) {
+      this.settings.aiSettings.openaiApiKey = encrypt(this.settings.aiSettings.openaiApiKey);
+    }
+  }
+  
   next();
 });
 
@@ -456,6 +531,19 @@ tenantSchema.methods.getDecryptedPaymentKeys = function() {
   };
 };
 
+// Method to get decrypted AI settings
+tenantSchema.methods.getDecryptedAISettings = function() {
+  return {
+    openaiApiKey: this.settings?.aiSettings?.openaiApiKey 
+      ? decrypt(this.settings.aiSettings.openaiApiKey) 
+      : null,
+    enabled: this.settings?.aiSettings?.enabled || false,
+    autoProcessEmails: this.settings?.aiSettings?.autoProcessEmails !== false,
+    confidenceThreshold: this.settings?.aiSettings?.confidenceThreshold || 70,
+    models: this.settings?.aiSettings?.models || {},
+  };
+};
+
 // Method to mask sensitive keys for API responses
 tenantSchema.methods.toJSON = function() {
   const obj = this.toObject();
@@ -469,6 +557,11 @@ tenantSchema.methods.toJSON = function() {
   }
   if (obj.settings?.payment?.razorpayKeySecret) {
     obj.settings.payment.razorpayKeySecret = '***' + obj.settings.payment.razorpayKeySecret.slice(-4);
+  }
+  
+  // Mask OpenAI API key
+  if (obj.settings?.aiSettings?.openaiApiKey) {
+    obj.settings.aiSettings.openaiApiKey = 'sk-***' + obj.settings.aiSettings.openaiApiKey.slice(-4);
   }
   
   return obj;
