@@ -64,11 +64,17 @@ const ReviewQueue = () => {
         page: pagination.page,
         limit: pagination.limit
       });
-      setQueue(response.data);
-      setPagination(response.pagination);
+      
+      setQueue(response.data || []);
+      
+      // Safely handle pagination
+      if (response.pagination) {
+        setPagination(response.pagination);
+      }
     } catch (error) {
       console.error('Failed to fetch queue:', error);
       toast.error('Failed to load review queue');
+      setQueue([]);
     } finally {
       setLoading(false);
     }
@@ -77,9 +83,31 @@ const ReviewQueue = () => {
   const fetchStats = async () => {
     try {
       const response = await reviewQueueAPI.getStats();
-      setStats(response.data);
+      setStats(response.data || {
+        total: 0,
+        pending: 0,
+        inReview: 0,
+        completed: 0,
+        rejected: 0,
+        escalated: 0,
+        urgent: 0,
+        slaBreached: 0,
+        avgTimeInQueue: 0
+      });
     } catch (error) {
       console.error('Failed to fetch stats:', error);
+      // Set default stats on error
+      setStats({
+        total: 0,
+        pending: 0,
+        inReview: 0,
+        completed: 0,
+        rejected: 0,
+        escalated: 0,
+        urgent: 0,
+        slaBreached: 0,
+        avgTimeInQueue: 0
+      });
     }
   };
 

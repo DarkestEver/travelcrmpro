@@ -302,22 +302,69 @@ manualReviewQueueSchema.statics.getBreachedSLA = function(tenantId) {
 };
 
 manualReviewQueueSchema.statics.getQueueStats = async function(tenantId) {
-  return this.aggregate([
-    { $match: { tenantId: mongoose.Types.ObjectId(tenantId) } },
-    {
-      $group: {
-        _id: '$status',
-        count: { $sum: 1 },
-        avgTimeInQueue: { $avg: '$timeInQueue' },
-        urgentCount: {
-          $sum: { $cond: ['$isUrgent', 1, 0] }
-        },
-        slaBreachedCount: {
-          $sum: { $cond: ['$slaBreached', 1, 0] }
+  try {
+    const objectId = typeof tenantId === 'string' ? new mongoose.Types.ObjectId(tenantId) : tenantId;
+    
+    const stats = await this.aggregate([
+      { $match: { tenantId: objectId } },
+      {
+        $group: {
+          _id: '$status',
+          count: { $sum: 1 },
+          avgTimeInQueue: { $avg: '$timeInQueue' },
+          urgentCount: {
+            $sum: { $cond: ['$isUrgent', 1, 0] }
+          },
+          slaBreachedCount: {
+            $sum: { $cond: ['$slaBreached', 1, 0] }
+          }
         }
       }
+    ]);
+
+    // Transform to more friendly format
+    const result = {
+      total: 0,
+      pending: 0,
+      inReview: 0,
+      completed: 0,
+      rejected: 0,
+      escalated: 0,
+      urgent: 0,
+      slaBreached: 0,
+      avgTimeInQueue: 0
+    };
+
+    stats.forEach(stat => {
+      result.total += stat.count;
+      result[stat._id] = stat.count;
+      result.urgent += stat.urgentCount || 0;
+      result.slaBreached += stat.slaBreachedCount || 0;
+      if (stat.avgTimeInQueue) {
+        result.avgTimeInQueue += stat.avgTimeInQueue;
+      }
+    });
+
+    if (stats.length > 0) {
+      result.avgTimeInQueue = result.avgTimeInQueue / stats.length;
     }
-  ]);
+
+    return result;
+  } catch (error) {
+    console.error('getQueueStats error:', error);
+    // Return empty stats on error
+    return {
+      total: 0,
+      pending: 0,
+      inReview: 0,
+      completed: 0,
+      rejected: 0,
+      escalated: 0,
+      urgent: 0,
+      slaBreached: 0,
+      avgTimeInQueue: 0
+    };
+  }
 };
 
 module.exports = mongoose.model('ManualReviewQueue', manualReviewQueueSchema);
