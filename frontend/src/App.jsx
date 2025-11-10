@@ -82,6 +82,10 @@ import FinanceSettings from './pages/finance/Settings'
 import TenantSettings from './pages/TenantSettings'
 import EmailAccounts from './pages/settings/EmailAccounts'
 
+// Email Automation
+import EmailDashboard from './pages/emails/EmailDashboard'
+import EmailDetail from './pages/emails/EmailDetail'
+
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
   const { user, accessToken } = useAuthStore()
@@ -264,6 +268,18 @@ function App() {
         <Route path="settings/email-accounts" element={
           <RoleBasedRoute allowedRoles={['super_admin', 'operator', 'admin']}>
             <EmailAccounts />
+          </RoleBasedRoute>
+        } />
+
+        {/* Email Automation Routes */}
+        <Route path="emails" element={
+          <RoleBasedRoute allowedRoles={['super_admin', 'operator', 'admin']}>
+            <EmailDashboard />
+          </RoleBasedRoute>
+        } />
+        <Route path="emails/:id" element={
+          <RoleBasedRoute allowedRoles={['super_admin', 'operator', 'admin']}>
+            <EmailDetail />
           </RoleBasedRoute>
         } />
         

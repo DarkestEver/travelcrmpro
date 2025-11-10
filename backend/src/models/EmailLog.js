@@ -1,0 +1,237 @@
+const mongoose = require('mongoose');
+
+const emailLogSchema = new mongoose.Schema({
+  // Basic Email Information
+  messageId: {
+    type: String,
+    required: true,
+    unique: true,
+    index: true
+  },
+  threadId: {
+    type: String,
+    index: true
+  },
+  
+  // Email Account
+  emailAccountId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'EmailAccount',
+    required: true,
+    index: true
+  },
+  
+  // From/To Information
+  from: {
+    email: { type: String, required: true, index: true },
+    name: String
+  },
+  to: [{
+    email: { type: String, required: true },
+    name: String
+  }],
+  cc: [{
+    email: String,
+    name: String
+  }],
+  bcc: [{
+    email: String,
+    name: String
+  }],
+  
+  // Email Content
+  subject: {
+    type: String,
+    required: true,
+    index: true
+  },
+  bodyHtml: String,
+  bodyText: {
+    type: String,
+    required: true
+  },
+  snippet: String, // First 200 chars
+  
+  // Attachments
+  attachments: [{
+    filename: String,
+    contentType: String,
+    size: Number,
+    contentId: String,
+    url: String, // S3/storage URL if saved
+    processed: { type: Boolean, default: false }
+  }],
+  
+  // Email Metadata
+  receivedAt: {
+    type: Date,
+    required: true,
+    default: Date.now,
+    index: true
+  },
+  headers: mongoose.Schema.Types.Mixed,
+  priority: {
+    type: String,
+    enum: ['low', 'normal', 'high', 'urgent'],
+    default: 'normal',
+    index: true
+  },
+  
+  // AI Processing Status
+  processingStatus: {
+    type: String,
+    enum: ['pending', 'processing', 'completed', 'failed', 'skipped'],
+    default: 'pending',
+    index: true
+  },
+  processedAt: Date,
+  processingError: String,
+  
+  // AI Results
+  category: {
+    type: String,
+    enum: ['SUPPLIER', 'CUSTOMER', 'AGENT', 'FINANCE', 'OTHER', 'SPAM'],
+    index: true
+  },
+  categoryConfidence: {
+    type: Number,
+    min: 0,
+    max: 100
+  },
+  
+  // Extracted Data (JSON)
+  extractedData: mongoose.Schema.Types.Mixed,
+  
+  // Matching Results
+  matchingResults: [{
+    packageId: mongoose.Schema.Types.ObjectId,
+    score: Number,
+    reasons: [String]
+  }],
+  
+  // Response Tracking
+  responseGenerated: { type: Boolean, default: false },
+  responseId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'EmailLog'
+  },
+  responseSentAt: Date,
+  
+  // Manual Review
+  requiresReview: { type: Boolean, default: false, index: true },
+  reviewedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  },
+  reviewedAt: Date,
+  reviewNotes: String,
+  reviewDecision: {
+    type: String,
+    enum: ['approved', 'rejected', 'modified']
+  },
+  
+  // Flags
+  isRead: { type: Boolean, default: false, index: true },
+  isStarred: { type: Boolean, default: false },
+  isArchived: { type: Boolean, default: false },
+  isSpam: { type: Boolean, default: false },
+  
+  // Customer/Booking Context
+  customerId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Customer',
+    index: true
+  },
+  bookingId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Booking',
+    index: true
+  },
+  quoteId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Quote',
+    index: true
+  },
+  
+  // Tenant
+  tenantId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Tenant',
+    required: true,
+    index: true
+  },
+  
+  // Analytics
+  sentiment: {
+    type: String,
+    enum: ['positive', 'neutral', 'negative', 'urgent'],
+    index: true
+  },
+  language: {
+    type: String,
+    default: 'en'
+  },
+  tags: [String],
+  
+  // OpenAI Processing
+  openaiCost: {
+    type: Number,
+    default: 0
+  },
+  tokensUsed: {
+    type: Number,
+    default: 0
+  }
+}, {
+  timestamps: true
+});
+
+// Indexes for performance
+emailLogSchema.index({ tenantId: 1, receivedAt: -1 });
+emailLogSchema.index({ tenantId: 1, category: 1, processingStatus: 1 });
+emailLogSchema.index({ tenantId: 1, requiresReview: 1, reviewedAt: 1 });
+emailLogSchema.index({ 'from.email': 1, tenantId: 1 });
+
+// Virtual for full text
+emailLogSchema.virtual('fullText').get(function() {
+  return `${this.subject} ${this.bodyText}`;
+});
+
+// Methods
+emailLogSchema.methods.markAsProcessed = function(category, confidence, extractedData) {
+  this.processingStatus = 'completed';
+  this.processedAt = new Date();
+  this.category = category;
+  this.categoryConfidence = confidence;
+  this.extractedData = extractedData;
+  return this.save();
+};
+
+emailLogSchema.methods.markForReview = function(reason) {
+  this.requiresReview = true;
+  this.reviewNotes = reason;
+  return this.save();
+};
+
+// Statics
+emailLogSchema.statics.getPendingEmails = function(tenantId, limit = 50) {
+  return this.find({
+    tenantId,
+    processingStatus: 'pending'
+  })
+  .sort({ receivedAt: 1 })
+  .limit(limit);
+};
+
+emailLogSchema.statics.getReviewQueue = function(tenantId) {
+  return this.find({
+    tenantId,
+    requiresReview: true,
+    reviewedAt: { $exists: false }
+  })
+  .sort({ receivedAt: -1 })
+  .populate('emailAccountId', 'accountName email')
+  .populate('reviewedBy', 'name email');
+};
+
+module.exports = mongoose.model('EmailLog', emailLogSchema);

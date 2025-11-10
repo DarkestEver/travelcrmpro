@@ -21,6 +21,8 @@ const agentPaymentRoutes = require('./agentPaymentRoutes');
 const financeRoutes = require('./finance');
 const adjustmentRoutes = require('./adjustments');
 const emailAccountRoutes = require('./emailAccounts');
+const emailRoutes = require('./emailRoutes');
+const reviewQueueRoutes = require('./reviewQueueRoutes');
 
 const router = express.Router();
 
@@ -57,6 +59,8 @@ router.use('/upload', uploadRoutes);
 router.use('/finance', financeRoutes); // Finance management portal
 router.use('/adjustments', adjustmentRoutes); // Booking adjustments
 router.use('/email-accounts', emailAccountRoutes); // Email account management
+router.use('/emails', emailRoutes); // AI Email automation
+router.use('/review-queue', reviewQueueRoutes); // Manual review queue
 router.use('/email', emailTestRoutes); // Email test endpoints
 router.use('/test', testRoutes); // Test endpoints (development only)
 
