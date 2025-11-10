@@ -5,7 +5,7 @@ const User = require('../models/User');
 const Agent = require('../models/Agent');
 const Customer = require('../models/Customer');
 const openaiService = require('./openaiService');
-const emailService = require('./email');
+const emailService = require('./emailService');
 const notificationService = require('./notificationService');
 
 class EmailToQuoteService {
@@ -1035,12 +1035,8 @@ This is an automated acknowledgment. A travel consultant will contact you soon w
       await emailService.sendEmail({
         to: quote.customerEmail,
         subject,
-        body,
-        tenantId: quote.tenantId,
-        metadata: {
-          quoteId: quote._id,
-          type: 'acknowledgment'
-        }
+        text: body,
+        html: body.replace(/\n/g, '<br>')
       });
 
       console.log(`✅ Acknowledgment email sent to ${quote.customerEmail}`);
@@ -1096,12 +1092,8 @@ The Travel Team
       await emailService.sendEmail({
         to: quote.customerEmail,
         subject,
-        body,
-        tenantId: quote.tenantId,
-        metadata: {
-          quoteId: quote._id,
-          type: 'request_info'
-        }
+        text: body,
+        html: body.replace(/\n/g, '<br>')
       });
 
       quote.status = 'awaiting_customer_info';

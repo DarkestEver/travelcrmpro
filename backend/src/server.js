@@ -5,6 +5,7 @@ const helmet = require('helmet');
 const compression = require('compression');
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
+const cron = require('node-cron');
 require('dotenv').config();
 
 const { connectDB, connectRedis } = require('./config/database');
@@ -16,6 +17,7 @@ const { initCronJobs } = require('./jobs');
 // const getWebSocketService = require('./services/websocketService'); // Temporarily disabled
 const getPDFService = require('./services/pdfService');
 const { verifyConnection } = require('./config/emailConfig');
+const slaCheckService = require('./services/slaCheckService');
 
 // Initialize Express app
 const app = express();
@@ -159,6 +161,18 @@ const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
   logger.info(`Server running in ${process.env.NODE_ENV || 'development'} mode on port ${PORT}`);
   logger.info(`WebSocket server ready on port ${PORT}`);
+  
+  // Initialize SLA monitoring cron job (runs every hour)
+  cron.schedule('0 * * * *', async () => {
+    try {
+      logger.info('⏰ Running hourly SLA check...');
+      await slaCheckService.runSLACheck();
+    } catch (error) {
+      logger.error('❌ SLA check failed:', error);
+    }
+  });
+  
+  logger.info('✅ SLA monitoring cron job initialized (runs every hour)');
 });
 
 // Handle unhandled promise rejections
