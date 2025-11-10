@@ -1,4 +1,5 @@
 import { NavLink } from 'react-router-dom'
+import { useState } from 'react'
 import { useAuthStore } from '../stores/authStore'
 import { useTenantBranding } from '../contexts/TenantBrandingContext'
 import { 
@@ -11,12 +12,18 @@ import {
   FiCalendar,
   FiBarChart2,
   FiShield,
-  FiSettings
+  FiSettings,
+  FiMail,
+  FiInbox,
+  FiTrendingUp,
+  FiChevronDown,
+  FiChevronRight
 } from 'react-icons/fi'
 
 const Sidebar = () => {
   const { user } = useAuthStore()
   const { logo, companyName, primaryColor, isLoading } = useTenantBranding()
+  const [emailsOpen, setEmailsOpen] = useState(false)
 
   const navItems = [
     {
@@ -60,6 +67,28 @@ const Sidebar = () => {
       path: '/bookings',
       icon: FiCalendar,
       roles: ['super_admin', 'operator', 'agent'],
+    },
+    {
+      name: 'Emails',
+      icon: FiMail,
+      roles: ['super_admin', 'operator'],
+      submenu: [
+        {
+          name: 'Dashboard',
+          path: '/emails',
+          icon: FiInbox,
+        },
+        {
+          name: 'Review Queue',
+          path: '/emails/review-queue',
+          icon: FiFileText,
+        },
+        {
+          name: 'Analytics',
+          path: '/emails/analytics',
+          icon: FiTrendingUp,
+        },
+      ],
     },
     {
       name: 'Analytics',
@@ -123,23 +152,69 @@ const Sidebar = () => {
 
       <nav className="p-4">
         {filteredNavItems.map((item) => (
-          <NavLink
-            key={item.path}
-            to={item.path}
-            className={({ isActive }) =>
-              `flex items-center gap-3 px-4 py-3 rounded-lg mb-2 transition-colors ${
-                isActive
-                  ? 'text-white'
-                  : 'text-gray-700 hover:bg-gray-100'
-              }`
-            }
-            style={({ isActive }) => ({
-              backgroundColor: isActive ? primaryColor : 'transparent'
-            })}
-          >
-            <item.icon className="text-xl" />
-            <span className="font-medium">{item.name}</span>
-          </NavLink>
+          <div key={item.name}>
+            {item.submenu ? (
+              // Menu item with submenu
+              <div>
+                <button
+                  onClick={() => setEmailsOpen(!emailsOpen)}
+                  className="flex items-center justify-between w-full px-4 py-3 rounded-lg mb-2 transition-colors text-gray-700 hover:bg-gray-100"
+                >
+                  <div className="flex items-center gap-3">
+                    <item.icon className="text-xl" />
+                    <span className="font-medium">{item.name}</span>
+                  </div>
+                  {emailsOpen ? (
+                    <FiChevronDown className="text-lg" />
+                  ) : (
+                    <FiChevronRight className="text-lg" />
+                  )}
+                </button>
+                
+                {emailsOpen && (
+                  <div className="ml-4 space-y-1">
+                    {item.submenu.map((subItem) => (
+                      <NavLink
+                        key={subItem.path}
+                        to={subItem.path}
+                        className={({ isActive }) =>
+                          `flex items-center gap-3 px-4 py-2 rounded-lg transition-colors ${
+                            isActive
+                              ? 'text-white'
+                              : 'text-gray-600 hover:bg-gray-50'
+                          }`
+                        }
+                        style={({ isActive }) => ({
+                          backgroundColor: isActive ? primaryColor : 'transparent'
+                        })}
+                      >
+                        <subItem.icon className="text-lg" />
+                        <span className="text-sm font-medium">{subItem.name}</span>
+                      </NavLink>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ) : (
+              // Regular menu item
+              <NavLink
+                to={item.path}
+                className={({ isActive }) =>
+                  `flex items-center gap-3 px-4 py-3 rounded-lg mb-2 transition-colors ${
+                    isActive
+                      ? 'text-white'
+                      : 'text-gray-700 hover:bg-gray-100'
+                  }`
+                }
+                style={({ isActive }) => ({
+                  backgroundColor: isActive ? primaryColor : 'transparent'
+                })}
+              >
+                <item.icon className="text-xl" />
+                <span className="font-medium">{item.name}</span>
+              </NavLink>
+            )}
+          </div>
         ))}
       </nav>
     </div>

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Link } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import { 
   FiSettings, 
@@ -18,7 +19,9 @@ import {
   FiClock,
   FiDollarSign,
   FiEye,
-  FiEyeOff
+  FiEyeOff,
+  FiServer,
+  FiExternalLink
 } from 'react-icons/fi';
 import api from '../services/api';
 import PageWrapper from '../components/PageWrapper';
@@ -264,6 +267,7 @@ const TenantSettings = () => {
     { id: 'contact', label: 'Contact Information', icon: FiMail },
     { id: 'business', label: 'Business Rules', icon: FiBriefcase },
     { id: 'email', label: 'Email Settings', icon: FiMail },
+    { id: 'email-accounts', label: 'Email Accounts', icon: FiServer, isLink: true, path: '/settings/email-accounts' },
     { id: 'payment', label: 'Payment Settings', icon: FiCreditCard },
     { id: 'preferences', label: 'Preferences', icon: FiSettings },
     { id: 'subscription', label: 'Subscription', icon: FiGlobe }
@@ -297,6 +301,23 @@ const TenantSettings = () => {
           <nav className="-mb-px flex space-x-8">
             {tabs.map((tab) => {
               const Icon = tab.icon;
+              
+              // If it's a link tab (Email Accounts), render as Link
+              if (tab.isLink) {
+                return (
+                  <Link
+                    key={tab.id}
+                    to={tab.path}
+                    className="py-4 px-1 border-b-2 border-transparent font-medium text-sm flex items-center gap-2 text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                  >
+                    <Icon className="w-4 h-4" />
+                    {tab.label}
+                    <FiExternalLink className="w-3 h-3" />
+                  </Link>
+                );
+              }
+              
+              // Regular tab button
               return (
                 <button
                   key={tab.id}
