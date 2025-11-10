@@ -69,6 +69,12 @@ const emailLogSchema = new mongoose.Schema({
     default: Date.now,
     index: true
   },
+  source: {
+    type: String,
+    enum: ['imap', 'webhook', 'manual', 'api'],
+    default: 'webhook',
+    index: true
+  }, // Track where email came from
   headers: mongoose.Schema.Types.Mixed,
   inReplyTo: String, // Message-ID of parent email
   references: [String], // Thread message IDs
@@ -208,6 +214,11 @@ emailLogSchema.index({ tenantId: 1, receivedAt: -1 });
 emailLogSchema.index({ tenantId: 1, category: 1, processingStatus: 1 });
 emailLogSchema.index({ tenantId: 1, requiresReview: 1, reviewedAt: 1 });
 emailLogSchema.index({ 'from.email': 1, tenantId: 1 });
+
+// New indexes for faster email dashboard queries
+emailLogSchema.index({ tenantId: 1, processingStatus: 1, receivedAt: -1 });
+emailLogSchema.index({ tenantId: 1, source: 1, receivedAt: -1 });
+emailLogSchema.index({ tenantId: 1, category: 1, receivedAt: -1 });
 
 // Virtual for full text
 emailLogSchema.virtual('fullText').get(function() {

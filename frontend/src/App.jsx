@@ -81,12 +81,14 @@ import FinanceSettings from './pages/finance/Settings'
 // Tenant Settings
 import TenantSettings from './pages/TenantSettings'
 import EmailAccounts from './pages/settings/EmailAccounts'
+import AISettings from './pages/settings/AISettings'
 
 // Email Automation
 import EmailDashboard from './pages/emails/EmailDashboard'
 import EmailDetail from './pages/emails/EmailDetail'
 import ReviewQueue from './pages/emails/ReviewQueue'
 import EmailAnalytics from './pages/emails/EmailAnalytics'
+import ProcessingHistory from './pages/emails/ProcessingHistory'
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
@@ -272,6 +274,11 @@ function App() {
             <EmailAccounts />
           </RoleBasedRoute>
         } />
+        <Route path="settings/ai" element={
+          <RoleBasedRoute allowedRoles={['super_admin', 'operator', 'admin']}>
+            <AISettings />
+          </RoleBasedRoute>
+        } />
 
         {/* Email Automation Routes */}
         <Route path="emails" element={
@@ -282,6 +289,11 @@ function App() {
         <Route path="emails/:id" element={
           <RoleBasedRoute allowedRoles={['super_admin', 'operator', 'admin']}>
             <EmailDetail />
+          </RoleBasedRoute>
+        } />
+        <Route path="emails/history" element={
+          <RoleBasedRoute allowedRoles={['super_admin', 'operator', 'admin']}>
+            <ProcessingHistory />
           </RoleBasedRoute>
         } />
         <Route path="emails/review-queue" element={

@@ -11,7 +11,7 @@ router.use(protect);
 
 // Email CRUD
 router.get('/', emailController.getEmails);
-router.get('/stats', emailController.getStats);
+router.get('/stats', emailController.getEmailStats); // Updated to use new stats method
 router.get('/:id', emailController.getEmailById);
 router.delete('/:id', emailController.deleteEmail);
 
@@ -20,6 +20,7 @@ router.post('/:id/categorize', emailController.categorizeEmail);
 router.post('/:id/extract', emailController.extractData);
 router.post('/:id/match', emailController.matchPackages);
 router.post('/:id/respond', emailController.generateResponse);
+router.post('/:id/retry', emailController.retryProcessing); // NEW: Retry failed processing
 
 // Email-to-Quote workflow (NEW)
 router.post('/:id/convert-to-quote', emailController.convertEmailToQuote);

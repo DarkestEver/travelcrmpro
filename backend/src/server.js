@@ -18,6 +18,7 @@ const { initCronJobs } = require('./jobs');
 const getPDFService = require('./services/pdfService');
 const { verifyConnection } = require('./config/emailConfig');
 const slaCheckService = require('./services/slaCheckService');
+const emailPollingService = require('./services/emailPollingService');
 
 // Initialize Express app
 const app = express();
@@ -158,7 +159,7 @@ app.use(errorHandler);
 
 // Start server
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => {
+server.listen(PORT, async () => {
   logger.info(`Server running in ${process.env.NODE_ENV || 'development'} mode on port ${PORT}`);
   logger.info(`WebSocket server ready on port ${PORT}`);
   
@@ -173,6 +174,14 @@ server.listen(PORT, () => {
   });
   
   logger.info('✅ SLA monitoring cron job initialized (runs every hour)');
+  
+  // Start email polling service (IMAP email fetching)
+  try {
+    await emailPollingService.startPolling();
+    logger.info('✅ Email polling service initialized');
+  } catch (error) {
+    logger.error('❌ Failed to start email polling:', error);
+  }
 });
 
 // Handle unhandled promise rejections

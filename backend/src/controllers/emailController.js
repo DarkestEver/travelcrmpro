@@ -142,7 +142,8 @@ class EmailController {
           .sort({ receivedAt: -1 })
           .skip(skip)
           .limit(parseInt(limit))
-          .select('-bodyHtml -bodyText -headers'),
+          .select('-bodyHtml -bodyText -headers')
+          .lean(), // Faster query, returns plain objects
         EmailLog.countDocuments(filter)
       ]);
 
@@ -542,6 +543,149 @@ class EmailController {
       res.status(500).json({
         success: false,
         message: 'Failed to convert email to quote',
+        error: error.message
+      });
+    }
+  }
+
+  /**
+   * Get email processing stats
+   * GET /api/v1/emails/stats
+   */
+  async getEmailStats(req, res) {
+    try {
+      const tenantId = req.user.tenantId;
+
+      const [statusCounts, sourceCounts, categoryCounts, total] = await Promise.all([
+        // Count by status
+        EmailLog.aggregate([
+          { $match: { tenantId } },
+          {
+            $group: {
+              _id: '$processingStatus',
+              count: { $sum: 1 }
+            }
+          }
+        ]),
+        // Count by source
+        EmailLog.aggregate([
+          { $match: { tenantId } },
+          {
+            $group: {
+              _id: '$source',
+              count: { $sum: 1 }
+            }
+          }
+        ]),
+        // Count by category
+        EmailLog.aggregate([
+          { $match: { tenantId } },
+          {
+            $group: {
+              _id: '$category',
+              count: { $sum: 1 }
+            }
+          }
+        ]),
+        // Total count
+        EmailLog.countDocuments({ tenantId })
+      ]);
+
+      // Format results
+      const stats = {
+        total,
+        byStatus: {
+          pending: 0,
+          processing: 0,
+          completed: 0,
+          failed: 0,
+          converted_to_quote: 0,
+          duplicate_detected: 0
+        },
+        bySource: {
+          imap: 0,
+          webhook: 0,
+          manual: 0,
+          api: 0
+        },
+        byCategory: {
+          CUSTOMER: 0,
+          SUPPLIER: 0,
+          AGENT: 0,
+          FINANCE: 0,
+          OTHER: 0,
+          SPAM: 0
+        }
+      };
+
+      statusCounts.forEach(item => {
+        if (item._id && stats.byStatus.hasOwnProperty(item._id)) {
+          stats.byStatus[item._id] = item.count;
+        }
+      });
+
+      sourceCounts.forEach(item => {
+        if (item._id && stats.bySource.hasOwnProperty(item._id)) {
+          stats.bySource[item._id] = item.count;
+        }
+      });
+
+      categoryCounts.forEach(item => {
+        if (item._id && stats.byCategory.hasOwnProperty(item._id)) {
+          stats.byCategory[item._id] = item.count;
+        }
+      });
+
+      res.json({
+        success: true,
+        data: stats
+      });
+    } catch (error) {
+      console.error('Get email stats error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to fetch email stats',
+        error: error.message
+      });
+    }
+  }
+
+  /**
+   * Retry failed email processing
+   * POST /api/v1/emails/:id/retry
+   */
+  async retryProcessing(req, res) {
+    try {
+      const { id } = req.params;
+      const tenantId = req.user.tenantId;
+
+      const email = await EmailLog.findOne({ _id: id, tenantId });
+
+      if (!email) {
+        return res.status(404).json({
+          success: false,
+          message: 'Email not found'
+        });
+      }
+
+      // Reset status
+      email.processingStatus = 'pending';
+      email.processingError = null;
+      await email.save();
+
+      // Re-add to queue
+      await emailProcessingQueue.addToQueue(email._id.toString(), tenantId.toString(), 'high');
+
+      res.json({
+        success: true,
+        message: 'Email re-queued for processing',
+        emailId: email._id
+      });
+    } catch (error) {
+      console.error('Retry processing error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to retry processing',
         error: error.message
       });
     }

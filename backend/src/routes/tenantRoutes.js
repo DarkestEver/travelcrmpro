@@ -11,6 +11,8 @@ const {
   deleteTenant,
   getTenantStats,
   getCurrentTenant,
+  getTenantSettings,
+  updateTenantSettings,
 } = require('../controllers/tenantController');
 const { protect, restrictTo } = require('../middleware/auth');
 const { identifyTenant } = require('../middleware/tenant');
@@ -21,11 +23,15 @@ router.post('/', createTenant);
 // Protected routes - require authentication
 router.use(protect);
 
-// Get current tenant (from context)
+// Specific routes first (before :id routes)
+router.get('/settings', getTenantSettings);
+router.patch('/settings', updateTenantSettings);
 router.get('/current', identifyTenant, getCurrentTenant);
 
 // Super admin only routes
 router.get('/', restrictTo('super_admin'), getAllTenants);
+
+// Dynamic :id routes last
 router.get('/:id', getTenant); // Tenant owner or super admin
 router.patch('/:id', updateTenant); // Tenant owner or super admin
 router.patch('/:id/subscription', restrictTo('super_admin'), updateSubscription);

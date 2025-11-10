@@ -215,6 +215,27 @@ const emailAccountSchema = new mongoose.Schema({
     } // minutes
   },
   
+  // IMAP Polling Configuration
+  autoFetch: {
+    type: Boolean,
+    default: true
+  }, // Enable automatic email fetching via IMAP
+  
+  fetchInterval: {
+    type: Number,
+    default: 120000
+  }, // Fetch interval in milliseconds (default: 2 minutes)
+  
+  lastFetchAt: Date, // Last time emails were fetched
+  
+  lastFetchStatus: {
+    type: String,
+    enum: ['success', 'error', 'pending', 'never'],
+    default: 'never'
+  },
+  
+  lastFetchError: String, // Last error message if fetch failed
+  
   // Stats
   stats: {
     emailsReceived: {

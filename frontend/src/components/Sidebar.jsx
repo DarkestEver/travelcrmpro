@@ -17,13 +17,16 @@ import {
   FiInbox,
   FiTrendingUp,
   FiChevronDown,
-  FiChevronRight
+  FiChevronRight,
+  FiCpu,
+  FiClock
 } from 'react-icons/fi'
 
 const Sidebar = () => {
   const { user } = useAuthStore()
   const { logo, companyName, primaryColor, isLoading } = useTenantBranding()
   const [emailsOpen, setEmailsOpen] = useState(false)
+  const [settingsOpen, setSettingsOpen] = useState(false)
 
   const navItems = [
     {
@@ -79,6 +82,11 @@ const Sidebar = () => {
           icon: FiInbox,
         },
         {
+          name: 'Processing History',
+          path: '/emails/history',
+          icon: FiClock,
+        },
+        {
           name: 'Review Queue',
           path: '/emails/review-queue',
           icon: FiFileText,
@@ -97,10 +105,26 @@ const Sidebar = () => {
       roles: ['super_admin', 'operator'],
     },
     {
-      name: 'Tenant Settings',
-      path: '/settings',
+      name: 'Settings',
       icon: FiSettings,
       roles: ['super_admin', 'operator'],
+      submenu: [
+        {
+          name: 'General',
+          path: '/settings',
+          icon: FiSettings,
+        },
+        {
+          name: 'Email Accounts',
+          path: '/settings/email-accounts',
+          icon: FiMail,
+        },
+        {
+          name: 'AI Configuration',
+          path: '/settings/ai',
+          icon: FiCpu,
+        },
+      ],
     },
     {
       name: 'Tenant Management',
@@ -157,21 +181,27 @@ const Sidebar = () => {
               // Menu item with submenu
               <div>
                 <button
-                  onClick={() => setEmailsOpen(!emailsOpen)}
+                  onClick={() => {
+                    if (item.name === 'Emails') {
+                      setEmailsOpen(!emailsOpen)
+                    } else if (item.name === 'Settings') {
+                      setSettingsOpen(!settingsOpen)
+                    }
+                  }}
                   className="flex items-center justify-between w-full px-4 py-3 rounded-lg mb-2 transition-colors text-gray-700 hover:bg-gray-100"
                 >
                   <div className="flex items-center gap-3">
                     <item.icon className="text-xl" />
                     <span className="font-medium">{item.name}</span>
                   </div>
-                  {emailsOpen ? (
+                  {(item.name === 'Emails' ? emailsOpen : settingsOpen) ? (
                     <FiChevronDown className="text-lg" />
                   ) : (
                     <FiChevronRight className="text-lg" />
                   )}
                 </button>
                 
-                {emailsOpen && (
+                {((item.name === 'Emails' && emailsOpen) || (item.name === 'Settings' && settingsOpen)) && (
                   <div className="ml-4 space-y-1">
                     {item.submenu.map((subItem) => (
                       <NavLink

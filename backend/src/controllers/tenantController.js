@@ -303,6 +303,66 @@ const getCurrentTenant = asyncHandler(async (req, res) => {
   successResponse(res, 200, 'Current tenant fetched successfully', { tenant });
 });
 
+// @desc    Get tenant settings
+// @route   GET /api/v1/tenants/settings
+// @access  Private
+const getTenantSettings = asyncHandler(async (req, res) => {
+  const tenantId = req.user.tenantId;
+  
+  const tenant = await Tenant.findById(tenantId).select('settings subdomain companyName');
+
+  if (!tenant) {
+    throw new AppError('Tenant not found', 404);
+  }
+
+  successResponse(res, 200, 'Tenant settings fetched successfully', tenant.settings);
+});
+
+// @desc    Update tenant settings
+// @route   PATCH /api/v1/tenants/settings
+// @access  Private (Operator/Admin only)
+const updateTenantSettings = asyncHandler(async (req, res) => {
+  const tenantId = req.user.tenantId;
+  const { aiSettings, emailSettings, generalSettings } = req.body;
+
+  // Check if user has permission to update settings
+  if (!['super_admin', 'operator', 'admin'].includes(req.user.role)) {
+    throw new AppError('You do not have permission to update settings', 403);
+  }
+
+  const tenant = await Tenant.findById(tenantId);
+  
+  if (!tenant) {
+    throw new AppError('Tenant not found', 404);
+  }
+
+  // Update settings
+  if (aiSettings) {
+    tenant.settings.aiSettings = {
+      ...tenant.settings.aiSettings,
+      ...aiSettings
+    };
+  }
+
+  if (emailSettings) {
+    tenant.settings.emailSettings = {
+      ...tenant.settings.emailSettings,
+      ...emailSettings
+    };
+  }
+
+  if (generalSettings) {
+    tenant.settings.general = {
+      ...tenant.settings.general,
+      ...generalSettings
+    };
+  }
+
+  await tenant.save();
+
+  successResponse(res, 200, 'Settings updated successfully', tenant.settings);
+});
+
 module.exports = {
   getAllTenants,
   getTenant,
@@ -314,4 +374,6 @@ module.exports = {
   deleteTenant,
   getTenantStats,
   getCurrentTenant,
+  getTenantSettings,
+  updateTenantSettings,
 };
