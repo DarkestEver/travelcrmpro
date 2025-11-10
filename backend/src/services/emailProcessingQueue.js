@@ -7,54 +7,75 @@ const ManualReviewQueue = require('../models/ManualReviewQueue');
 
 class EmailProcessingQueue {
   constructor() {
-    // Initialize Bull queue with Redis
-    this.queue = new Queue('email-processing', {
-      redis: {
-        host: process.env.REDIS_HOST || 'localhost',
-        port: process.env.REDIS_PORT || 6379,
-        password: process.env.REDIS_PASSWORD || undefined
-      }
-    });
+    // Try to initialize Bull queue with Redis
+    try {
+      this.queue = new Queue('email-processing', {
+        redis: {
+          host: process.env.REDIS_HOST || 'localhost',
+          port: process.env.REDIS_PORT || 6379,
+          password: process.env.REDIS_PASSWORD || undefined
+        }
+      });
 
-    // Configure queue settings
-    this.queue.process(3, this.processEmail.bind(this)); // Process 3 emails concurrently
-    
-    // Event listeners
-    this.queue.on('completed', (job, result) => {
-      console.log(`Email ${job.data.emailId} processed successfully:`, result);
-    });
+      // Configure queue settings
+      this.queue.process(3, this.processEmail.bind(this)); // Process 3 emails concurrently
+      
+      // Event listeners
+      this.queue.on('completed', (job, result) => {
+        console.log(`Email ${job.data.emailId} processed successfully:`, result);
+      });
 
-    this.queue.on('failed', (job, err) => {
-      console.error(`Email ${job.data.emailId} processing failed:`, err);
-    });
+      this.queue.on('failed', (job, err) => {
+        console.error(`Email ${job.data.emailId} processing failed:`, err);
+      });
+
+      this.useQueue = true;
+      console.log('✅ Email queue initialized with Redis');
+    } catch (error) {
+      console.warn('⚠️  Redis not available, using synchronous processing');
+      console.warn('   To enable queue: Install Redis or run: docker run -d -p 6379:6379 redis');
+      this.useQueue = false;
+    }
   }
 
   /**
    * Add email to processing queue
    */
   async addToQueue(emailId, tenantId, priority = 'normal') {
-    const priorityMap = {
-      urgent: 1,
-      high: 2,
-      normal: 3,
-      low: 4
-    };
+    if (this.useQueue) {
+      // Use Redis queue
+      const priorityMap = {
+        urgent: 1,
+        high: 2,
+        normal: 3,
+        low: 4
+      };
 
-    await this.queue.add(
-      { emailId, tenantId },
-      {
-        priority: priorityMap[priority] || 3,
-        attempts: 3,
-        backoff: {
-          type: 'exponential',
-          delay: 5000 // Start with 5 seconds, doubles each retry
-        },
-        removeOnComplete: false,
-        removeOnFail: false
+      await this.queue.add(
+        { emailId, tenantId },
+        {
+          priority: priorityMap[priority] || 3,
+          attempts: 3,
+          backoff: {
+            type: 'exponential',
+            delay: 5000 // Start with 5 seconds, doubles each retry
+          },
+          removeOnComplete: false,
+          removeOnFail: false
+        }
+      );
+
+      console.log(`Email ${emailId} added to processing queue with priority ${priority}`);
+    } else {
+      // Process synchronously without queue
+      console.log(`📧 Processing email ${emailId} synchronously (no Redis)`);
+      try {
+        await this.processEmail({ data: { emailId, tenantId } });
+      } catch (error) {
+        console.error(`Failed to process email ${emailId}:`, error);
+        throw error;
       }
-    );
-
-    console.log(`Email ${emailId} added to processing queue with priority ${priority}`);
+    }
   }
 
   /**
@@ -281,6 +302,18 @@ class EmailProcessingQueue {
    * Get queue statistics
    */
   async getStats() {
+    if (!this.useQueue) {
+      return {
+        waiting: 0,
+        active: 0,
+        completed: 0,
+        failed: 0,
+        delayed: 0,
+        total: 0,
+        mode: 'synchronous'
+      };
+    }
+
     const waiting = await this.queue.getWaitingCount();
     const active = await this.queue.getActiveCount();
     const completed = await this.queue.getCompletedCount();
@@ -293,7 +326,8 @@ class EmailProcessingQueue {
       completed,
       failed,
       delayed,
-      total: waiting + active + completed + failed + delayed
+      total: waiting + active + completed + failed + delayed,
+      mode: 'queue'
     };
   }
 
@@ -301,16 +335,20 @@ class EmailProcessingQueue {
    * Pause queue
    */
   async pause() {
-    await this.queue.pause();
-    console.log('Email processing queue paused');
+    if (this.useQueue) {
+      await this.queue.pause();
+      console.log('Email processing queue paused');
+    }
   }
 
   /**
    * Resume queue
    */
   async resume() {
-    await this.queue.resume();
-    console.log('Email processing queue resumed');
+    if (this.useQueue) {
+      await this.queue.resume();
+      console.log('Email processing queue resumed');
+    }
   }
 
   /**
