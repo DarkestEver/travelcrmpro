@@ -3,28 +3,57 @@ const AIProcessingLog = require('../models/AIProcessingLog');
 
 class OpenAIService {
   constructor() {
-    this.client = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY
-    });
-    
-    this.models = {
-      categorization: 'gpt-4-turbo-preview',
-      extraction: 'gpt-4-turbo-preview',
-      response: 'gpt-4-turbo-preview',
-      sentiment: 'gpt-3.5-turbo'
-    };
-    
-    // Pricing per 1K tokens (as of Nov 2024)
-    this.pricing = {
-      'gpt-4-turbo-preview': { input: 0.01, output: 0.03 },
-      'gpt-3.5-turbo': { input: 0.0005, output: 0.0015 }
-    };
+    // Check if OpenAI API key is configured
+    if (!process.env.OPENAI_API_KEY) {
+      console.warn('⚠️  OPENAI_API_KEY not configured - AI features will be disabled');
+      console.warn('   To enable AI: Add OPENAI_API_KEY=sk-your-key to backend/.env');
+      this.enabled = false;
+      return;
+    }
+
+    try {
+      this.client = new OpenAI({
+        apiKey: process.env.OPENAI_API_KEY
+      });
+      
+      this.models = {
+        categorization: 'gpt-4-turbo-preview',
+        extraction: 'gpt-4-turbo-preview',
+        response: 'gpt-4-turbo-preview',
+        sentiment: 'gpt-3.5-turbo'
+      };
+      
+      // Pricing per 1K tokens (as of Nov 2024)
+      this.pricing = {
+        'gpt-4-turbo-preview': { input: 0.01, output: 0.03 },
+        'gpt-3.5-turbo': { input: 0.0005, output: 0.0015 }
+      };
+
+      this.enabled = true;
+      console.log('✅ OpenAI service initialized');
+    } catch (error) {
+      console.error('❌ Failed to initialize OpenAI:', error.message);
+      this.enabled = false;
+    }
   }
 
   /**
    * Categorize email using AI
    */
   async categorizeEmail(email, tenantId) {
+    if (!this.enabled) {
+      return {
+        category: 'OTHER',
+        confidence: 0,
+        reasoning: 'OpenAI not configured - manual categorization required',
+        subcategory: 'uncategorized',
+        urgency: 'normal',
+        sentiment: 'neutral',
+        cost: 0,
+        tokens: { prompt: 0, completion: 0, total: 0 }
+      };
+    }
+
     const startTime = Date.now();
     
     const prompt = `Analyze this email and categorize it into ONE of these categories:
@@ -120,6 +149,19 @@ Respond with ONLY valid JSON:
    * Extract structured data from customer inquiry
    */
   async extractCustomerInquiry(email, tenantId) {
+    if (!this.enabled) {
+      return {
+        destination: null,
+        dates: { flexible: true },
+        travelers: { adults: 0, children: 0 },
+        budget: { amount: null, currency: 'USD', flexible: true },
+        confidence: 0,
+        missingInfo: ['OpenAI not configured - manual extraction required'],
+        cost: 0,
+        tokens: { prompt: 0, completion: 0, total: 0 }
+      };
+    }
+
     const startTime = Date.now();
     
     const prompt = `Extract structured travel inquiry data from this email:
@@ -225,7 +267,20 @@ Extract ALL available information and respond with ONLY valid JSON:
   /**
    * Extract supplier package information
    */
+  /**
+   * Extract structured supplier package data
+   */
   async extractSupplierPackage(email, tenantId) {
+    if (!this.enabled) {
+      return {
+        packages: [],
+        confidence: 0,
+        supplierInfo: { name: null, contact: email.from.email },
+        cost: 0,
+        tokens: { prompt: 0, completion: 0, total: 0 }
+      };
+    }
+
     const startTime = Date.now();
     
     const prompt = `Extract travel package details from this supplier email:
@@ -324,6 +379,16 @@ Extract ALL package information and respond with ONLY valid JSON:
    * Generate response email
    */
   async generateResponse(email, context, templateType, tenantId) {
+    if (!this.enabled) {
+      return {
+        subject: 'Re: ' + email.subject,
+        body: 'Thank you for your email. We will review your request and get back to you shortly.',
+        plainText: 'Thank you for your email. We will review your request and get back to you shortly.',
+        cost: 0,
+        tokens: { prompt: 0, completion: 0, total: 0 }
+      };
+    }
+
     const startTime = Date.now();
     
     let prompt = '';
