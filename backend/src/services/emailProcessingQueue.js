@@ -337,21 +337,36 @@ class EmailProcessingQueue {
       };
     }
 
-    const waiting = await this.queue.getWaitingCount();
-    const active = await this.queue.getActiveCount();
-    const completed = await this.queue.getCompletedCount();
-    const failed = await this.queue.getFailedCount();
-    const delayed = await this.queue.getDelayedCount();
+    try {
+      const waiting = await this.queue.getWaitingCount();
+      const active = await this.queue.getActiveCount();
+      const completed = await this.queue.getCompletedCount();
+      const failed = await this.queue.getFailedCount();
+      const delayed = await this.queue.getDelayedCount();
 
-    return {
-      waiting,
-      active,
-      completed,
-      failed,
-      delayed,
-      total: waiting + active + completed + failed + delayed,
-      mode: this.queueType
-    };
+      return {
+        waiting,
+        active,
+        completed,
+        failed,
+        delayed,
+        total: waiting + active + completed + failed + delayed,
+        mode: this.queueType
+      };
+    } catch (error) {
+      // Redis connection error - fallback to zero stats
+      console.warn('⚠️  Queue stats unavailable (Redis connection error):', error.message);
+      return {
+        waiting: 0,
+        active: 0,
+        completed: 0,
+        failed: 0,
+        delayed: 0,
+        total: 0,
+        mode: this.queueType + ' (disconnected)',
+        error: error.message
+      };
+    }
   }
 
   /**
