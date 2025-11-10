@@ -147,15 +147,24 @@ const quoteSchema = new mongoose.Schema({
       'draft', 
       'incomplete_data',
       'pending_operator_review',
+      'manual_review_required',
+      'awaiting_customer_info',
       'itineraries_found',
       'awaiting_supplier_response',
       'sent', 
       'viewed', 
       'accepted', 
       'rejected', 
-      'expired'
+      'expired',
+      'cancelled'
     ],
     default: 'draft',
+  },
+  // SLA tracking
+  sla: {
+    responseDeadline: Date,
+    reminderSent: { type: Boolean, default: false },
+    breached: { type: Boolean, default: false }
   },
   pdfUrl: String,
   emailSentAt: Date,
@@ -171,7 +180,7 @@ const quoteSchema = new mongoose.Schema({
   createdBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
-    required: true,
+    required: false, // Not required for email-generated quotes
   },
 }, {
   timestamps: true,

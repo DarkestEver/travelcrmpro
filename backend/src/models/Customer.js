@@ -105,10 +105,20 @@ const customerSchema = new mongoose.Schema({
     type: Number,
     default: 0,
   },
+  inquiryCount: {
+    type: Number,
+    default: 0,
+  },
+  lastContactDate: Date,
   lastBookingDate: Date,
+  source: {
+    type: String,
+    enum: ['direct', 'email_inquiry', 'referral', 'website', 'social_media', 'other'],
+    default: 'direct'
+  },
   status: {
     type: String,
-    enum: ['active', 'inactive'],
+    enum: ['active', 'inactive', 'lead'],
     default: 'active',
   },
 }, {

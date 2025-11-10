@@ -70,6 +70,8 @@ const emailLogSchema = new mongoose.Schema({
     index: true
   },
   headers: mongoose.Schema.Types.Mixed,
+  inReplyTo: String, // Message-ID of parent email
+  references: [String], // Thread message IDs
   priority: {
     type: String,
     enum: ['low', 'normal', 'high', 'urgent'],
@@ -80,12 +82,22 @@ const emailLogSchema = new mongoose.Schema({
   // AI Processing Status
   processingStatus: {
     type: String,
-    enum: ['pending', 'processing', 'completed', 'failed', 'skipped'],
+    enum: [
+      'pending', 
+      'processing', 
+      'completed', 
+      'failed', 
+      'skipped', 
+      'converted_to_quote',
+      'linked_to_existing_quote',
+      'duplicate_detected'
+    ],
     default: 'pending',
     index: true
   },
   processedAt: Date,
   processingError: String,
+  aiExtractionFailed: { type: Boolean, default: false },
   
   // AI Results
   category: {
@@ -148,6 +160,11 @@ const emailLogSchema = new mongoose.Schema({
     index: true
   },
   quoteId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Quote',
+    index: true
+  },
+  linkedQuote: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Quote',
     index: true
