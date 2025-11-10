@@ -49,11 +49,17 @@ const EmailDashboard = () => {
         page: pagination.page,
         limit: pagination.limit
       });
-      setEmails(response.data);
-      setPagination(response.pagination);
+      
+      setEmails(response.data || []);
+      
+      // Safely handle pagination
+      if (response.pagination) {
+        setPagination(response.pagination);
+      }
     } catch (error) {
       console.error('Failed to fetch emails:', error);
       toast.error('Failed to load emails');
+      setEmails([]);
     } finally {
       setLoading(false);
     }
@@ -62,9 +68,27 @@ const EmailDashboard = () => {
   const fetchStats = async () => {
     try {
       const response = await emailAPI.getStats();
-      setStats(response.data);
+      setStats(response.data || {
+        total: 0,
+        customer_inquiry: 0,
+        supplier_package: 0,
+        booking_confirmation: 0,
+        processed: 0,
+        pending: 0,
+        failed: 0
+      });
     } catch (error) {
       console.error('Failed to fetch stats:', error);
+      // Set default stats on error
+      setStats({
+        total: 0,
+        customer_inquiry: 0,
+        supplier_package: 0,
+        booking_confirmation: 0,
+        processed: 0,
+        pending: 0,
+        failed: 0
+      });
     }
   };
 

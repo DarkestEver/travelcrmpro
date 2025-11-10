@@ -58,11 +58,30 @@ const EmailAnalytics = () => {
         startDate: startDate.toISOString(),
         endDate: endDate.toISOString()
       });
-      setStats(emailStatsResponse.data);
+      setStats(emailStatsResponse.data || {
+        total: 0,
+        customer_inquiry: 0,
+        supplier_package: 0,
+        booking_confirmation: 0,
+        processed: 0,
+        pending: 0,
+        failed: 0,
+        categoryDistribution: []
+      });
 
       // Fetch review queue stats
       const reviewStatsResponse = await reviewQueueAPI.getStats();
-      setReviewStats(reviewStatsResponse.data);
+      setReviewStats(reviewStatsResponse.data || {
+        total: 0,
+        pending: 0,
+        inReview: 0,
+        completed: 0,
+        rejected: 0,
+        escalated: 0,
+        urgent: 0,
+        slaBreached: 0,
+        avgTimeInQueue: 0
+      });
 
       // Calculate trends (simplified version - would need historical data API)
       setTrends({
@@ -75,6 +94,28 @@ const EmailAnalytics = () => {
     } catch (error) {
       console.error('Failed to fetch analytics:', error);
       toast.error('Failed to load analytics');
+      // Set default values on error
+      setStats({
+        total: 0,
+        customer_inquiry: 0,
+        supplier_package: 0,
+        booking_confirmation: 0,
+        processed: 0,
+        pending: 0,
+        failed: 0,
+        categoryDistribution: []
+      });
+      setReviewStats({
+        total: 0,
+        pending: 0,
+        inReview: 0,
+        completed: 0,
+        rejected: 0,
+        escalated: 0,
+        urgent: 0,
+        slaBreached: 0,
+        avgTimeInQueue: 0
+      });
     } finally {
       setLoading(false);
     }
