@@ -1,4 +1,5 @@
 const Queue = require('bull');
+const InMemoryQueue = require('./InMemoryQueue');
 const EmailLog = require('../models/EmailLog');
 const openaiService = require('./openaiService');
 const matchingEngine = require('./matchingEngine');
@@ -7,6 +8,8 @@ const ManualReviewQueue = require('../models/ManualReviewQueue');
 
 class EmailProcessingQueue {
   constructor() {
+    const isDevelopment = process.env.NODE_ENV === 'development';
+    
     // Try to initialize Bull queue with Redis
     try {
       this.queue = new Queue('email-processing', {
@@ -18,23 +21,43 @@ class EmailProcessingQueue {
       });
 
       // Configure queue settings
-      this.queue.process(3, this.processEmail.bind(this)); // Process 3 emails concurrently
+      this.queue.process(3, this.processEmail.bind(this));
       
       // Event listeners
       this.queue.on('completed', (job, result) => {
-        console.log(`Email ${job.data.emailId} processed successfully:`, result);
+        console.log(`✅ Email ${job.data.emailId} processed successfully`);
       });
 
       this.queue.on('failed', (job, err) => {
-        console.error(`Email ${job.data.emailId} processing failed:`, err);
+        console.error(`❌ Email ${job.data.emailId} processing failed:`, err.message);
       });
 
-      this.useQueue = true;
+      this.queueType = 'redis';
       console.log('✅ Email queue initialized with Redis');
     } catch (error) {
-      console.warn('⚠️  Redis not available, using synchronous processing');
-      console.warn('   To enable queue: Install Redis or run: docker run -d -p 6379:6379 redis');
-      this.useQueue = false;
+      // Use in-memory queue as fallback (especially for development)
+      if (isDevelopment) {
+        console.log('📝 Development mode: Using in-memory queue (no Redis needed)');
+        this.queue = new InMemoryQueue('email-processing');
+        
+        // Configure in-memory queue
+        this.queue.process(3, this.processEmail.bind(this));
+        
+        // Event listeners
+        this.queue.on('completed', (job, result) => {
+          console.log(`✅ Email ${job.data.emailId} processed successfully`);
+        });
+
+        this.queue.on('failed', (job, err) => {
+          console.error(`❌ Email ${job.data.emailId} processing failed:`, err.message);
+        });
+
+        this.queueType = 'memory';
+      } else {
+        console.warn('⚠️  Redis not available in production, using synchronous processing');
+        console.warn('   For better performance: Install Redis');
+        this.queueType = 'sync';
+      }
     }
   }
 
@@ -42,15 +65,15 @@ class EmailProcessingQueue {
    * Add email to processing queue
    */
   async addToQueue(emailId, tenantId, priority = 'normal') {
-    if (this.useQueue) {
-      // Use Redis queue
-      const priorityMap = {
-        urgent: 1,
-        high: 2,
-        normal: 3,
-        low: 4
-      };
+    const priorityMap = {
+      urgent: 1,
+      high: 2,
+      normal: 3,
+      low: 4
+    };
 
+    if (this.queueType === 'redis' || this.queueType === 'memory') {
+      // Use queue (Redis or in-memory)
       await this.queue.add(
         { emailId, tenantId },
         {
@@ -58,21 +81,21 @@ class EmailProcessingQueue {
           attempts: 3,
           backoff: {
             type: 'exponential',
-            delay: 5000 // Start with 5 seconds, doubles each retry
+            delay: 5000
           },
           removeOnComplete: false,
           removeOnFail: false
         }
       );
 
-      console.log(`Email ${emailId} added to processing queue with priority ${priority}`);
+      console.log(`📧 Email ${emailId} added to ${this.queueType} queue (priority: ${priority})`);
     } else {
-      // Process synchronously without queue
-      console.log(`📧 Processing email ${emailId} synchronously (no Redis)`);
+      // Process synchronously (fallback)
+      console.log(`📧 Processing email ${emailId} synchronously`);
       try {
         await this.processEmail({ data: { emailId, tenantId } });
       } catch (error) {
-        console.error(`Failed to process email ${emailId}:`, error);
+        console.error(`❌ Failed to process email ${emailId}:`, error.message);
         throw error;
       }
     }
@@ -302,7 +325,7 @@ class EmailProcessingQueue {
    * Get queue statistics
    */
   async getStats() {
-    if (!this.useQueue) {
+    if (this.queueType === 'sync') {
       return {
         waiting: 0,
         active: 0,
@@ -327,7 +350,7 @@ class EmailProcessingQueue {
       failed,
       delayed,
       total: waiting + active + completed + failed + delayed,
-      mode: 'queue'
+      mode: this.queueType
     };
   }
 
@@ -335,9 +358,9 @@ class EmailProcessingQueue {
    * Pause queue
    */
   async pause() {
-    if (this.useQueue) {
+    if (this.queueType !== 'sync') {
       await this.queue.pause();
-      console.log('Email processing queue paused');
+      console.log(`⏸️  Email processing queue paused (${this.queueType} mode)`);
     }
   }
 
@@ -345,9 +368,9 @@ class EmailProcessingQueue {
    * Resume queue
    */
   async resume() {
-    if (this.useQueue) {
+    if (this.queueType !== 'sync') {
       await this.queue.resume();
-      console.log('Email processing queue resumed');
+      console.log(`▶️  Email processing queue resumed (${this.queueType} mode)`);
     }
   }
 
@@ -355,10 +378,13 @@ class EmailProcessingQueue {
    * Clean old jobs
    */
   async cleanOldJobs(grace = 7 * 24 * 60 * 60 * 1000) {
+    if (this.queueType === 'sync') {
+      return; // No cleanup needed in sync mode
+    }
     // Clean completed and failed jobs older than grace period (default 7 days)
     await this.queue.clean(grace, 'completed');
     await this.queue.clean(grace, 'failed');
-    console.log('Old jobs cleaned from queue');
+    console.log(`🧹 Old jobs cleaned from queue (${this.queueType} mode)`);
   }
 }
 
