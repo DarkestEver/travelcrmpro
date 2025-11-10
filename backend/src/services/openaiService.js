@@ -235,6 +235,16 @@ From: ${email.from.email}
 Subject: ${email.subject}
 Body: ${email.bodyText}
 
+IMPORTANT: Pay special attention to the email signature (usually at the end after "Best regards", "Thanks", "Sincerely", etc.) to extract complete customer contact information including:
+- Full name (from signature)
+- Email address
+- Phone number(s) (mobile, work, home)
+- Company/Organization name
+- Job title/position
+- Physical address (if present)
+- Website (if present)
+- Social media handles (if present)
+
 Extract ALL available information and respond with ONLY valid JSON:
 {
   "destination": "string (primary destination city/country)",
@@ -270,10 +280,27 @@ Extract ALL available information and respond with ONLY valid JSON:
   "activities": ["array of requested activities/experiences"],
   "specialRequirements": ["array of special needs like wheelchair, dietary"],
   "customerInfo": {
-    "name": "string or null",
-    "email": "email from 'from' field",
-    "phone": "string or null",
-    "company": "string or null",
+    "name": "string (EXTRACT FROM SIGNATURE - full name)",
+    "email": "string (primary email from 'from' field or signature)",
+    "alternateEmail": "string or null (additional email from signature)",
+    "phone": "string or null (any phone format: +1-234-567-8900, (234) 567-8900, etc.)",
+    "mobile": "string or null (mobile/cell phone)",
+    "workPhone": "string or null (office/work phone)",
+    "company": "string or null (company/organization name from signature)",
+    "jobTitle": "string or null (position/title from signature)",
+    "address": {
+      "street": "string or null",
+      "city": "string or null",
+      "state": "string or null",
+      "country": "string or null",
+      "zipCode": "string or null"
+    },
+    "website": "string or null (company website from signature)",
+    "socialMedia": {
+      "linkedin": "string or null",
+      "twitter": "string or null",
+      "facebook": "string or null"
+    },
     "isReturning": boolean
   },
   "urgency": "low|normal|high|urgent",
@@ -444,6 +471,199 @@ Extract ALL package information and respond with ONLY valid JSON:
       });
       
       throw error;
+    }
+  }
+
+  /**
+   * Extract contact information from signature images using GPT-4 Vision
+   * @param {Object} email - Email object with attachments
+   * @param {String} tenantId - Tenant ID
+   * @returns {Object} Extracted contact information
+   */
+  async extractContactFromSignatureImages(email, tenantId) {
+    const clientInfo = await this.getClientForTenant(tenantId);
+    
+    if (!clientInfo) {
+      return {
+        success: false,
+        extractedContacts: [],
+        error: 'OpenAI not configured',
+        cost: 0,
+        tokens: { prompt: 0, completion: 0, total: 0 }
+      };
+    }
+
+    // Filter attachments that are images
+    const imageAttachments = (email.attachments || []).filter(att => {
+      const contentType = att.contentType?.toLowerCase() || '';
+      return contentType.includes('image/') || 
+             contentType.includes('png') || 
+             contentType.includes('jpg') || 
+             contentType.includes('jpeg') || 
+             contentType.includes('gif');
+    });
+
+    if (imageAttachments.length === 0) {
+      return {
+        success: true,
+        extractedContacts: [],
+        message: 'No image attachments found',
+        cost: 0,
+        tokens: { prompt: 0, completion: 0, total: 0 }
+      };
+    }
+
+    const startTime = Date.now();
+    const extractedContacts = [];
+    let totalCost = 0;
+    let totalTokens = { prompt: 0, completion: 0, total: 0 };
+
+    try {
+      // Use GPT-4 Vision model
+      const model = 'gpt-4-vision-preview';
+
+      for (const attachment of imageAttachments.slice(0, 3)) { // Process max 3 images to control costs
+        try {
+          // If attachment has a URL (from S3/storage), use it directly
+          // Otherwise, we'd need to convert the buffer to base64
+          if (!attachment.url) {
+            console.log(`Skipping attachment ${attachment.filename} - no URL available`);
+            continue;
+          }
+
+          const visionPrompt = `You are an expert at extracting contact information from business cards, email signatures, and other contact images.
+
+Analyze this image and extract ALL visible contact information.
+
+Respond with ONLY valid JSON in this exact format:
+{
+  "name": "string (full name) or null",
+  "firstName": "string or null",
+  "lastName": "string or null",
+  "jobTitle": "string (position/title) or null",
+  "company": "string (company/organization name) or null",
+  "email": "string (primary email) or null",
+  "phone": "string (primary phone with any format) or null",
+  "mobile": "string (mobile phone) or null",
+  "workPhone": "string (office phone) or null",
+  "fax": "string (fax number) or null",
+  "website": "string (company website URL) or null",
+  "address": {
+    "street": "string or null",
+    "city": "string or null",
+    "state": "string or null",
+    "country": "string or null",
+    "zipCode": "string or null",
+    "full": "string (complete address) or null"
+  },
+  "socialMedia": {
+    "linkedin": "string (LinkedIn profile URL) or null",
+    "twitter": "string (Twitter handle or URL) or null",
+    "facebook": "string (Facebook URL) or null",
+    "instagram": "string (Instagram handle or URL) or null"
+  },
+  "confidence": 0-100,
+  "imageType": "business_card|email_signature|logo|other",
+  "notes": "string (any additional relevant information)"
+}
+
+If no contact information is visible in the image, return all fields as null with confidence 0.`;
+
+          const response = await clientInfo.client.chat.completions.create({
+            model: model,
+            messages: [
+              {
+                role: 'user',
+                content: [
+                  {
+                    type: 'text',
+                    text: visionPrompt
+                  },
+                  {
+                    type: 'image_url',
+                    image_url: {
+                      url: attachment.url,
+                      detail: 'high' // Use high detail for better OCR
+                    }
+                  }
+                ]
+              }
+            ],
+            temperature: 0.2,
+            max_tokens: 1000
+          });
+
+          const result = JSON.parse(response.choices[0].message.content);
+          const usage = response.usage;
+          const cost = this.calculateCost(model, usage);
+
+          totalCost += cost;
+          totalTokens.prompt += usage.prompt_tokens;
+          totalTokens.completion += usage.completion_tokens;
+          totalTokens.total += usage.total_tokens;
+
+          // Add source info
+          result.source = {
+            filename: attachment.filename,
+            contentType: attachment.contentType,
+            attachmentId: attachment._id
+          };
+
+          extractedContacts.push(result);
+
+          // Log the extraction
+          await AIProcessingLog.create({
+            emailLogId: email._id,
+            processingType: 'vision_extraction',
+            status: 'completed',
+            model: model,
+            prompt: visionPrompt,
+            promptTokens: usage.prompt_tokens,
+            completionTokens: usage.completion_tokens,
+            totalTokens: usage.total_tokens,
+            response: response.choices[0].message,
+            result,
+            confidence: result.confidence,
+            startedAt: new Date(startTime),
+            completedAt: new Date(),
+            estimatedCost: cost,
+            tenantId
+          });
+
+        } catch (imageError) {
+          console.error(`Error processing image ${attachment.filename}:`, imageError.message);
+          // Continue with next image
+        }
+      }
+
+      return {
+        success: true,
+        extractedContacts,
+        processedImages: extractedContacts.length,
+        totalImages: imageAttachments.length,
+        cost: totalCost,
+        tokens: totalTokens
+      };
+
+    } catch (error) {
+      console.error('OpenAI vision extraction error:', error);
+      
+      await AIProcessingLog.create({
+        emailLogId: email._id,
+        processingType: 'vision_extraction',
+        status: 'failed',
+        model: 'gpt-4-vision-preview',
+        error: error.message,
+        tenantId
+      });
+      
+      return {
+        success: false,
+        extractedContacts: [],
+        error: error.message,
+        cost: totalCost,
+        tokens: totalTokens
+      };
     }
   }
 

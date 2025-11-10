@@ -154,6 +154,57 @@ class EmailProcessingQueue {
         await email.save();
         job.progress(50);
 
+        // STEP 2.5: Extract contact information from signature images if attachments exist
+        if (email.attachments && email.attachments.length > 0) {
+          console.log('Step 2.5: Extracting contact from signature images...');
+          try {
+            const visionResult = await openaiService.extractContactFromSignatureImages(email, tenantId);
+            
+            if (visionResult.success && visionResult.extractedContacts.length > 0) {
+              // Merge extracted contact info with existing customerInfo
+              const signatureContact = visionResult.extractedContacts[0]; // Use first/best match
+              
+              if (!email.extractedData.customerInfo) {
+                email.extractedData.customerInfo = {};
+              }
+              
+              // Merge data, preferring non-null values from signature
+              const merged = { ...email.extractedData.customerInfo };
+              
+              if (signatureContact.name && !merged.name) merged.name = signatureContact.name;
+              if (signatureContact.email && !merged.email) merged.email = signatureContact.email;
+              if (signatureContact.phone && !merged.phone) merged.phone = signatureContact.phone;
+              if (signatureContact.mobile && !merged.mobile) merged.mobile = signatureContact.mobile;
+              if (signatureContact.workPhone && !merged.workPhone) merged.workPhone = signatureContact.workPhone;
+              if (signatureContact.company && !merged.company) merged.company = signatureContact.company;
+              if (signatureContact.jobTitle && !merged.jobTitle) merged.jobTitle = signatureContact.jobTitle;
+              if (signatureContact.website && !merged.website) merged.website = signatureContact.website;
+              
+              if (signatureContact.address) {
+                merged.address = { ...merged.address, ...signatureContact.address };
+              }
+              
+              if (signatureContact.socialMedia) {
+                merged.socialMedia = { ...merged.socialMedia, ...signatureContact.socialMedia };
+              }
+              
+              email.extractedData.customerInfo = merged;
+              email.extractedData.signatureImageProcessed = true;
+              email.extractedData.signatureImageData = visionResult.extractedContacts;
+              
+              email.openaiCost += visionResult.cost;
+              email.tokensUsed = (email.tokensUsed || 0) + visionResult.tokens.total;
+              
+              console.log(`✅ Extracted contact from ${visionResult.processedImages} signature image(s)`);
+            }
+          } catch (visionError) {
+            console.error('Error extracting from signature images:', visionError.message);
+            // Continue processing even if vision extraction fails
+          }
+          
+          await email.save();
+        }
+
         // Check for missing critical information
         if (extractedData.missingInfo?.length > 3) {
           await this.sendToReview(email, 'AMBIGUOUS_REQUEST', {

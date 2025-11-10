@@ -307,6 +307,9 @@ const ProcessingHistory = () => {
                   From
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Contact Info
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Subject
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -332,7 +335,7 @@ const ProcessingHistory = () => {
             <tbody className="bg-white divide-y divide-gray-200">
               {emails.length === 0 ? (
                 <tr>
-                  <td colSpan="9" className="px-6 py-12 text-center text-gray-500">
+                  <td colSpan="10" className="px-6 py-12 text-center text-gray-500">
                     No emails found
                   </td>
                 </tr>
@@ -346,6 +349,58 @@ const ProcessingHistory = () => {
                       <div className="max-w-xs truncate" title={email.from?.email}>
                         {email.from?.name || email.from?.email}
                       </div>
+                    </td>
+                    <td className="px-6 py-4 text-sm">
+                      {email.extractedData?.customerInfo ? (
+                        <div className="flex flex-col gap-1">
+                          {email.extractedData.customerInfo.name && (
+                            <div className="flex items-center gap-1 text-gray-700">
+                              <span className="text-blue-600 font-medium">{email.extractedData.customerInfo.name}</span>
+                            </div>
+                          )}
+                          {email.extractedData.customerInfo.company && (
+                            <div className="text-gray-600 text-xs">
+                              🏢 {email.extractedData.customerInfo.company}
+                            </div>
+                          )}
+                          <div className="flex gap-2 mt-1">
+                            {email.extractedData.customerInfo.email && (
+                              <a 
+                                href={`mailto:${email.extractedData.customerInfo.email}`}
+                                className="text-blue-600 hover:text-blue-800"
+                                title={`Email: ${email.extractedData.customerInfo.email}`}
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                ✉️
+                              </a>
+                            )}
+                            {(email.extractedData.customerInfo.phone || email.extractedData.customerInfo.mobile) && (
+                              <a 
+                                href={`tel:${email.extractedData.customerInfo.phone || email.extractedData.customerInfo.mobile}`}
+                                className="text-green-600 hover:text-green-800"
+                                title={`Phone: ${email.extractedData.customerInfo.phone || email.extractedData.customerInfo.mobile}`}
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                📞
+                              </a>
+                            )}
+                            {email.extractedData.customerInfo.website && (
+                              <a 
+                                href={email.extractedData.customerInfo.website}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-purple-600 hover:text-purple-800"
+                                title={`Website: ${email.extractedData.customerInfo.website}`}
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                🌐
+                              </a>
+                            )}
+                          </div>
+                        </div>
+                      ) : (
+                        <span className="text-gray-400 text-xs">No contact info</span>
+                      )}
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-900">
                       <div className="max-w-xs truncate" title={email.subject}>
