@@ -85,6 +85,8 @@ import EmailAccounts from './pages/settings/EmailAccounts'
 // Email Automation
 import EmailDashboard from './pages/emails/EmailDashboard'
 import EmailDetail from './pages/emails/EmailDetail'
+import ReviewQueue from './pages/emails/ReviewQueue'
+import EmailAnalytics from './pages/emails/EmailAnalytics'
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
@@ -280,6 +282,16 @@ function App() {
         <Route path="emails/:id" element={
           <RoleBasedRoute allowedRoles={['super_admin', 'operator', 'admin']}>
             <EmailDetail />
+          </RoleBasedRoute>
+        } />
+        <Route path="emails/review-queue" element={
+          <RoleBasedRoute allowedRoles={['super_admin', 'operator', 'admin']}>
+            <ReviewQueue />
+          </RoleBasedRoute>
+        } />
+        <Route path="emails/analytics" element={
+          <RoleBasedRoute allowedRoles={['super_admin', 'operator', 'admin']}>
+            <EmailAnalytics />
           </RoleBasedRoute>
         } />
         
