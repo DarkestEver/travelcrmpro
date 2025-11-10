@@ -237,44 +237,48 @@ Body: ${email.bodyText}
 
 Extract ALL available information and respond with ONLY valid JSON:
 {
-  "destination": "string (primary destination)",
-  "additionalDestinations": ["array of other destinations"],
+  "destination": "string (primary destination city/country)",
+  "additionalDestinations": ["array of other destinations if multi-city"],
   "dates": {
     "flexible": boolean,
-    "preferredStart": "YYYY-MM-DD or null",
-    "preferredEnd": "YYYY-MM-DD or null",
+    "startDate": "YYYY-MM-DD or null (journey start date)",
+    "endDate": "YYYY-MM-DD or null (journey end date)",
     "duration": "number of days/nights or null"
   },
   "travelers": {
     "adults": number,
     "children": number,
-    "childAges": [numbers],
+    "childAges": [numbers array - ages of each child],
     "infants": number
   },
   "budget": {
     "amount": number or null,
-    "currency": "USD|EUR|GBP etc",
+    "currency": "INR|USD|EUR|GBP etc",
     "flexible": boolean,
     "perPerson": boolean
   },
   "packageType": "honeymoon|family|adventure|luxury|budget|group|solo|business|custom",
   "accommodation": {
-    "rating": "3|4|5 star or null",
-    "type": "hotel|resort|villa|apartment|etc",
-    "preferences": ["array of preferences"]
+    "hotelType": "budget|standard|premium|luxury",
+    "starRating": "3|4|5 star or null",
+    "roomCategory": "standard|deluxe|suite|villa or null",
+    "numberOfRooms": number or null,
+    "roomType": "single|double|twin|triple|family or null",
+    "preferences": ["array of preferences like sea-view, poolside, etc"]
   },
-  "activities": ["array of requested activities"],
-  "meals": "none|breakfast|halfboard|fullboard|allinclusive",
-  "specialRequirements": ["array of special needs"],
+  "mealPlan": "room_only|breakfast|half_board|full_board|all_inclusive or null",
+  "activities": ["array of requested activities/experiences"],
+  "specialRequirements": ["array of special needs like wheelchair, dietary"],
   "customerInfo": {
     "name": "string or null",
-    "email": "email",
+    "email": "email from 'from' field",
     "phone": "string or null",
+    "company": "string or null",
     "isReturning": boolean
   },
   "urgency": "low|normal|high|urgent",
   "confidence": 0-100,
-  "missingInfo": ["array of missing required fields"]
+  "missingInfo": ["array of CRITICAL missing fields for quote: startDate, endDate, destination, adults count, mealPlan, hotelType, roomCategory"]
 }`;
 
     try {

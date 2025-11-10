@@ -14,17 +14,77 @@ const quoteSchema = new mongoose.Schema({
   itineraryId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Itinerary',
-    required: true,
+    required: false, // Not required for email-generated quotes
   },
   agentId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Agent',
-    required: true,
+    required: false, // Not required initially
   },
   customerId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Customer',
   },
+  
+  // Customer details (from email extraction)
+  customerName: String,
+  customerEmail: String,
+  customerPhone: String,
+  
+  // Travel details (from email extraction)
+  destination: String,
+  additionalDestinations: [String],
+  startDate: Date,
+  endDate: Date,
+  duration: Number,
+  
+  // Travelers
+  adults: { type: Number, default: 0 },
+  children: { type: Number, default: 0 },
+  childAges: [Number],
+  infants: { type: Number, default: 0 },
+  
+  // Accommodation requirements
+  hotelType: {
+    type: String,
+    enum: ['budget', 'standard', 'premium', 'luxury', null]
+  },
+  starRating: String,
+  roomCategory: String,
+  numberOfRooms: Number,
+  roomType: String,
+  
+  // Package details
+  packageType: String,
+  mealPlan: String,
+  activities: [String],
+  specialRequirements: [String],
+  
+  // Budget
+  estimatedBudget: Number,
+  currency: { type: String, default: 'INR' },
+  budgetFlexible: { type: Boolean, default: true },
+  
+  // Email source tracking
+  source: {
+    type: String,
+    enum: ['manual', 'email', 'import'],
+    default: 'manual'
+  },
+  emailId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'EmailLog'
+  },
+  extractionConfidence: Number,
+  dataCompleteness: Number,
+  missingFields: [String],
+  warningFields: [String],
+  
+  // Matched itineraries
+  matchedItineraries: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Itinerary'
+  }],
   pricing: {
     baseCost: {
       type: Number,
@@ -83,7 +143,18 @@ const quoteSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['draft', 'sent', 'viewed', 'accepted', 'rejected', 'expired'],
+    enum: [
+      'draft', 
+      'incomplete_data',
+      'pending_operator_review',
+      'itineraries_found',
+      'awaiting_supplier_response',
+      'sent', 
+      'viewed', 
+      'accepted', 
+      'rejected', 
+      'expired'
+    ],
     default: 'draft',
   },
   pdfUrl: String,
@@ -91,7 +162,11 @@ const quoteSchema = new mongoose.Schema({
   viewedAt: Date,
   respondedAt: Date,
   rejectionReason: String,
-  notes: String,
+  notes: [{
+    text: String,
+    createdBy: String,
+    createdAt: { type: Date, default: Date.now }
+  }],
   customizations: String, // Custom requests or modifications
   createdBy: {
     type: mongoose.Schema.Types.ObjectId,

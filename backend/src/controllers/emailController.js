@@ -2,6 +2,7 @@ const EmailLog = require('../models/EmailLog');
 const emailProcessingQueue = require('../services/emailProcessingQueue');
 const openaiService = require('../services/openaiService');
 const matchingEngine = require('../services/matchingEngine');
+const emailToQuoteService = require('../services/emailToQuoteService');
 const { simpleParser } = require('mailparser');
 
 class EmailController {
@@ -508,6 +509,39 @@ class EmailController {
       res.status(500).json({
         success: false,
         message: 'Failed to fetch statistics',
+        error: error.message
+      });
+    }
+  }
+
+  /**
+   * Convert email to quote (NEW - Complete workflow)
+   * POST /api/v1/emails/:id/convert-to-quote
+   */
+  async convertEmailToQuote(req, res) {
+    try {
+      const { id } = req.params;
+      const tenantId = req.user.tenantId;
+
+      // Run the complete workflow
+      const result = await emailToQuoteService.processEmailToQuote(id, tenantId);
+
+      res.json({
+        success: true,
+        message: 'Email successfully converted to quote',
+        data: {
+          email: result.email,
+          extractedData: result.extractedData,
+          validation: result.validation,
+          quote: result.quote,
+          itinerarySearch: result.itinerarySearch
+        }
+      });
+    } catch (error) {
+      console.error('Convert email to quote error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to convert email to quote',
         error: error.message
       });
     }
