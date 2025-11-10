@@ -2,14 +2,30 @@ const mongoose = require('mongoose');
 const crypto = require('crypto');
 
 // Encryption configuration
-const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || crypto.randomBytes(32).toString('hex').slice(0, 32); // 32 bytes
+// Get encryption key from env or generate a default one
+// For AES-256-CBC, we need exactly 32 bytes
+let ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || crypto.randomBytes(32).toString('hex');
+
+// Ensure the key is exactly 32 bytes
+if (ENCRYPTION_KEY.length === 64) {
+  // It's a hex string (64 chars = 32 bytes), convert to Buffer
+  ENCRYPTION_KEY = Buffer.from(ENCRYPTION_KEY, 'hex');
+} else if (ENCRYPTION_KEY.length === 32) {
+  // It's already 32 characters, use as-is
+  ENCRYPTION_KEY = Buffer.from(ENCRYPTION_KEY, 'utf8');
+} else {
+  // Invalid length, pad or truncate to 32 bytes
+  const hash = crypto.createHash('sha256').update(ENCRYPTION_KEY).digest();
+  ENCRYPTION_KEY = hash.slice(0, 32);
+}
+
 const IV_LENGTH = 16; // For AES, this is always 16
 
 // Encryption utilities
 function encrypt(text) {
   if (!text) return text;
   const iv = crypto.randomBytes(IV_LENGTH);
-  const cipher = crypto.createCipheriv('aes-256-cbc', Buffer.from(ENCRYPTION_KEY), iv);
+  const cipher = crypto.createCipheriv('aes-256-cbc', ENCRYPTION_KEY, iv);
   let encrypted = cipher.update(text);
   encrypted = Buffer.concat([encrypted, cipher.final()]);
   return iv.toString('hex') + ':' + encrypted.toString('hex');
@@ -21,7 +37,7 @@ function decrypt(text) {
   if (textParts.length !== 2) return text; // Not encrypted
   const iv = Buffer.from(textParts.shift(), 'hex');
   const encryptedText = Buffer.from(textParts.join(':'), 'hex');
-  const decipher = crypto.createDecipheriv('aes-256-cbc', Buffer.from(ENCRYPTION_KEY), iv);
+  const decipher = crypto.createDecipheriv('aes-256-cbc', ENCRYPTION_KEY, iv);
   let decrypted = decipher.update(encryptedText);
   decrypted = Buffer.concat([decrypted, decipher.final()]);
   return decrypted.toString();

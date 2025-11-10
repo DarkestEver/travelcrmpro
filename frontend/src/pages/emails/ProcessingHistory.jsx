@@ -55,11 +55,11 @@ const ProcessingHistory = () => {
 
       const response = await api.get(`/emails?${params}`);
       if (response.success) {
-        setEmails(response.data.emails || []);
+        setEmails(response.data || []); // API returns data array directly
         setPagination({
-          total: response.data.total || 0,
-          pages: response.data.pages || 0,
-          currentPage: response.data.currentPage || 1
+          total: response.pagination?.total || 0,
+          pages: response.pagination?.pages || 0,
+          currentPage: response.pagination?.page || 1
         });
       }
     } catch (error) {

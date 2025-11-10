@@ -38,10 +38,16 @@ const EmailDetail = () => {
     try {
       setLoading(true);
       const response = await emailAPI.getEmailById(id);
-      setEmail(response.data);
+      if (response.success && response.data) {
+        setEmail(response.data);
+      } else {
+        toast.error('Email not found');
+        navigate('/emails/history');
+      }
     } catch (error) {
       console.error('Failed to fetch email:', error);
       toast.error('Failed to load email');
+      navigate('/emails/history');
     } finally {
       setLoading(false);
     }

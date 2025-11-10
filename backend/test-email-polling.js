@@ -7,7 +7,7 @@
 const axios = require('axios');
 
 const API_BASE_URL = 'http://localhost:5000/api/v1';
-const TENANT_ID = '66e50b97e5e59e8ab7492c42'; // Replace with your tenant ID
+const TENANT_ID = '690ce6d206c104addbfedb65'; // Main Travel Agency
 
 async function checkRecentEmails() {
   console.log('\n═══════════════════════════════════════════════════════');

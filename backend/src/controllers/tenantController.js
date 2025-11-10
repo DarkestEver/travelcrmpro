@@ -309,9 +309,21 @@ const getCurrentTenant = asyncHandler(async (req, res) => {
 const getTenantSettings = asyncHandler(async (req, res) => {
   const tenantId = req.user.tenantId;
   
+  // Debug logging
+  if (!tenantId) {
+    console.error('getTenantSettings: No tenantId found for user:', {
+      userId: req.user._id,
+      role: req.user.role,
+      email: req.user.email,
+      tenantId: req.user.tenantId
+    });
+    throw new AppError('User does not have a tenant assigned. Please contact support.', 400);
+  }
+  
   const tenant = await Tenant.findById(tenantId).select('settings subdomain companyName');
 
   if (!tenant) {
+    console.error('getTenantSettings: Tenant not found in database:', { tenantId });
     throw new AppError('Tenant not found', 404);
   }
 
@@ -330,9 +342,43 @@ const updateTenantSettings = asyncHandler(async (req, res) => {
     throw new AppError('You do not have permission to update settings', 403);
   }
 
+  // Debug logging
+  if (!tenantId) {
+    console.error('updateTenantSettings: No tenantId found for user:', {
+      userId: req.user._id,
+      role: req.user.role,
+      email: req.user.email,
+      tenantId: req.user.tenantId
+    });
+    throw new AppError('User does not have a tenant assigned. Please contact support.', 400);
+  }
+
+  console.log('updateTenantSettings: Looking for tenant:', {
+    tenantId,
+    tenantIdType: typeof tenantId,
+    userId: req.user._id,
+    userEmail: req.user.email
+  });
+
   const tenant = await Tenant.findById(tenantId);
   
+  console.log('updateTenantSettings: Tenant query result:', {
+    found: !!tenant,
+    tenantId,
+    tenant: tenant ? {
+      id: tenant._id,
+      companyName: tenant.companyName,
+      subdomain: tenant.subdomain
+    } : null
+  });
+  
   if (!tenant) {
+    console.error('updateTenantSettings: Tenant not found in database:', { 
+      tenantId,
+      tenantIdString: String(tenantId),
+      userTenantId: req.user.tenantId,
+      userTenantIdString: String(req.user.tenantId)
+    });
     throw new AppError('Tenant not found', 404);
   }
 
