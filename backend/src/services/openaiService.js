@@ -668,7 +668,7 @@ If no contact information is visible in the image, return all fields as null wit
   }
 
   /**
-   * Generate response email
+   * Generate response email with itinerary matching workflow support
    */
   async generateResponse(email, context, templateType, tenantId) {
     const clientInfo = await this.getClientForTenant(tenantId);
@@ -685,9 +685,156 @@ If no contact information is visible in the image, return all fields as null wit
 
     const startTime = Date.now();
     
+    // Extract customer info for personalization
+    const customerName = context.extractedData?.customerInfo?.name || 
+                        email.from?.name || 
+                        'Valued Customer';
+    
     let prompt = '';
     
-    if (templateType === 'PACKAGE_FOUND') {
+    // Handle itinerary matching workflow responses
+    if (templateType === 'ASK_CUSTOMER') {
+      const missingFieldsList = context.missingFields
+        .map(field => `- ${field.label}`)
+        .join('\n');
+      
+      prompt = `Generate a friendly, professional email asking for missing information.
+
+Customer Name: ${customerName}
+Customer Email: ${email.bodyText}
+
+Missing Required Information:
+${missingFieldsList}
+
+Customer Info Available:
+${JSON.stringify(context.extractedData?.customerInfo || {}, null, 2)}
+
+Instructions:
+- Greet customer by name warmly
+- Thank them for their interest
+- Acknowledge what information they've already provided
+- Politely ask for the missing information with specific questions
+- Explain why this information helps us serve them better
+- Keep tone helpful and enthusiastic
+- Make it easy to respond (clear questions)
+- 150-200 words
+
+Respond with ONLY valid JSON:
+{
+  "subject": "Re: ${email.subject} - A few quick questions",
+  "body": "HTML email body with personalized greeting",
+  "plainText": "Plain text version"
+}`;
+    } else if (templateType === 'SEND_ITINERARIES') {
+      const itinerariesInfo = context.itineraries.map((match, index) => {
+        const itin = match.itinerary;
+        return `
+Itinerary ${index + 1}: ${itin.title} (${match.score}% match)
+- Destination: ${itin.destination?.city || itin.destination?.country}
+- Duration: ${itin.duration?.days} days / ${itin.duration?.nights} nights
+- Estimated Cost: ${itin.estimatedCost?.currency} ${itin.estimatedCost?.totalCost}
+- Highlights: ${itin.highlights?.slice(0, 3).join(', ')}
+- Match Score: ${match.score}%`;
+      }).join('\n\n');
+
+      prompt = `Generate an exciting, personalized email presenting matching itineraries.
+
+Customer Name: ${customerName}
+Customer Request: ${email.bodyText}
+
+Customer Requirements:
+${JSON.stringify(context.extractedData, null, 2)}
+
+Matching Itineraries Found:
+${itinerariesInfo}
+
+Instructions:
+- Greet customer by name warmly
+- Express excitement about their travel plans
+- Present the top matching itineraries (max 3)
+- For each itinerary: highlight key features, what makes it special
+- Mention how it matches their requirements
+- Include pricing and what's included
+- Create urgency (limited availability, seasonal pricing)
+- Include clear call-to-action (book now, request details, schedule call)
+- Professional yet warm and enthusiastic tone
+- 300-400 words
+
+Respond with ONLY valid JSON:
+{
+  "subject": "Perfect Itineraries for Your ${context.extractedData?.destination || 'Dream'} Trip! ✈️",
+  "body": "HTML email body with exciting presentation",
+  "plainText": "Plain text version"
+}`;
+    } else if (templateType === 'SEND_ITINERARIES_WITH_NOTE') {
+      const itinerariesInfo = context.itineraries.map((match, index) => {
+        const itin = match.itinerary;
+        return `
+Itinerary ${index + 1}: ${itin.title} (${match.score}% match)
+- Destination: ${itin.destination?.city || itin.destination?.country}
+- Duration: ${itin.duration?.days} days / ${itin.duration?.nights} nights
+- Estimated Cost: ${itin.estimatedCost?.currency} ${itin.estimatedCost?.totalCost}`;
+      }).join('\n\n');
+
+      prompt = `Generate a professional email presenting itineraries that partially match requirements.
+
+Customer Name: ${customerName}
+Customer Request: ${email.bodyText}
+
+Customer Requirements:
+${JSON.stringify(context.extractedData, null, 2)}
+
+Available Itineraries (partial match):
+${itinerariesInfo}
+
+Note: ${context.note}
+
+Instructions:
+- Greet customer warmly
+- Present the available itineraries honestly
+- Mention these are close matches we can customize
+- Emphasize flexibility and personalization
+- Offer to adjust itineraries to better match their needs
+- Ask about their priorities (what's most important to them)
+- Maintain positive, solution-oriented tone
+- 250-300 words
+
+Respond with ONLY valid JSON:
+{
+  "subject": "Great Options for Your ${context.extractedData?.destination || 'Trip'} (+ Customization Available)",
+  "body": "HTML email body",
+  "plainText": "Plain text version"
+}`;
+    } else if (templateType === 'FORWARD_TO_SUPPLIER') {
+      prompt = `Generate a professional email acknowledging custom itinerary request.
+
+Customer Name: ${customerName}
+Customer Request: ${email.bodyText}
+
+Customer Requirements:
+${JSON.stringify(context.extractedData, null, 2)}
+
+Note: ${context.note || 'No matching pre-made itineraries found'}
+
+Instructions:
+- Greet customer warmly by name
+- Thank them for their detailed requirements
+- Acknowledge this is a unique/custom request
+- Explain we're creating a personalized itinerary for them
+- Promise timeline (e.g., "within 24-48 hours")
+- Mention we're working with our best suppliers/partners
+- Ask if they have any additional preferences
+- Reassure them about quality and attention to detail
+- Professional, confident, reassuring tone
+- 200-250 words
+
+Respond with ONLY valid JSON:
+{
+  "subject": "Creating Your Custom ${context.extractedData?.destination || 'Travel'} Experience ✨",
+  "body": "HTML email body",
+  "plainText": "Plain text version"
+}`;
+    } else if (templateType === 'PACKAGE_FOUND') {
       prompt = `Generate a professional, friendly response email for this customer inquiry.
       
 Customer Email:

@@ -3,6 +3,8 @@ const InMemoryQueue = require('./InMemoryQueue');
 const EmailLog = require('../models/EmailLog');
 const openaiService = require('./openaiService');
 const matchingEngine = require('./matchingEngine');
+const itineraryMatchingService = require('./itineraryMatchingService');
+const emailService = require('./emailService');
 const SupplierPackageCache = require('../models/SupplierPackageCache');
 const ManualReviewQueue = require('../models/ManualReviewQueue');
 
@@ -214,8 +216,30 @@ class EmailProcessingQueue {
           return { status: 'review', reason: 'Too much missing information' };
         }
 
-        // STEP 3: Match with packages
-        console.log('Step 3: Matching with packages...');
+        // STEP 3: Itinerary Matching (New Workflow)
+        console.log('Step 3: Matching with itineraries...');
+        const itineraryMatching = await itineraryMatchingService.processItineraryMatching(
+          extractedData,
+          tenantId
+        );
+        
+        email.itineraryMatching = {
+          validation: itineraryMatching.validation,
+          workflowAction: itineraryMatching.workflow.action,
+          reason: itineraryMatching.workflow.reason,
+          matchCount: itineraryMatching.matches?.length || 0,
+          topMatches: itineraryMatching.matches?.slice(0, 3).map(m => ({
+            itineraryId: m.itinerary._id,
+            title: m.itinerary.title,
+            score: m.score,
+            gaps: m.gaps
+          }))
+        };
+        await email.save();
+        job.progress(60);
+
+        // STEP 4: Match with packages (legacy/fallback)
+        console.log('Step 4: Matching with packages...');
         const matches = await matchingEngine.matchPackages(extractedData, tenantId);
         
         email.matchingResults = matches.map(m => ({
@@ -227,29 +251,76 @@ class EmailProcessingQueue {
         await email.save();
         job.progress(70);
 
-        // STEP 4: Generate response
-        console.log('Step 4: Generating response...');
+        // STEP 5: Generate response based on itinerary workflow
+        console.log('Step 5: Generating response...');
         let response;
+        const workflow = itineraryMatching.workflow;
         
-        if (matches.length > 0 && matches[0].score >= 60) {
-          // Good matches found
+        if (workflow.action === 'ASK_CUSTOMER') {
+          // Missing required fields - ask customer
           response = await openaiService.generateResponse(
-            email, 
-            { 
-              matchedPackages: matches.slice(0, 3).map(m => m.package),
-              extractedData 
+            email,
+            {
+              extractedData,
+              missingFields: workflow.missingFields
             },
-            'PACKAGE_FOUND',
+            'ASK_CUSTOMER',
+            tenantId
+          );
+        } else if (workflow.action === 'SEND_ITINERARIES') {
+          // Good matches found (≥70%)
+          response = await openaiService.generateResponse(
+            email,
+            {
+              extractedData,
+              itineraries: workflow.matches.slice(0, 3)
+            },
+            'SEND_ITINERARIES',
+            tenantId
+          );
+        } else if (workflow.action === 'SEND_ITINERARIES_WITH_NOTE') {
+          // Moderate matches (50-69%)
+          response = await openaiService.generateResponse(
+            email,
+            {
+              extractedData,
+              itineraries: workflow.matches.slice(0, 3),
+              note: workflow.reason
+            },
+            'SEND_ITINERARIES_WITH_NOTE',
+            tenantId
+          );
+        } else if (workflow.action === 'FORWARD_TO_SUPPLIER') {
+          // No good matches - custom quote needed
+          response = await openaiService.generateResponse(
+            email,
+            {
+              extractedData,
+              note: workflow.reason
+            },
+            'FORWARD_TO_SUPPLIER',
             tenantId
           );
         } else {
-          // No good matches
-          response = await openaiService.generateResponse(
-            email,
-            { extractedData },
-            'PACKAGE_NOT_FOUND',
-            tenantId
-          );
+          // Fallback to package matching if itinerary workflow fails
+          if (matches.length > 0 && matches[0].score >= 60) {
+            response = await openaiService.generateResponse(
+              email, 
+              { 
+                matchedPackages: matches.slice(0, 3).map(m => m.package),
+                extractedData 
+              },
+              'PACKAGE_FOUND',
+              tenantId
+            );
+          } else {
+            response = await openaiService.generateResponse(
+              email,
+              { extractedData },
+              'PACKAGE_NOT_FOUND',
+              tenantId
+            );
+          }
         }
 
         email.responseGenerated = true;
@@ -257,6 +328,31 @@ class EmailProcessingQueue {
         email.openaiCost += 0.03; // Approximate cost
         await email.save();
         job.progress(90);
+
+        // STEP 6: Send the response email to customer automatically
+        console.log('Step 6: Sending response email to customer...');
+        try {
+          const sendResult = await emailService.sendEmail({
+            to: email.from.email,
+            subject: response.subject,
+            html: response.body,
+            text: response.plainText
+          });
+          
+          email.responseSentAt = new Date();
+          email.responseId = sendResult.messageId;
+          await email.save();
+          
+          console.log(`✅ Response email sent to ${email.from.email}`);
+        } catch (sendError) {
+          console.error('❌ Failed to send response email:', sendError.message);
+          // Don't fail the entire process if email sending fails
+          // Just log it and continue
+          email.processingError = `Response generated but failed to send: ${sendError.message}`;
+          await email.save();
+        }
+        
+        job.progress(95);
 
         // Check if high value customer (budget > $5000) - needs review
         if (extractedData.budget?.amount > 5000) {

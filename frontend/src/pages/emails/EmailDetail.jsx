@@ -27,6 +27,7 @@ const EmailDetail = () => {
   const navigate = useNavigate();
   const [email, setEmail] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [processing, setProcessing] = useState(false);
   const [activeTab, setActiveTab] = useState('content');
 
@@ -37,17 +38,29 @@ const EmailDetail = () => {
   const fetchEmail = async () => {
     try {
       setLoading(true);
-      const response = await emailAPI.getEmailById(id);
-      if (response.success && response.data) {
-        setEmail(response.data);
+      setError(null);
+      const data = await emailAPI.getEmailById(id);
+      console.log('📧 Email API Response:', data);
+      
+      // The response is already unwrapped by api.js interceptor
+      // So data = { success: true, data: {...} }
+      if (data.success && data.data) {
+        setEmail(data.data);
+      } else if (data._id) {
+        // Sometimes it might return the email object directly
+        setEmail(data);
       } else {
-        toast.error('Email not found');
-        navigate('/emails/history');
+        console.error('❌ Email not found or no data:', data);
+        setError(data.message || 'Email not found');
+        // Don't auto-redirect, let user see the error and choose to go back
       }
     } catch (error) {
-      console.error('Failed to fetch email:', error);
-      toast.error('Failed to load email');
-      navigate('/emails/history');
+      console.error('❌ Failed to fetch email:', error);
+      console.error('Error response:', error.response);
+      const errorMsg = error.response?.data?.message || error.message || 'Failed to load email';
+      setError(errorMsg);
+      toast.error(errorMsg);
+      // Don't auto-redirect, let user see the error
     } finally {
       setLoading(false);
     }
@@ -137,12 +150,20 @@ const EmailDetail = () => {
   if (!email) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
+        <div className="text-center max-w-md">
           <AlertCircle className="w-16 h-16 text-red-400 mx-auto mb-4" />
-          <p className="text-gray-600">Email not found</p>
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">Email Not Found</h2>
+          {error && (
+            <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+              <p className="text-sm text-red-800">{error}</p>
+            </div>
+          )}
+          <p className="text-gray-600 mb-4">
+            This email may have been deleted, or you don't have permission to view it.
+          </p>
           <button
             onClick={() => navigate('/emails')}
-            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
           >
             Back to Emails
           </button>

@@ -120,6 +120,20 @@ const emailLogSchema = new mongoose.Schema({
   // Extracted Data (JSON)
   extractedData: mongoose.Schema.Types.Mixed,
   
+  // Signature Image Processing (Vision API)
+  signatureImageProcessed: { type: Boolean, default: false },
+  signatureImageData: {
+    processedImages: Number,
+    extractedContacts: [mongoose.Schema.Types.Mixed],
+    cost: Number,
+    tokens: {
+      prompt: Number,
+      completion: Number,
+      total: Number
+    },
+    processedAt: Date
+  },
+  
   // Matching Results
   matchingResults: [{
     packageId: mongoose.Schema.Types.ObjectId,
@@ -127,8 +141,49 @@ const emailLogSchema = new mongoose.Schema({
     reasons: [String]
   }],
   
+  // Itinerary Matching Results (New Workflow)
+  itineraryMatching: {
+    validation: {
+      isValid: Boolean,
+      completeness: Number,
+      missingFields: [String]
+    },
+    workflowAction: {
+      type: String,
+      enum: ['ASK_CUSTOMER', 'SEND_ITINERARIES', 'SEND_ITINERARIES_WITH_NOTE', 'FORWARD_TO_SUPPLIER']
+    },
+    reason: String,
+    matchCount: Number,
+    topMatches: [{
+      itineraryId: mongoose.Schema.Types.ObjectId,
+      title: String,
+      score: Number,
+      gaps: [String]
+    }],
+    processedAt: {
+      type: Date,
+      default: Date.now
+    }
+  },
+  
   // Response Tracking
   responseGenerated: { type: Boolean, default: false },
+  generatedResponse: {
+    subject: String,
+    body: String,
+    plainText: String,
+    templateType: String,
+    cost: Number,
+    tokens: {
+      prompt: Number,
+      completion: Number,
+      total: Number
+    },
+    generatedAt: {
+      type: Date,
+      default: Date.now
+    }
+  },
   responseId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'EmailLog'
