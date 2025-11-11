@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Great Matches Found - Customization Available</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f4f4f4;">
+  <table role="presentation" style="width: 100%; border-collapse: collapse;">
+    <tr>
+      <td style="padding: 20px 0; text-align: center; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">
+        <h1 style="color: white; margin: 0; font-size: 28px;">✨ Great Matches Found!</h1>
+      </td>
+    </tr>
+  </table>
+
+  <table role="presentation" style="width: 100%; max-width: 600px; margin: 20px auto; background-color: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+    <tr>
+      <td style="padding: 30px;">
+        
+        <!-- Greeting -->
+        <h2 style="color: #333; margin-top: 0;">Dear {{CUSTOMER_NAME}},</h2>
+        
+        <p style="color: #555; line-height: 1.6; font-size: 16px;">
+          We found <strong>excellent itineraries</strong> for your trip to <strong>{{DESTINATION}}</strong>! 
+          While these options match most of your requirements, we can easily customize them to be perfect for you.
+        </p>
+
+        <!-- Trip Summary -->
+        <div style="background-color: #f8f9fa; padding: 15px; border-radius: 6px; margin: 20px 0; border-left: 4px solid #f59e0b;">
+          <p style="margin: 5px 0; color: #333;"><strong>📍 Destination:</strong> {{DESTINATION}}</p>
+          <p style="margin: 5px 0; color: #333;"><strong>📅 Dates:</strong> {{TRAVEL_DATES}}</p>
+          <p style="margin: 5px 0; color: #333;"><strong>👥 Travelers:</strong> {{TRAVELERS}}</p>
+          <p style="margin: 5px 0; color: #333;"><strong>💰 Budget:</strong> {{BUDGET}}</p>
+        </div>
+
+        <!-- Customization Note Alert -->
+        <div style="background-color: #fef3c7; border: 2px solid #f59e0b; border-radius: 8px; padding: 20px; margin: 25px 0;">
+          <h3 style="color: #d97706; margin-top: 0; font-size: 18px;">
+            💡 Customization Note
+          </h3>
+          <p style="color: #92400e; line-height: 1.6; margin: 10px 0; font-size: 15px;">
+            {{CUSTOMIZATION_NOTE}}
+          </p>
+          <p style="color: #92400e; line-height: 1.6; margin: 10px 0; font-size: 15px;">
+            <strong>Good news:</strong> We can easily adjust these itineraries to match your preferences perfectly! 
+            Just reply to this email with your specific requirements.
+          </p>
+        </div>
+
+        <h3 style="color: #f59e0b; border-bottom: 2px solid #f59e0b; padding-bottom: 10px; margin-top: 30px;">
+          🎯 Recommended Itineraries ({{MATCH_COUNT}} Great Matches)
+        </h3>
+
+        <!-- Itinerary Cards Placeholder -->
+        {{ITINERARY_CARDS}}
+
+        <!-- Customization Options -->
+        <div style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); padding: 25px; border-radius: 8px; margin-top: 30px; border: 2px solid #f59e0b;">
+          <h3 style="color: #92400e; margin-top: 0;">🔧 Easy Customization Available</h3>
+          <p style="color: #78350f; margin: 15px 0; line-height: 1.6;">
+            We can modify any aspect of these itineraries:
+          </p>
+          <table role="presentation" style="width: 100%;">
+            <tr>
+              <td style="padding: 8px 0; color: #78350f;">
+                <span style="color: #f59e0b; font-size: 18px;">✓</span> Adjust duration & dates
+              </td>
+              <td style="padding: 8px 0; color: #78350f;">
+                <span style="color: #f59e0b; font-size: 18px;">✓</span> Change activities
+              </td>
+            </tr>
+            <tr>
+              <td style="padding: 8px 0; color: #78350f;">
+                <span style="color: #f59e0b; font-size: 18px;">✓</span> Upgrade/downgrade hotels
+              </td>
+              <td style="padding: 8px 0; color: #78350f;">
+                <span style="color: #f59e0b; font-size: 18px;">✓</span> Modify budget
+              </td>
+            </tr>
+            <tr>
+              <td style="padding: 8px 0; color: #78350f;">
+                <span style="color: #f59e0b; font-size: 18px;">✓</span> Add destinations
+              </td>
+              <td style="padding: 8px 0; color: #78350f;">
+                <span style="color: #f59e0b; font-size: 18px;">✓</span> Include special requests
+              </td>
+            </tr>
+          </table>
+        </div>
+
+        <!-- Call to Action -->
+        <div style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); padding: 25px; border-radius: 8px; margin-top: 30px; text-align: center;">
+          <h3 style="color: white; margin-top: 0;">Let's Make It Perfect!</h3>
+          <p style="color: white; margin: 15px 0;">Reply to this email to:</p>
+          <table role="presentation" style="margin: 20px auto;">
+            <tr>
+              <td style="padding: 12px 30px; background-color: white; border-radius: 6px; text-align: center;">
+                <a href="mailto:{{COMPANY_EMAIL}}?subject=Customize {{DESTINATION}} Trip - {{CUSTOMER_NAME}}&body=Hi! I'm interested in these itineraries but would like to customize them. Here are my specific requirements:%0D%0A%0D%0A[Your requirements here]" 
+                   style="color: #f59e0b; text-decoration: none; font-weight: bold; font-size: 16px;">
+                  ✏️ Request Customization
+                </a>
+              </td>
+            </tr>
+          </table>
+          <p style="color: rgba(255,255,255,0.9); font-size: 14px; margin-top: 15px;">
+            ✓ Tell us your preferences<br>
+            ✓ Get a tailored itinerary<br>
+            ✓ Book with confidence
+          </p>
+        </div>
+
+        <!-- Why Choose Us -->
+        <div style="margin-top: 30px; padding: 20px; background-color: #f8f9fa; border-radius: 6px;">
+          <h4 style="color: #333; margin-top: 0;">Why {{COMPANY_NAME}}?</h4>
+          <table role="presentation" style="width: 100%;">
+            <tr>
+              <td style="padding: 8px 0; color: #555;">
+                <span style="color: #10b981; font-size: 18px;">✓</span> Free Customization
+              </td>
+              <td style="padding: 8px 0; color: #555;">
+                <span style="color: #10b981; font-size: 18px;">✓</span> Expert Travel Planners
+              </td>
+            </tr>
+            <tr>
+              <td style="padding: 8px 0; color: #555;">
+                <span style="color: #10b981; font-size: 18px;">✓</span> Flexible Changes
+              </td>
+              <td style="padding: 8px 0; color: #555;">
+                <span style="color: #10b981; font-size: 18px;">✓</span> 24/7 Support
+              </td>
+            </tr>
+          </table>
+        </div>
+
+        <!-- Original Email Quote -->
+        {{QUOTED_ORIGINAL}}
+
+        <!-- Footer -->
+        <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e0e0e0; text-align: center; color: #888; font-size: 14px;">
+          <p style="margin: 5px 0;">
+            <strong style="color: #f59e0b;">{{COMPANY_NAME}}</strong>
+          </p>
+          <p style="margin: 5px 0;">
+            📧 {{COMPANY_EMAIL}} | 📞 {{COMPANY_PHONE}}
+          </p>
+          <p style="margin: 5px 0;">
+            🌐 {{COMPANY_WEBSITE}}
+          </p>
+          <p style="margin: 15px 0 5px 0; color: #aaa; font-size: 12px;">
+            © {{CURRENT_YEAR}} {{COMPANY_NAME}}. All rights reserved.
+          </p>
+        </div>
+
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

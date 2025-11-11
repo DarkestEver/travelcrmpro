@@ -276,39 +276,33 @@ class EmailProcessingQueue {
             tenantId
           });
         } else if (workflow.action === 'SEND_ITINERARIES') {
-          // Good matches found (≥70%)
-          response = await openaiService.generateResponse(
+          // Good matches found (≥70%) - use template (no AI cost!)
+          console.log('📋 Using template for itineraries (cost savings - Phase 3)');
+          response = await emailTemplateService.generateItinerariesEmail({
             email,
-            {
-              extractedData,
-              itineraries: workflow.matches.slice(0, 3)
-            },
-            'SEND_ITINERARIES',
+            extractedData,
+            itineraries: workflow.matches.slice(0, 3),
             tenantId
-          );
+          });
         } else if (workflow.action === 'SEND_ITINERARIES_WITH_NOTE') {
-          // Moderate matches (50-69%)
-          response = await openaiService.generateResponse(
+          // Moderate matches (50-69%) - use template (no AI cost!)
+          console.log('📋 Using template for moderate matches (cost savings - Phase 3)');
+          response = await emailTemplateService.generateModerateMatchEmail({
             email,
-            {
-              extractedData,
-              itineraries: workflow.matches.slice(0, 3),
-              note: workflow.reason
-            },
-            'SEND_ITINERARIES_WITH_NOTE',
+            extractedData,
+            itineraries: workflow.matches.slice(0, 3),
+            note: workflow.reason,
             tenantId
-          );
+          });
         } else if (workflow.action === 'FORWARD_TO_SUPPLIER') {
-          // No good matches - custom quote needed
-          response = await openaiService.generateResponse(
+          // No good matches - custom quote needed - use template (no AI cost!)
+          console.log('📋 Using template for custom request (cost savings - Phase 3)');
+          response = await emailTemplateService.generateCustomRequestEmail({
             email,
-            {
-              extractedData,
-              note: workflow.reason
-            },
-            'FORWARD_TO_SUPPLIER',
+            extractedData,
+            note: workflow.reason,
             tenantId
-          );
+          });
         } else {
           // Fallback to package matching if itinerary workflow fails
           if (matches.length > 0 && matches[0].score >= 60) {

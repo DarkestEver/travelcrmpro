@@ -1,9 +1,13 @@
 const Itinerary = require('../models/Itinerary');
-const openaiService = require('./openaiService');
 
 /**
  * Itinerary Matching Service
  * Matches customer inquiries with existing itineraries in the database
+ * 
+ * NOTE: This service uses PURE DATABASE FILTERING - No AI costs!
+ * - MongoDB queries for destination/duration matching
+ * - JavaScript scoring algorithm (100-point system)
+ * - Zero external API dependencies
  */
 class ItineraryMatchingService {
   /**

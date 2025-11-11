@@ -1,0 +1,97 @@
+<!-- Single Itinerary Card Component -->
+<div style="border: 2px solid #e0e0e0; border-radius: 8px; margin: 20px 0; padding: 20px; background-color: #ffffff; position: relative;">
+  
+  <!-- Match Score Badge -->
+  <div style="position: absolute; top: -12px; right: 20px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 8px 16px; border-radius: 20px; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">
+    {{MATCH_SCORE}}% Match ⭐
+  </div>
+
+  <!-- Itinerary Title -->
+  <h3 style="color: #667eea; margin-top: 5px; margin-bottom: 10px; font-size: 20px;">
+    {{ITINERARY_TITLE}}
+  </h3>
+
+  <!-- Description -->
+  <p style="color: #666; line-height: 1.6; margin: 10px 0; font-size: 15px;">
+    {{ITINERARY_DESCRIPTION}}
+  </p>
+
+  <!-- Key Details Grid -->
+  <table role="presentation" style="width: 100%; margin: 15px 0; background-color: #f8f9fa; border-radius: 6px; padding: 15px;">
+    <tr>
+      <td style="padding: 8px; width: 50%;">
+        <span style="font-size: 18px;">📅</span>
+        <strong style="color: #333;">Duration:</strong>
+        <span style="color: #555;">{{DURATION}} days</span>
+      </td>
+      <td style="padding: 8px; width: 50%;">
+        <span style="font-size: 18px;">💰</span>
+        <strong style="color: #333;">Price:</strong>
+        <span style="color: #059669; font-weight: bold; font-size: 18px;">{{PRICE}}</span>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding: 8px;">
+        <span style="font-size: 18px;">📍</span>
+        <strong style="color: #333;">Locations:</strong>
+        <span style="color: #555;">{{LOCATIONS}}</span>
+      </td>
+      <td style="padding: 8px;">
+        <span style="font-size: 18px;">👥</span>
+        <strong style="color: #333;">Capacity:</strong>
+        <span style="color: #555;">{{MIN_CAPACITY}}-{{MAX_CAPACITY}} people</span>
+      </td>
+    </tr>
+  </table>
+
+  <!-- Highlights Section -->
+  <div style="margin: 15px 0;">
+    <h4 style="color: #333; margin-bottom: 10px; font-size: 16px;">✨ Highlights:</h4>
+    <ul style="color: #555; line-height: 1.8; margin: 5px 0; padding-left: 20px;">
+      {{HIGHLIGHTS_LIST}}
+    </ul>
+  </div>
+
+  <!-- Activities Section -->
+  <div style="margin: 15px 0; padding: 12px; background-color: #f0f9ff; border-left: 3px solid #667eea; border-radius: 4px;">
+    <strong style="color: #667eea;">🎯 Activities Included:</strong>
+    <span style="color: #555; margin-left: 8px;">{{ACTIVITIES}}</span>
+  </div>
+
+  <!-- Accommodation Info -->
+  <div style="margin: 15px 0; padding: 10px; background-color: #fef3c7; border-radius: 4px;">
+    <span style="font-size: 16px;">🏨</span>
+    <strong style="color: #333;">Accommodation:</strong>
+    <span style="color: #555;">{{ACCOMMODATION}}</span>
+  </div>
+
+  <!-- Availability -->
+  <div style="margin: 15px 0; color: #059669; font-size: 14px;">
+    <span style="font-size: 16px;">✓</span>
+    <strong>Available:</strong> {{AVAILABILITY}}
+  </div>
+
+  <!-- Action Button -->
+  <table role="presentation" style="width: 100%; margin-top: 20px;">
+    <tr>
+      <td style="text-align: center;">
+        <a href="mailto:{{COMPANY_EMAIL}}?subject=Booking: {{ITINERARY_TITLE}} - {{CUSTOMER_NAME}}&body=Hi! I'm interested in this itinerary ({{ITINERARY_ID}}). Please send more details." 
+           style="display: inline-block; padding: 14px 32px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 16px; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">
+          📋 Select This Itinerary
+        </a>
+      </td>
+      <td style="text-align: center;">
+        <a href="mailto:{{COMPANY_EMAIL}}?subject=Customize: {{ITINERARY_TITLE}} - {{CUSTOMER_NAME}}&body=Hi! I like this itinerary but would like to customize it. Here's what I'd like to change:" 
+           style="display: inline-block; padding: 14px 32px; background-color: white; color: #667eea; text-decoration: none; border: 2px solid #667eea; border-radius: 6px; font-weight: bold; font-size: 16px;">
+          ✏️ Customize It
+        </a>
+      </td>
+    </tr>
+  </table>
+
+  <!-- Price per person note -->
+  <p style="text-align: center; color: #888; font-size: 13px; margin-top: 12px; margin-bottom: 0;">
+    * Price shown is per person based on {{MIN_CAPACITY}} travelers
+  </p>
+
+</div>
