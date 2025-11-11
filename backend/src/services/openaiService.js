@@ -245,56 +245,77 @@ CRITICAL INSTRUCTIONS:
    - budget.amount: Total budget amount as a number (e.g., "$8,000" → 8000, "8000 USD" → 8000)
 
 2. DATE PARSING RULES:
-   - Convert relative dates: "December 20-27, 2025" → startDate: "2025-12-20", endDate: "2025-12-27"
-   - If only month is given: dates.flexible = true
+   - Current year is 2025. Use 2025 for any upcoming month without a year specified.
+   
+   CASE 1 - Both dates provided:
+   - "December 20-27, 2025" → startDate: "2025-12-20", endDate: "2025-12-27", flexible: false
+   - "March 15 to March 22" → startDate: "2025-03-15", endDate: "2025-03-22", flexible: false
+   
+   CASE 2 - Start date + duration:
+   - "December 20 for 7 nights" → startDate: "2025-12-20", calculate endDate: "2025-12-27", flexible: false
+   - "January 10, 5 days" → startDate: "2025-01-10", calculate endDate: "2025-01-14" (5 days = 4 nights)
+   
+   CASE 3 - Only month + duration:
+   - "December for 7 nights" → flexible: true, NO startDate/endDate, only duration: 7 nights
+   - "sometime in March, 5 days" → flexible: true, NO startDate/endDate, only duration: 5 days
+   
+   Rules:
    - Calculate duration from dates if not explicitly mentioned
-   - Use year 2025 if not specified and month is upcoming
+   - If specific date is given, flexible = false
+   - If only month is mentioned, flexible = true and do NOT set startDate/endDate
 
 3. TRAVELER COUNT RULES:
    - "family of 4" typically means 2 adults + 2 children
-   - "couple" = 2 adults, 0 children
-   - "we are 2" or "2 people" = 2 adults, 0 children
+   - "couple" = 2 adults, 0 children, 0 infants
+   - "we are 2" or "2 people" = 2 adults, 0 children, 0 infants
    - Extract exact numbers when specified: "2 adults and 2 children"
+   - INFANTS: Separate from children (typically under 2 years). "2 adults, 1 infant" → adults: 2, children: 0, infants: 1
+   - CHILDREN AGES ARE MANDATORY: Always extract childAges array if children mentioned
+     Example: "2 kids aged 5 and 8" → children: 2, childAges: [5, 8]
+     Example: "3 children (ages 4, 7, 10)" → children: 3, childAges: [4, 7, 10]
+   - If children count is mentioned but ages are NOT specified, include "children ages" in missingInfo array
 
 4. BUDGET RULES:
+   - Budget is OPTIONAL - if not mentioned in email, set amount: null, flexible: true
    - Extract total amount: "$8,000 total" → amount: 8000, perPerson: false
    - Extract per person: "$2,000 per person" → amount: 2000, perPerson: true
    - Detect currency from symbols: $ = USD, € = EUR, £ = GBP, ₹ = INR
+   - If no budget mentioned, do NOT include "budget amount" in missingInfo
 
 5. SIGNATURE EXTRACTION:
-   Pay special attention to the email signature (after "Thanks", "Best regards", "Sincerely") to extract:
+   Pay special attention to the email signature (after "Thanks", "Best regards", "Sincerely", "Regards", or at the end) to extract:
    - Full name (e.g., "John Doe")
-   - Email address
+   - Email address (if different from sender)
    - Phone number(s) in ANY format: +1-555-1234, (555) 123-4567, 555.123.4567
    - Company name
-   - Address
+   - Address (complete or partial)
+   
+   SIGNATURE FORMATS:
+   - TEXT SIGNATURE: Extract directly from email body text
+   - IMAGE SIGNATURE: If signature appears to be in an image (look for image attachments or embedded images), 
+     note this in the response and extraction will be handled separately by vision processing
+   - Extract ALL available contact details from text portion of signature
 
 Extract ALL available information and respond with ONLY valid JSON:
 {
   "destination": "string (REQUIRED - primary destination city/country)",
   "additionalDestinations": ["array of other destinations if multi-city"],
   "dates": {
-    "flexible": boolean,
-    "startDate": "YYYY-MM-DD (REQUIRED - e.g., '2025-12-20')",
-    "endDate": "YYYY-MM-DD (REQUIRED - e.g., '2025-12-27')",
-    "duration": number (calculated from start to end date)
+    "flexible": boolean (true if only month provided, false if specific dates given),
+    "startDate": "YYYY-MM-DD (REQUIRED if specific date given - e.g., '2025-12-20', null if only month)",
+    "endDate": "YYYY-MM-DD (REQUIRED if specific date given OR calculated from duration - e.g., '2025-12-27', null if only month)",
+    "duration": number (nights count - required if mentioned or calculable from dates)
   },
   "travelers": {
     "adults": number (REQUIRED - minimum 1),
     "children": number (REQUIRED - default 0 if not mentioned),
-    "childAges": [array of numbers],
-    "infants": number
+    "childAges": [array of numbers - REQUIRED if children > 0],
+    "infants": number (default 0 if not mentioned, separate from children)
   },
   "budget": {
-    "amount": number (REQUIRED - total budget as number, e.g., 8000),
+    "amount": number (OPTIONAL - can be null if not mentioned in email),
     "currency": "USD|EUR|GBP|INR",
-    "flexible": boolean,
-    "perPerson": boolean (true if per person, false if total)
-  },
-  "budget": {
-    "amount": number (REQUIRED - total budget as number, e.g., 8000),
-    "currency": "USD|EUR|GBP|INR",
-    "flexible": boolean,
+    "flexible": boolean (true if not specified or ranges given),
     "perPerson": boolean (true if per person, false if total)
   },
   "packageType": "honeymoon|family|adventure|luxury|budget|group|solo|business|custom",
@@ -335,7 +356,8 @@ Extract ALL available information and respond with ONLY valid JSON:
   },
   "urgency": "low|normal|high|urgent",
   "confidence": 0-100,
-  "missingInfo": ["array of CRITICAL missing MANDATORY fields ONLY if truly missing. Do NOT include fields that were successfully extracted. Only include: 'destination', 'startDate', 'endDate', 'adults count', 'budget amount' if they are genuinely missing from the email."]
+  "hasImageSignature": boolean (true if signature appears to be in an image),
+  "missingInfo": ["array of CRITICAL missing MANDATORY fields ONLY if truly missing. Do NOT include fields that were successfully extracted. Include ONLY these if missing: 'destination', 'specific travel dates (only if month mentioned but no date)', 'adults count', 'children ages (only if children > 0 but ages not specified)'. Do NOT include 'budget amount' as it is optional."]
 }`;
 
     try {
