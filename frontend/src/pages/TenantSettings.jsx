@@ -27,6 +27,8 @@ import api from '../services/api';
 import PageWrapper from '../components/PageWrapper';
 
 const TenantSettings = () => {
+  console.log('🎯 TenantSettings component loaded - VERSION 2');
+  
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState('branding');
   const [logoFile, setLogoFile] = useState(null);
@@ -38,12 +40,28 @@ const TenantSettings = () => {
   const [showRazorpaySecret, setShowRazorpaySecret] = useState(false);
 
   // Fetch current tenant settings
-  const { data: tenantData, isLoading } = useQuery({
+  const { data: tenantData, isLoading, error } = useQuery({
     queryKey: ['tenant', 'current'],
     queryFn: async () => {
-      const { data } = await api.get('/tenants/current');
-      return data.data.tenant;
+      console.log('📥 TenantSettings: Fetching tenant data from /tenants/current');
+      const response = await api.get('/tenants/current');
+      console.log('📥 TenantSettings: Response.data:', response.data);
+      
+      // The API interceptor unwraps the response to just the data payload
+      // Backend returns: { success, message, data: { tenant } }
+      // But interceptor extracts response.data.data and returns it
+      // So we receive: { tenant: {...} }
+      const tenant = response.data.tenant;
+      console.log('📥 TenantSettings: Extracted tenant:', tenant);
+      return tenant;
     }
+  });
+
+  console.log('🔍 TenantSettings: Query state:', { 
+    hasTenantData: !!tenantData, 
+    isLoading, 
+    hasError: !!error,
+    tenantData 
   });
 
   const [formData, setFormData] = useState({
@@ -123,7 +141,16 @@ const TenantSettings = () => {
   // Update form when tenant data loads
   useEffect(() => {
     if (tenantData) {
-      setFormData({
+      console.log('🔍 TenantSettings: Loaded tenant data:', {
+        name: tenantData.name,
+        hasSettings: !!tenantData.settings,
+        settingsKeys: tenantData.settings ? Object.keys(tenantData.settings) : [],
+        branding: tenantData.settings?.branding,
+        email: tenantData.settings?.email,
+        contact: tenantData.settings?.contact
+      });
+
+      const newFormData = {
         name: tenantData.name || '',
         settings: {
           branding: {
@@ -195,7 +222,17 @@ const TenantSettings = () => {
           timezone: tenantData.metadata?.timezone || 'UTC',
           currency: tenantData.metadata?.currency || 'USD'
         }
+      };
+
+      console.log('🔍 TenantSettings: Setting form data:', {
+        name: newFormData.name,
+        settingsKeys: Object.keys(newFormData.settings),
+        branding: newFormData.settings.branding,
+        email: newFormData.settings.email
       });
+
+      setFormData(newFormData);
+
       if (tenantData.settings?.branding?.logo) {
         setLogoPreview(tenantData.settings.branding.logo);
       }
@@ -205,14 +242,21 @@ const TenantSettings = () => {
   // Update tenant mutation
   const updateTenantMutation = useMutation({
     mutationFn: async (data) => {
-      const response = await api.patch(`/tenants/${tenantData._id}`, data);
+      console.log('📤 TenantSettings: Sending PATCH request to /tenants/settings');
+      console.log('Data:', JSON.stringify(data, null, 2));
+      // Use /tenants/settings endpoint instead of /tenants/:id
+      const response = await api.patch(`/tenants/settings`, data);
+      console.log('✅ TenantSettings: Received response:', response.data);
       return response.data;
     },
-    onSuccess: () => {
+    onSuccess: (responseData) => {
+      console.log('✅ TenantSettings: Update successful');
       toast.success('Tenant settings updated successfully');
       queryClient.invalidateQueries(['tenant']);
     },
     onError: (error) => {
+      console.error('❌ TenantSettings: Settings update error:', error);
+      console.error('Error response:', error.response?.data);
       toast.error(error.response?.data?.message || 'Failed to update settings');
     }
   });
@@ -244,6 +288,14 @@ const TenantSettings = () => {
     if (logoFile) {
       updatedData.settings.branding.logo = logoPreview;
     }
+
+    console.log('🚀 TenantSettings: Submitting data:', {
+      name: updatedData.name,
+      settingsKeys: Object.keys(updatedData.settings),
+      branding: updatedData.settings.branding,
+      email: updatedData.settings.email,
+      contact: updatedData.settings.contact
+    });
 
     updateTenantMutation.mutate(updatedData);
   };

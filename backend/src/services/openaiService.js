@@ -140,26 +140,35 @@ Subject: ${email.subject}
 Body: ${email.bodyText.substring(0, 2500)}
 
 EXTRACTION RULES (for CUSTOMER emails):
-1. MANDATORY FIELDS - Extract if present:
-   - destination: City/country they want to visit
+1. CRITICAL MANDATORY FIELDS (MUST be present or flag as missing):
+   - destination: City/country they want to visit (CRITICAL - add to missingInfo if absent)
+   - travelers.adults: Number of adults traveling (CRITICAL - add to missingInfo if not mentioned)
+   - travelers.children: Number of children (default 0 if not mentioned)
+
+2. IMPORTANT FIELDS (Extract if present):
    - dates.startDate: Specific date in YYYY-MM-DD format (use ${currentYear} if year not specified)
    - dates.endDate: Specific date in YYYY-MM-DD format
-   - travelers.adults: Number of adults (minimum 1)
-   - travelers.children: Number of children (default 0)
    - budget.amount: Total budget as number (OPTIONAL - can be null)
 
-2. DATE PARSING:
+3. DATE PARSING:
    - "December 20-27" → startDate: "${currentYear}-12-20", endDate: "${currentYear}-12-27", flexible: false
    - "December 20 for 7 nights" → Calculate endDate from duration
    - "December, 7 nights" → flexible: true, NO specific dates
 
-3. TRAVELERS:
+4. TRAVELERS PARSING (CRITICAL):
    - "family of 4" = 2 adults, 2 children
    - "couple" = 2 adults, 0 children
+   - "solo" or "I" = 1 adult, 0 children
+   - If NO traveler count mentioned → adults: null, children: null, ADD "travelers" to missingInfo array
    - Extract childAges if children > 0
 
-4. BUDGET: OPTIONAL - if not mentioned, set amount: null
-5. SIGNATURE: Extract name, phone, email from signature area
+5. BUDGET: OPTIONAL - if not mentioned, set amount: null
+6. SIGNATURE: Extract name, phone, email from signature area
+
+MISSING INFO RULES:
+- If destination not mentioned or unclear → Add "destination" to missingInfo
+- If number of travelers NOT mentioned → Add "travelers" to missingInfo (CRITICAL)
+- Do NOT add dates or budget to missingInfo (those are optional)
 
 Respond with ONLY valid JSON:
 {

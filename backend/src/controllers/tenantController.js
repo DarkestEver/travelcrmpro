@@ -335,7 +335,7 @@ const getTenantSettings = asyncHandler(async (req, res) => {
 // @access  Private (Operator/Admin only)
 const updateTenantSettings = asyncHandler(async (req, res) => {
   const tenantId = req.user.tenantId;
-  const { aiSettings, emailSettings, generalSettings } = req.body;
+  const { aiSettings, emailSettings, generalSettings, settings, name, metadata } = req.body;
 
   // Check if user has permission to update settings
   if (!['super_admin', 'operator', 'admin'].includes(req.user.role)) {
@@ -357,7 +357,8 @@ const updateTenantSettings = asyncHandler(async (req, res) => {
     tenantId,
     tenantIdType: typeof tenantId,
     userId: req.user._id,
-    userEmail: req.user.email
+    userEmail: req.user.email,
+    bodyKeys: Object.keys(req.body)
   });
 
   const tenant = await Tenant.findById(tenantId);
@@ -382,29 +383,112 @@ const updateTenantSettings = asyncHandler(async (req, res) => {
     throw new AppError('Tenant not found', 404);
   }
 
-  // Update settings
-  if (aiSettings) {
-    tenant.settings.aiSettings = {
-      ...tenant.settings.aiSettings,
-      ...aiSettings
+  // Update basic fields
+  if (name) {
+    tenant.name = name;
+  }
+
+  if (metadata) {
+    tenant.metadata = {
+      ...tenant.metadata,
+      ...metadata
     };
   }
 
-  if (emailSettings) {
-    tenant.settings.emailSettings = {
-      ...tenant.settings.emailSettings,
-      ...emailSettings
-    };
-  }
+  // Helper to remove undefined values from nested objects
+  const removeUndefined = (obj) => {
+    if (obj === null || obj === undefined) return obj;
+    if (typeof obj !== 'object') return obj;
+    if (Array.isArray(obj)) return obj.map(removeUndefined);
+    
+    const cleaned = {};
+    for (const key in obj) {
+      if (obj.hasOwnProperty(key)) {
+        const value = obj[key];
+        if (value !== undefined) {
+          if (typeof value === 'object' && value !== null && !Array.isArray(value) && !(value instanceof Date)) {
+            cleaned[key] = removeUndefined(value);
+          } else {
+            cleaned[key] = value;
+          }
+        }
+      }
+    }
+    return cleaned;
+  };
 
-  if (generalSettings) {
-    tenant.settings.general = {
-      ...tenant.settings.general,
-      ...generalSettings
-    };
+  // Helper to deeply merge settings preserving existing fields
+  const deepMergeSettings = (target, source) => {
+    // Convert Mongoose document to plain object
+    const result = target && target.toObject ? target.toObject() : JSON.parse(JSON.stringify(target || {}));
+    
+    for (const key in source) {
+      if (source.hasOwnProperty(key)) {
+        const sourceValue = source[key];
+        
+        // Skip undefined values completely
+        if (sourceValue === undefined) {
+          continue;
+        }
+        
+        // Check if both target and source values are plain objects
+        const isSourcePlainObject = sourceValue && 
+                                    typeof sourceValue === 'object' && 
+                                    !Array.isArray(sourceValue) &&
+                                    !(sourceValue instanceof Date) &&
+                                    sourceValue.constructor === Object;
+        
+        const isTargetPlainObject = result[key] && 
+                                    typeof result[key] === 'object' && 
+                                    !Array.isArray(result[key]) &&
+                                    !(result[key] instanceof Date) &&
+                                    result[key].constructor === Object;
+        
+        if (isSourcePlainObject && isTargetPlainObject) {
+          // Recursively merge nested objects
+          result[key] = deepMergeSettings(result[key], sourceValue);
+        } else if (isSourcePlainObject) {
+          // Source is object but target isn't - clean undefined from source
+          result[key] = removeUndefined(sourceValue);
+        } else {
+          // Direct assignment for primitives, arrays, dates
+          result[key] = sourceValue;
+        }
+      }
+    }
+    
+    return result;
+  };
+
+  // Log what we're receiving
+  console.log('updateTenantSettings: Received settings keys:', settings ? Object.keys(settings) : 'none');
+
+  // Update settings - support both old format (aiSettings, emailSettings) and new format (settings.branding, etc)
+  if (settings) {
+    // New format from frontend - deep merge preserving existing fields
+    tenant.settings = deepMergeSettings(tenant.settings, settings);
+    tenant.markModified('settings');
+    console.log('updateTenantSettings: Settings updated successfully');
+  } else {
+    // Old format - individual setting groups
+    if (aiSettings) {
+      tenant.settings.aiSettings = deepMergeSettings(tenant.settings.aiSettings || {}, aiSettings);
+    }
+
+    if (emailSettings) {
+      tenant.settings.emailSettings = deepMergeSettings(tenant.settings.emailSettings || {}, emailSettings);
+    }
+
+    if (generalSettings) {
+      tenant.settings.general = deepMergeSettings(tenant.settings.general || {}, generalSettings);
+    }
+    
+    tenant.markModified('settings');
   }
 
   await tenant.save();
+
+  console.log('updateTenantSettings: Successfully updated tenant settings');
 
   successResponse(res, 200, 'Settings updated successfully', tenant.settings);
 });

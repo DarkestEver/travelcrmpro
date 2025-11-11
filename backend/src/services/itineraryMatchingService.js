@@ -53,12 +53,12 @@ class ItineraryMatchingService {
       hasRequiredFields.dates = true;
     }
 
-    // Check travelers
-    if (!extractedData.travelers?.adults || extractedData.travelers.adults === 0) {
+    // Check travelers (CRITICAL)
+    if (!extractedData.travelers?.adults || extractedData.travelers.adults === 0 || extractedData.travelers.adults === null) {
       missingFields.push({
         field: 'travelers',
         label: requiredFields['travelers.adults'],
-        question: 'How many adults will be traveling?',
+        question: 'How many adults will be traveling? Please also let us know if any children will be joining.',
         priority: 'critical'
       });
       hasRequiredFields.travelers = false;

@@ -65,6 +65,22 @@ class EmailController {
         tenantId: tenantId || req.user.tenantId
       };
 
+      // Get email account for tenant (or use first available)
+      const EmailAccount = require('../models/EmailAccount');
+      let emailAccount = await EmailAccount.findOne({ 
+        tenantId: emailData.tenantId
+      });
+
+      if (!emailAccount) {
+        // If no email account exists, create a minimal webhook entry
+        // or just use a placeholder ObjectId for testing
+        const mongoose = require('mongoose');
+        emailData.emailAccountId = req.body.emailAccountId || new mongoose.Types.ObjectId();
+        console.log(`⚠️  No email account found for tenant. Using placeholder: ${emailData.emailAccountId}`);
+      } else {
+        emailData.emailAccountId = emailAccount._id;
+      }
+
       // Save to database
       const email = await EmailLog.create(emailData);
 

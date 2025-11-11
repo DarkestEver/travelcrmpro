@@ -40,6 +40,11 @@ router.use(identifyTenant);
 router.use('/auth', authRoutes); // Auth routes don't need requireTenant yet
 router.use('/payments', paymentWebhookRoutes); // Webhook routes (no auth needed, before requireTenant)
 router.use('/customer', customerPortalRoutes); // Customer self-service portal (before requireTenant)
+
+// Email webhook endpoint (public, no auth needed - before requireTenant)
+const emailController = require('../controllers/emailController');
+router.post('/emails/webhook', emailController.receiveEmail);
+
 router.use(requireTenant); // Require valid tenant for all routes below
 
 // API routes

@@ -5,11 +5,71 @@
 
 const fs = require('fs').promises;
 const path = require('path');
+const Tenant = require('../models/Tenant');
 
 class EmailTemplateService {
   constructor() {
     this.templatesPath = path.join(__dirname, '../../templates');
     this.templateCache = new Map();
+    this.tenantConfigCache = new Map();
+  }
+
+  /**
+   * Load tenant configuration for branding/signature
+   */
+  async loadTenantConfig(tenantId) {
+    // Check cache first (cache for 5 minutes)
+    const cacheKey = tenantId.toString();
+    const cached = this.tenantConfigCache.get(cacheKey);
+    if (cached && (Date.now() - cached.timestamp) < 5 * 60 * 1000) {
+      return cached.config;
+    }
+
+    // Load from database
+    try {
+      const tenant = await Tenant.findById(tenantId);
+      if (!tenant) {
+        return this.getDefaultConfig();
+      }
+
+      const config = {
+        companyName: tenant.businessName || tenant.name || 'Travel Manager Pro',
+        agentName: tenant.settings?.email?.senderName || 'Travel Team',
+        email: tenant.settings?.email?.senderEmail || tenant.email || 'app@travelmanagerpro.com',
+        phone: tenant.settings?.contact?.phone || '+1 (800) 123-4567',
+        website: tenant.settings?.contact?.website || 'www.travelmanagerpro.com',
+        signature: tenant.settings?.email?.emailSignature || '',
+        logoUrl: tenant.settings?.branding?.logoUrl || '',
+        primaryColor: tenant.settings?.branding?.primaryColor || '#2563eb'
+      };
+
+      // Cache it
+      this.tenantConfigCache.set(cacheKey, {
+        config,
+        timestamp: Date.now()
+      });
+
+      return config;
+    } catch (error) {
+      console.error('Error loading tenant config:', error.message);
+      return this.getDefaultConfig();
+    }
+  }
+
+  /**
+   * Get default configuration (fallback)
+   */
+  getDefaultConfig() {
+    return {
+      companyName: 'Travel Manager Pro',
+      agentName: 'Travel Team',
+      email: 'app@travelmanagerpro.com',
+      phone: '+1 (800) 123-4567',
+      website: 'www.travelmanagerpro.com',
+      signature: '',
+      logoUrl: '',
+      primaryColor: '#2563eb'
+    };
   }
 
   /**
@@ -90,13 +150,13 @@ class EmailTemplateService {
           .replace('{{DESTINATION_DESCRIPTION}}', description);
       }
 
-      // Company/Tenant configuration with fallbacks
-      const tenantConfig = {}; // TODO: Load from database using tenantId
-      const companyName = tenantConfig.companyName || 'Travel Manager Pro';
-      const companyEmail = tenantConfig.email || email.to || 'travel@example.com';
-      const companyPhone = tenantConfig.phone || '+1 (800) 123-4567';
-      const companyWebsite = tenantConfig.website || 'www.travelmanagerpro.com';
-      const agentName = tenantConfig.agentName || 'Travel Team';
+      // Load tenant configuration from database
+      const tenantConfig = await this.loadTenantConfig(tenantId);
+      const companyName = tenantConfig.companyName;
+      const companyEmail = tenantConfig.email;
+      const companyPhone = tenantConfig.phone;
+      const companyWebsite = tenantConfig.website;
+      const agentName = tenantConfig.agentName;
 
       // Replace all placeholders
       let finalHtml = mainTemplate
@@ -302,11 +362,12 @@ class EmailTemplateService {
         .replace(/{{EMAIL_SUBJECT}}/g, email.subject || 'Travel Inquiry')
         .replace(/{{EMAIL_BODY}}/g, (email.bodyPlain || email.bodyHtml || '').substring(0, 500));
 
-      // Company info (should come from tenant config, but using defaults for now)
-      const companyName = 'Travel Manager Pro';
-      const companyEmail = 'travel@example.com';
-      const companyPhone = '+1 (555) 123-4567';
-      const companyWebsite = 'www.travelmanager.com';
+      // Load tenant configuration
+      const tenantConfig = await this.loadTenantConfig(tenantId);
+      const companyName = tenantConfig.companyName;
+      const companyEmail = tenantConfig.email;
+      const companyPhone = tenantConfig.phone;
+      const companyWebsite = tenantConfig.website;
       const currentYear = new Date().getFullYear();
 
       // Replace main template placeholders
@@ -424,11 +485,12 @@ class EmailTemplateService {
         .replace(/{{EMAIL_SUBJECT}}/g, email.subject || 'Travel Inquiry')
         .replace(/{{EMAIL_BODY}}/g, (email.bodyPlain || email.bodyHtml || '').substring(0, 500));
 
-      // Company info
-      const companyName = 'Travel Manager Pro';
-      const companyEmail = 'travel@example.com';
-      const companyPhone = '+1 (555) 123-4567';
-      const companyWebsite = 'www.travelmanager.com';
+      // Load tenant configuration
+      const tenantConfig = await this.loadTenantConfig(tenantId);
+      const companyName = tenantConfig.companyName;
+      const companyEmail = tenantConfig.email;
+      const companyPhone = tenantConfig.phone;
+      const companyWebsite = tenantConfig.website;
       const currentYear = new Date().getFullYear();
 
       // Customization note
@@ -530,11 +592,12 @@ class EmailTemplateService {
         .replace(/{{EMAIL_SUBJECT}}/g, email.subject || 'Travel Inquiry')
         .replace(/{{EMAIL_BODY}}/g, (email.bodyPlain || email.bodyHtml || '').substring(0, 500));
 
-      // Company info
-      const companyName = 'Travel Manager Pro';
-      const companyEmail = 'travel@example.com';
-      const companyPhone = '+1 (555) 123-4567';
-      const companyWebsite = 'www.travelmanager.com';
+      // Load tenant configuration
+      const tenantConfig = await this.loadTenantConfig(tenantId);
+      const companyName = tenantConfig.companyName;
+      const companyEmail = tenantConfig.email;
+      const companyPhone = tenantConfig.phone;
+      const companyWebsite = tenantConfig.website;
       const currentYear = new Date().getFullYear();
 
       // Customization reason
