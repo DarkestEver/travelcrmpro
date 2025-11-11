@@ -554,7 +554,8 @@ function AddEmailAccountForm({ onClose, onSubmit, isSubmitting }) {
       port: 993,
       secure: true,
       username: '',
-      password: ''
+      password: '',
+      pollingInterval: 300 // Default 5 minutes (300 seconds)
     },
     smtp: {
       enabled: true,
@@ -741,6 +742,26 @@ function AddEmailAccountForm({ onClose, onSubmit, isSubmitting }) {
                   For Gmail, use App Password. For Outlook, use account password.
                 </p>
               </div>
+              <div className="col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Polling Interval (seconds) *
+                </label>
+                <input
+                  type="number"
+                  required
+                  min="60"
+                  max="3600"
+                  value={formData.imap.pollingInterval || 300}
+                  onChange={(e) => setFormData({
+                    ...formData,
+                    imap: { ...formData.imap, pollingInterval: parseInt(e.target.value) }
+                  })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  How often to check for new emails (300 seconds = 5 minutes). Minimum: 60 seconds.
+                </p>
+              </div>
             </div>
           </div>
           
@@ -843,7 +864,8 @@ function EditEmailAccountForm({ account, onClose, onSubmit, isSubmitting }) {
       port: account.imap?.port || 993,
       secure: account.imap?.secure !== false,
       username: account.imap?.username || account.email || '',
-      password: '' // Don't prefill password for security
+      password: '', // Don't prefill password for security
+      pollingInterval: account.imap?.pollingInterval || 300
     },
     smtp: {
       enabled: account.smtp?.enabled !== false,
@@ -1005,6 +1027,26 @@ function EditEmailAccountForm({ account, onClose, onSubmit, isSubmitting }) {
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   placeholder="Leave empty to keep current password"
                 />
+              </div>
+              <div className="col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Polling Interval (seconds) *
+                </label>
+                <input
+                  type="number"
+                  required
+                  min="60"
+                  max="3600"
+                  value={formData.imap.pollingInterval || 300}
+                  onChange={(e) => setFormData({
+                    ...formData,
+                    imap: { ...formData.imap, pollingInterval: parseInt(e.target.value) }
+                  })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  How often to check for new emails (300 seconds = 5 minutes). Minimum: 60 seconds.
+                </p>
               </div>
             </div>
           </div>
