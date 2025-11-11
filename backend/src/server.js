@@ -14,6 +14,7 @@ const { errorHandler, notFound } = require('./middleware/errorHandler');
 const logger = require('./utils/logger');
 const setupSwagger = require('./config/swagger');
 const { initCronJobs } = require('./jobs');
+const { initEmailPolling } = require('./jobs/pollEmails');
 // const getWebSocketService = require('./services/websocketService'); // Temporarily disabled
 const getPDFService = require('./services/pdfService');
 const { verifyConnection } = require('./config/emailConfig');
@@ -175,7 +176,15 @@ server.listen(PORT, async () => {
   
   logger.info('✅ SLA monitoring cron job initialized (runs every hour)');
   
-  // Start email polling service (IMAP email fetching)
+  // Initialize email polling cron job (runs every 2 minutes)
+  try {
+    initEmailPolling();
+    logger.info('✅ Email polling cron job initialized');
+  } catch (error) {
+    logger.error('❌ Failed to initialize email polling cron:', error);
+  }
+  
+  // Start initial email polling (fetch immediately on startup)
   try {
     await emailPollingService.startPolling();
     logger.info('✅ Email polling service initialized');

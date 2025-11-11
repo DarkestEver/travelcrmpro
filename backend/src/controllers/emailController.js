@@ -690,6 +690,132 @@ class EmailController {
       });
     }
   }
+
+  /**
+   * Send manual reply to an email
+   * POST /api/v1/emails/:id/reply
+   */
+  async replyToEmail(req, res) {
+    try {
+      const { id } = req.params;
+      const { subject, body, plainText } = req.body;
+      const userId = req.user?.id;
+      const tenantId = req.user?.tenantId;
+
+      // Validate input
+      if (!subject || !body) {
+        return res.status(400).json({
+          success: false,
+          message: 'Subject and body are required'
+        });
+      }
+
+      // Get original email
+      const email = await EmailLog.findOne({ _id: id, tenantId });
+      if (!email) {
+        return res.status(404).json({
+          success: false,
+          message: 'Email not found'
+        });
+      }
+
+      // Get tenant's email account for SMTP settings
+      const EmailAccount = require('../models/EmailAccount');
+      const emailAccount = await EmailAccount.findOne({ 
+        tenantId,
+        isActive: true,
+        'smtp.enabled': true
+      }).select('+smtp.password'); // Include encrypted password
+
+      if (!emailAccount) {
+        return res.status(400).json({
+          success: false,
+          message: 'No active SMTP email account configured for your tenant'
+        });
+      }
+
+      // Decrypt password using Mongoose getter
+      const accountObj = emailAccount.toObject({ getters: true });
+
+      // Create nodemailer transporter with tenant's SMTP settings
+      const nodemailer = require('nodemailer');
+      const transporter = nodemailer.createTransport({
+        host: accountObj.smtp.host,
+        port: accountObj.smtp.port,
+        secure: accountObj.smtp.secure, // true for SSL, false for STARTTLS
+        auth: {
+          user: accountObj.smtp.username,
+          pass: accountObj.smtp.password // Decrypted by getter
+        },
+        tls: {
+          rejectUnauthorized: false // Allow self-signed certs
+        }
+      });
+
+      // Send reply email using tenant's SMTP
+      console.log('📤 Sending reply via tenant SMTP:', {
+        host: accountObj.smtp.host,
+        port: accountObj.smtp.port,
+        secure: accountObj.smtp.secure,
+        from: accountObj.smtp.username,
+        to: email.from.email
+      });
+
+      const sendResult = await transporter.sendMail({
+        from: accountObj.smtp.fromName 
+          ? `"${accountObj.smtp.fromName}" <${accountObj.smtp.username}>`
+          : accountObj.smtp.username,
+        to: email.from.email,
+        subject: subject,
+        html: body,
+        text: plainText || body.replace(/<[^>]*>/g, ''), // Strip HTML if no plain text
+        inReplyTo: email.messageId,
+        references: email.references ? [...email.references, email.messageId] : [email.messageId],
+        replyTo: accountObj.smtp.replyTo || accountObj.smtp.username
+      });
+
+      console.log('✅ Reply sent successfully via tenant SMTP. MessageId:', sendResult.messageId);
+
+      // Mark email as manually replied
+      email.manuallyReplied = true;
+      email.responseType = 'manual';
+      email.responseSentAt = new Date();
+      email.repliedBy = userId;
+      email.responseMessageId = sendResult.messageId; // Store SMTP message ID
+      email.processingStatus = 'completed';
+      
+      // Store the manual reply in generatedResponse for history
+      if (!email.generatedResponse) {
+        email.generatedResponse = {};
+      }
+      email.generatedResponse.manualReply = {
+        subject,
+        body,
+        plainText,
+        sentAt: new Date(),
+        sentBy: userId
+      };
+
+      await email.save();
+
+      res.json({
+        success: true,
+        message: 'Reply sent successfully',
+        data: {
+          emailId: email._id,
+          responseSentAt: email.responseSentAt,
+          responseId: sendResult.messageId
+        }
+      });
+    } catch (error) {
+      console.error('Reply email error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to send reply',
+        error: error.message
+      });
+    }
+  }
 }
 
 module.exports = new EmailController();

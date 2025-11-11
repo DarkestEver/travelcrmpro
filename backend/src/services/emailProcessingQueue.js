@@ -5,14 +5,37 @@ const openaiService = require('./openaiService');
 const matchingEngine = require('./matchingEngine');
 const itineraryMatchingService = require('./itineraryMatchingService');
 const emailService = require('./emailService');
+const nodemailer = require('nodemailer');
 const SupplierPackageCache = require('../models/SupplierPackageCache');
 const ManualReviewQueue = require('../models/ManualReviewQueue');
 
 class EmailProcessingQueue {
   constructor() {
-    const isDevelopment = process.env.NODE_ENV === 'development';
+    const isDevelopment = process.env.NODE_ENV === 'development' || process.env.NODE_ENV !== 'production';
+    const useRedis = process.env.USE_REDIS === 'true';
     
-    // Try to initialize Bull queue with Redis
+    // Always use InMemoryQueue when Redis is not explicitly enabled
+    if (!useRedis || isDevelopment) {
+      console.log('📝 Using in-memory queue (Redis disabled or development mode)');
+      this.queue = new InMemoryQueue('email-processing');
+      
+      // Configure in-memory queue
+      this.queue.process(3, this.processEmail.bind(this));
+      
+      // Event listeners
+      this.queue.on('completed', (job, result) => {
+        console.log(`✅ Email ${job.data.emailId} processed successfully`);
+      });
+
+      this.queue.on('failed', (job, err) => {
+        console.error(`❌ Email ${job.data.emailId} processing failed:`, err.message);
+      });
+
+      this.queueType = 'memory';
+      return;
+    }
+    
+    // Try to initialize Bull queue with Redis (only if explicitly enabled)
     try {
       this.queue = new Queue('email-processing', {
         redis: {
@@ -33,33 +56,20 @@ class EmailProcessingQueue {
       this.queue.on('failed', (job, err) => {
         console.error(`❌ Email ${job.data.emailId} processing failed:`, err.message);
       });
+      
+      // Listen for connection errors
+      this.queue.on('error', (error) => {
+        console.error('❌ Redis queue error:', error.message);
+        console.warn('⚠️  Falling back to synchronous processing');
+        this.queueType = 'sync';
+      });
 
       this.queueType = 'redis';
       console.log('✅ Email queue initialized with Redis');
     } catch (error) {
-      // Use in-memory queue as fallback (especially for development)
-      if (isDevelopment) {
-        console.log('📝 Development mode: Using in-memory queue (no Redis needed)');
-        this.queue = new InMemoryQueue('email-processing');
-        
-        // Configure in-memory queue
-        this.queue.process(3, this.processEmail.bind(this));
-        
-        // Event listeners
-        this.queue.on('completed', (job, result) => {
-          console.log(`✅ Email ${job.data.emailId} processed successfully`);
-        });
-
-        this.queue.on('failed', (job, err) => {
-          console.error(`❌ Email ${job.data.emailId} processing failed:`, err.message);
-        });
-
-        this.queueType = 'memory';
-      } else {
-        console.warn('⚠️  Redis not available in production, using synchronous processing');
-        console.warn('   For better performance: Install Redis');
-        this.queueType = 'sync';
-      }
+      console.warn('⚠️  Redis not available, using synchronous processing');
+      console.warn('   For better performance: Install Redis and set USE_REDIS=true');
+      this.queueType = 'sync';
     }
   }
 
@@ -121,92 +131,91 @@ class EmailProcessingQueue {
       // Update progress
       job.progress(10);
 
-      // STEP 1: Categorize email
-      console.log('Step 1: Categorizing email...');
-      const categorization = await openaiService.categorizeEmail(email, tenantId);
+      // STEP 1 (OPTIMIZED): Categorize AND Extract in ONE API call (saves 50% cost!)
+      console.log('Step 1: Categorizing + Extracting data (combined for cost optimization)...');
+      const result = await openaiService.categorizeAndExtract(email, tenantId);
       
-      email.category = categorization.category;
-      email.categoryConfidence = categorization.confidence;
-      email.sentiment = categorization.sentiment;
-      email.tags = [categorization.subcategory];
-      email.openaiCost = (email.openaiCost || 0) + categorization.cost;
-      email.tokensUsed = (email.tokensUsed || 0) + categorization.tokens;
+      // Apply categorization results
+      email.category = result.category;
+      email.categoryConfidence = result.confidence;
+      email.sentiment = result.sentiment;
+      email.tags = [result.subcategory];
+      email.openaiCost = (email.openaiCost || 0) + result.cost;
+      email.tokensUsed = (email.tokensUsed || 0) + result.tokens.total_tokens;
+      
+      // Apply extraction results (if customer email)
+      if (result.category === 'CUSTOMER' && result.extractedData) {
+        email.extractedData = result.extractedData;
+      }
       
       await email.save();
-      job.progress(30);
+      job.progress(50); // Jump to 50% since we combined two steps
 
       // Check if confidence is too low
-      if (categorization.confidence < 70) {
+      if (result.confidence < 70) {
         await this.sendToReview(email, 'LOW_CONFIDENCE', {
-          category: categorization.category,
-          confidence: categorization.confidence,
-          reasoning: categorization.reasoning
+          category: result.category,
+          confidence: result.confidence,
+          reasoning: result.reasoning
         });
         return { status: 'review', reason: 'Low confidence categorization' };
       }
 
-      // STEP 2: Extract data based on category
-      console.log(`Step 2: Extracting data (category: ${categorization.category})...`);
-      let extractedData = null;
-
-      if (categorization.category === 'CUSTOMER') {
-        extractedData = await openaiService.extractCustomerInquiry(email, tenantId);
-        email.extractedData = extractedData;
-        email.openaiCost += 0.02; // Approximate cost
-        await email.save();
-        job.progress(50);
-
-        // STEP 2.5: Extract contact information from signature images if attachments exist
-        if (email.attachments && email.attachments.length > 0) {
-          console.log('Step 2.5: Extracting contact from signature images...');
-          try {
-            const visionResult = await openaiService.extractContactFromSignatureImages(email, tenantId);
-            
-            if (visionResult.success && visionResult.extractedContacts.length > 0) {
-              // Merge extracted contact info with existing customerInfo
-              const signatureContact = visionResult.extractedContacts[0]; // Use first/best match
-              
-              if (!email.extractedData.customerInfo) {
-                email.extractedData.customerInfo = {};
-              }
-              
-              // Merge data, preferring non-null values from signature
-              const merged = { ...email.extractedData.customerInfo };
-              
-              if (signatureContact.name && !merged.name) merged.name = signatureContact.name;
-              if (signatureContact.email && !merged.email) merged.email = signatureContact.email;
-              if (signatureContact.phone && !merged.phone) merged.phone = signatureContact.phone;
-              if (signatureContact.mobile && !merged.mobile) merged.mobile = signatureContact.mobile;
-              if (signatureContact.workPhone && !merged.workPhone) merged.workPhone = signatureContact.workPhone;
-              if (signatureContact.company && !merged.company) merged.company = signatureContact.company;
-              if (signatureContact.jobTitle && !merged.jobTitle) merged.jobTitle = signatureContact.jobTitle;
-              if (signatureContact.website && !merged.website) merged.website = signatureContact.website;
-              
-              if (signatureContact.address) {
-                merged.address = { ...merged.address, ...signatureContact.address };
-              }
-              
-              if (signatureContact.socialMedia) {
-                merged.socialMedia = { ...merged.socialMedia, ...signatureContact.socialMedia };
-              }
-              
-              email.extractedData.customerInfo = merged;
-              email.extractedData.signatureImageProcessed = true;
-              email.extractedData.signatureImageData = visionResult.extractedContacts;
-              
-              email.openaiCost += visionResult.cost;
-              email.tokensUsed = (email.tokensUsed || 0) + visionResult.tokens.total;
-              
-              console.log(`✅ Extracted contact from ${visionResult.processedImages} signature image(s)`);
-            }
-          } catch (visionError) {
-            console.error('Error extracting from signature images:', visionError.message);
-            // Continue processing even if vision extraction fails
-          }
+      // STEP 2 (OPTIMIZED): Only extract from signature images if attachments exist
+      let extractedData = result.extractedData;
+      
+      if (result.category === 'CUSTOMER' && email.attachments && email.attachments.length > 0) {
+        console.log('Step 2: Extracting contact from signature images...');
+        try {
+          const visionResult = await openaiService.extractContactFromSignatureImages(email, tenantId);
           
-          await email.save();
+          if (visionResult.success && visionResult.extractedContacts.length > 0) {
+            // Merge extracted contact info with existing customerInfo
+            const signatureContact = visionResult.extractedContacts[0]; // Use first/best match
+            
+            if (!email.extractedData.customerInfo) {
+              email.extractedData.customerInfo = {};
+            }
+            
+            // Merge data, preferring non-null values from signature
+            const merged = { ...email.extractedData.customerInfo };
+            
+            if (signatureContact.name && !merged.name) merged.name = signatureContact.name;
+            if (signatureContact.email && !merged.email) merged.email = signatureContact.email;
+            if (signatureContact.phone && !merged.phone) merged.phone = signatureContact.phone;
+            if (signatureContact.mobile && !merged.mobile) merged.mobile = signatureContact.mobile;
+            if (signatureContact.workPhone && !merged.workPhone) merged.workPhone = signatureContact.workPhone;
+            if (signatureContact.company && !merged.company) merged.company = signatureContact.company;
+            if (signatureContact.jobTitle && !merged.jobTitle) merged.jobTitle = signatureContact.jobTitle;
+            if (signatureContact.website && !merged.website) merged.website = signatureContact.website;
+            
+            if (signatureContact.address) {
+              merged.address = { ...merged.address, ...signatureContact.address };
+            }
+            
+            if (signatureContact.socialMedia) {
+              merged.socialMedia = { ...merged.socialMedia, ...signatureContact.socialMedia };
+            }
+            
+            email.extractedData.customerInfo = merged;
+            email.extractedData.signatureImageProcessed = true;
+            email.extractedData.signatureImageData = visionResult.extractedContacts;
+            
+            email.openaiCost += visionResult.cost;
+            email.tokensUsed = (email.tokensUsed || 0) + visionResult.tokens.total;
+            
+            console.log(`✅ Extracted contact from ${visionResult.processedImages} signature image(s)`);
+          }
+        } catch (visionError) {
+          console.error('Error extracting from signature images:', visionError.message);
+          // Continue processing even if vision extraction fails
         }
+        
+        await email.save();
+      }
 
+      // Continue processing CUSTOMER emails
+      if (result.category === 'CUSTOMER') {
         // Check for missing critical information
         if (extractedData.missingInfo?.length > 3) {
           await this.sendToReview(email, 'AMBIGUOUS_REQUEST', {
@@ -240,7 +249,7 @@ class EmailProcessingQueue {
 
         // STEP 4: Match with packages (legacy/fallback)
         console.log('Step 4: Matching with packages...');
-        const matches = await matchingEngine.matchPackages(extractedData, tenantId);
+        const matches = await matchingEngine.matchPackages(extractedData, tenantId, email._id);
         
         email.matchingResults = matches.map(m => ({
           packageId: m.package._id,
@@ -330,22 +339,78 @@ class EmailProcessingQueue {
         job.progress(90);
 
         // STEP 6: Send the response email to customer automatically
+        // Skip if email was already manually replied to from UI
+        if (email.manuallyReplied) {
+          console.log('⏭️  Skipping auto-reply - email was manually replied to from UI');
+          email.processingStatus = 'completed';
+          await email.save();
+          return { status: 'completed', reason: 'Manually replied - skipped auto-send' };
+        }
+
         console.log('Step 6: Sending response email to customer...');
         try {
-          const sendResult = await emailService.sendEmail({
+          // Get tenant's email account for SMTP settings
+          const EmailAccount = require('../models/EmailAccount');
+          const emailAccount = await EmailAccount.findOne({ 
+            tenantId,
+            isActive: true,
+            'smtp.enabled': true
+          }).select('+smtp.password');
+
+          if (!emailAccount) {
+            console.error('❌ No active SMTP email account configured for tenant:', tenantId);
+            email.processingError = 'No active SMTP account - cannot send auto-reply';
+            email.processingStatus = 'failed';
+            await email.save();
+            return { status: 'failed', reason: 'No SMTP account configured' };
+          }
+
+          // Decrypt password using Mongoose getter
+          const accountObj = emailAccount.toObject({ getters: true });
+
+          // Create nodemailer transporter with tenant's SMTP settings
+          const transporter = nodemailer.createTransport({
+            host: accountObj.smtp.host,
+            port: accountObj.smtp.port,
+            secure: accountObj.smtp.secure,
+            auth: {
+              user: accountObj.smtp.username,
+              pass: accountObj.smtp.password
+            },
+            tls: {
+              rejectUnauthorized: false
+            }
+          });
+
+          console.log('📤 Sending auto-reply via tenant SMTP:', {
+            host: accountObj.smtp.host,
+            port: accountObj.smtp.port,
+            from: accountObj.smtp.username,
+            to: email.from.email
+          });
+
+          // Send auto-reply using tenant's SMTP
+          const sendResult = await transporter.sendMail({
+            from: accountObj.smtp.fromName 
+              ? `"${accountObj.smtp.fromName}" <${accountObj.smtp.username}>`
+              : accountObj.smtp.username,
             to: email.from.email,
             subject: response.subject,
             html: response.body,
-            text: response.plainText
+            text: response.plainText,
+            inReplyTo: email.messageId,
+            references: email.references ? [...email.references, email.messageId] : [email.messageId],
+            replyTo: accountObj.smtp.replyTo || accountObj.smtp.username
           });
           
           email.responseSentAt = new Date();
-          email.responseId = sendResult.messageId;
+          email.responseMessageId = sendResult.messageId; // Store SMTP message ID
+          email.responseType = 'auto'; // Mark as auto-sent
           await email.save();
           
-          console.log(`✅ Response email sent to ${email.from.email}`);
+          console.log(`✅ Auto-reply sent to ${email.from.email} via tenant SMTP. MessageId:`, sendResult.messageId);
         } catch (sendError) {
-          console.error('❌ Failed to send response email:', sendError.message);
+          console.error('❌ Failed to send auto-reply email:', sendError.message);
           // Don't fail the entire process if email sending fails
           // Just log it and continue
           email.processingError = `Response generated but failed to send: ${sendError.message}`;
@@ -364,11 +429,15 @@ class EmailProcessingQueue {
           return { status: 'review', reason: 'High value customer' };
         }
 
-      } else if (categorization.category === 'SUPPLIER') {
-        // Extract package information
-        extractedData = await openaiService.extractSupplierPackage(email, tenantId);
-        email.extractedData = extractedData;
-        email.openaiCost += 0.02;
+      } else if (result.category === 'SUPPLIER') {
+        // Extract package information (if not already extracted)
+        if (!result.extractedData) {
+          extractedData = await openaiService.extractSupplierPackage(email, tenantId);
+          email.extractedData = extractedData;
+          email.openaiCost += 0.02;
+        } else {
+          extractedData = result.extractedData;
+        }
         await email.save();
         job.progress(60);
 
@@ -390,22 +459,22 @@ class EmailProcessingQueue {
         }
         job.progress(90);
 
-      } else if (categorization.category === 'SPAM') {
-        // Mark as processed, no further action
-        email.processingStatus = 'processed';
+      } else if (result.category === 'SPAM') {
+        // Mark as completed, no further action
+        email.processingStatus = 'completed';
         await email.save();
-        return { status: 'processed', action: 'ignored_spam' };
+        return { status: 'completed', action: 'ignored_spam' };
       }
 
-      // Mark as processed
-      email.processingStatus = 'processed';
+      // Mark as completed
+      email.processingStatus = 'completed';
       email.processedAt = new Date();
       await email.save();
       job.progress(100);
 
       return { 
         status: 'success', 
-        category: categorization.category,
+        category: result.category,
         matches: email.matchingResults?.length || 0,
         responseGenerated: email.responseGenerated
       };

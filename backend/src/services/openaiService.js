@@ -96,6 +96,190 @@ class OpenAIService {
   }
 
   /**
+   * OPTIMIZED: Categorize AND extract data in single API call (saves 50% cost!)
+   * Combines categorizeEmail() and extractCustomerInquiry() into one prompt
+   */
+  async categorizeAndExtract(email, tenantId) {
+    const clientInfo = await this.getClientForTenant(tenantId);
+    
+    if (!clientInfo) {
+      return {
+        category: 'OTHER',
+        confidence: 0,
+        reasoning: 'OpenAI not configured',
+        subcategory: 'uncategorized',
+        urgency: 'normal',
+        sentiment: 'neutral',
+        extractedData: null,
+        cost: 0,
+        tokens: { prompt: 0, completion: 0, total: 0 }
+      };
+    }
+
+    const startTime = Date.now();
+    const currentYear = new Date().getFullYear();
+    
+    const prompt = `Analyze this email and perform TWO tasks in ONE response:
+
+TASK 1: CATEGORIZE into ONE category:
+- SUPPLIER: Package updates, pricing, availability, hotel/activity confirmations
+- CUSTOMER: Booking inquiries, travel requests, questions, complaints  
+- AGENT: Commission queries, booking status, internal questions
+- FINANCE: Payment confirmations, invoices, refund requests
+- SPAM: Marketing, unrelated content, spam
+- OTHER: Cannot determine or doesn't fit above
+
+TASK 2: EXTRACT DATA (only if category is CUSTOMER or SUPPLIER):
+- For CUSTOMER: Extract travel inquiry details (destination, dates, travelers, budget, etc.)
+- For SUPPLIER: Extract package information
+- For OTHER categories: Set extractedData to null
+
+Email Details:
+From: ${email.from.email}
+Subject: ${email.subject}
+Body: ${email.bodyText.substring(0, 2500)}
+
+EXTRACTION RULES (for CUSTOMER emails):
+1. MANDATORY FIELDS - Extract if present:
+   - destination: City/country they want to visit
+   - dates.startDate: Specific date in YYYY-MM-DD format (use ${currentYear} if year not specified)
+   - dates.endDate: Specific date in YYYY-MM-DD format
+   - travelers.adults: Number of adults (minimum 1)
+   - travelers.children: Number of children (default 0)
+   - budget.amount: Total budget as number (OPTIONAL - can be null)
+
+2. DATE PARSING:
+   - "December 20-27" → startDate: "${currentYear}-12-20", endDate: "${currentYear}-12-27", flexible: false
+   - "December 20 for 7 nights" → Calculate endDate from duration
+   - "December, 7 nights" → flexible: true, NO specific dates
+
+3. TRAVELERS:
+   - "family of 4" = 2 adults, 2 children
+   - "couple" = 2 adults, 0 children
+   - Extract childAges if children > 0
+
+4. BUDGET: OPTIONAL - if not mentioned, set amount: null
+5. SIGNATURE: Extract name, phone, email from signature area
+
+Respond with ONLY valid JSON:
+{
+  "category": "SUPPLIER|CUSTOMER|AGENT|FINANCE|SPAM|OTHER",
+  "confidence": 0-100,
+  "reasoning": "brief explanation",
+  "subcategory": "more specific classification",
+  "urgency": "low|normal|high|urgent",
+  "sentiment": "positive|neutral|negative",
+  "extractedData": {
+    "destination": "string or null",
+    "additionalDestinations": ["array or empty"],
+    "dates": {
+      "flexible": boolean,
+      "startDate": "YYYY-MM-DD or null",
+      "endDate": "YYYY-MM-DD or null",
+      "duration": number or null
+    },
+    "travelers": {
+      "adults": number,
+      "children": number,
+      "childAges": [array of numbers or empty],
+      "infants": number
+    },
+    "budget": {
+      "amount": number or null,
+      "currency": "USD|EUR|GBP|INR",
+      "flexible": boolean,
+      "perPerson": boolean
+    },
+    "packageType": "string or null",
+    "accommodation": {
+      "hotelType": "string or null",
+      "starRating": "string or null",
+      "preferences": ["array or empty"]
+    },
+    "activities": ["array or empty"],
+    "specialRequirements": ["array or empty"],
+    "customerInfo": {
+      "name": "string or null",
+      "email": "string",
+      "phone": "string or null",
+      "company": "string or null"
+    },
+    "confidence": 0-100,
+    "missingInfo": ["array of CRITICAL missing fields ONLY"]
+  }
+}
+
+NOTE: If category is NOT CUSTOMER, set extractedData to null or minimal data.`;
+
+    try {
+      const model = clientInfo.settings?.models?.categorization || 'gpt-4-turbo-preview';
+      const response = await clientInfo.client.chat.completions.create({
+        model: model,
+        messages: [
+          { role: 'system', content: 'You are an expert email analyzer for a travel CRM. Categorize AND extract data in one response. Always respond with valid JSON only.' },
+          { role: 'user', content: prompt }
+        ],
+        temperature: 0.3,
+        response_format: { type: 'json_object' }
+      });
+
+      const result = JSON.parse(response.choices[0].message.content);
+      const usage = response.usage;
+      const cost = this.calculateCost(model, usage);
+
+      // Log as combined processing
+      await AIProcessingLog.create({
+        emailLogId: email._id,
+        processingType: 'categorization_and_extraction',
+        status: 'completed',
+        model: model,
+        prompt,
+        promptTokens: usage.prompt_tokens,
+        completionTokens: usage.completion_tokens,
+        totalTokens: usage.total_tokens,
+        request: { email: email._id },
+        response: response.choices[0].message,
+        result,
+        confidence: result.confidence,
+        startedAt: new Date(startTime),
+        completedAt: new Date(),
+        estimatedCost: cost,
+        tenantId
+      });
+
+      return {
+        category: result.category,
+        confidence: result.confidence,
+        reasoning: result.reasoning,
+        subcategory: result.subcategory,
+        urgency: result.urgency,
+        sentiment: result.sentiment,
+        extractedData: result.extractedData,
+        cost,
+        tokens: usage
+      };
+    } catch (error) {
+      console.error('OpenAI categorization+extraction error:', error);
+      
+      const model = clientInfo.settings?.models?.categorization || 'gpt-4-turbo-preview';
+      await AIProcessingLog.create({
+        emailLogId: email._id,
+        processingType: 'categorization_and_extraction',
+        status: 'failed',
+        model: model,
+        prompt,
+        error: error.message,
+        errorCode: error.code,
+        startedAt: new Date(startTime),
+        completedAt: new Date(),
+        tenantId
+      });
+      
+      throw error;
+    }
+  }
+
+  /**
    * Categorize email using AI
    */
   async categorizeEmail(email, tenantId) {
@@ -721,6 +905,51 @@ If no contact information is visible in the image, return all fields as null wit
   }
 
   /**
+   * Format original email as quoted reply for threading
+   * @param {Object} email - Email object from EmailLog
+   * @param {String} format - 'html' or 'plain'
+   * @returns {String} Formatted quoted email
+   */
+  formatEmailAsQuote(email, format = 'html') {
+    // Format date nicely
+    const date = new Date(email.receivedAt).toLocaleString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true
+    });
+    
+    const from = email.from?.name || email.from?.email || 'Customer';
+    const fromEmail = email.from?.email || '';
+    
+    if (format === 'html') {
+      // Use bodyHtml if available, otherwise convert bodyText to HTML
+      const quotedBody = email.bodyHtml || 
+        (email.bodyText || '').replace(/\n/g, '<br>').replace(/  /g, '&nbsp;&nbsp;');
+      
+      return `
+<div style="border-top: 1px solid #ddd; margin-top: 20px; padding-top: 10px;">
+  <p style="color: #666; font-size: 0.9em; margin-bottom: 10px;">
+    <strong>On ${date}, ${from} &lt;${fromEmail}&gt; wrote:</strong>
+  </p>
+  <blockquote style="border-left: 3px solid #ccc; padding-left: 15px; margin: 10px 0; color: #555; font-style: italic;">
+    ${quotedBody}
+  </blockquote>
+</div>`;
+    } else {
+      // Plain text format with quote markers
+      const quotedBody = (email.bodyText || '')
+        .split('\n')
+        .map(line => '> ' + line)
+        .join('\n');
+      
+      return `\n---\nOn ${date}, ${from} <${fromEmail}> wrote:\n\n${quotedBody}`;
+    }
+  }
+
+  /**
    * Generate response email with itinerary matching workflow support
    */
   async generateResponse(email, context, templateType, tenantId) {
@@ -770,13 +999,14 @@ Instructions:
 - Explain why this information helps us serve them better
 - Keep tone helpful and enthusiastic
 - Make it easy to respond (clear questions)
-- 150-200 words
+- 150-200 words for YOUR response only
+- DO NOT include or quote the original email - it will be automatically appended
 
 Respond with ONLY valid JSON:
 {
   "subject": "Re: ${email.subject} - A few quick questions",
-  "body": "HTML email body with personalized greeting",
-  "plainText": "Plain text version"
+  "body": "HTML email body with personalized greeting (DO NOT include original email)",
+  "plainText": "Plain text version (DO NOT include original email)"
 }`;
     } else if (templateType === 'SEND_ITINERARIES') {
       const itinerariesInfo = context.itineraries.map((match, index) => {
@@ -811,13 +1041,14 @@ Instructions:
 - Create urgency (limited availability, seasonal pricing)
 - Include clear call-to-action (book now, request details, schedule call)
 - Professional yet warm and enthusiastic tone
-- 300-400 words
+- 300-400 words for YOUR response only
+- DO NOT include or quote the original email - it will be automatically appended
 
 Respond with ONLY valid JSON:
 {
   "subject": "Perfect Itineraries for Your ${context.extractedData?.destination || 'Dream'} Trip! ✈️",
-  "body": "HTML email body with exciting presentation",
-  "plainText": "Plain text version"
+  "body": "HTML email body with exciting presentation (DO NOT include original email)",
+  "plainText": "Plain text version (DO NOT include original email)"
 }`;
     } else if (templateType === 'SEND_ITINERARIES_WITH_NOTE') {
       const itinerariesInfo = context.itineraries.map((match, index) => {
@@ -951,6 +1182,14 @@ Respond with ONLY valid JSON:
       const result = JSON.parse(response.choices[0].message.content);
       const usage = response.usage;
       const cost = this.calculateCost(model, usage);
+
+      // Append quoted original email for proper threading
+      const quotedHtml = this.formatEmailAsQuote(email, 'html');
+      const quotedPlain = this.formatEmailAsQuote(email, 'plain');
+      
+      // Enhance result with quoted original
+      result.body = (result.body || '') + quotedHtml;
+      result.plainText = (result.plainText || '') + quotedPlain;
 
       await AIProcessingLog.create({
         emailLogId: email._id,

@@ -17,7 +17,8 @@ import {
   Clock,
   MapPin,
   Users,
-  Plane
+  Plane,
+  Reply
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import emailAPI from '../../services/emailAPI';
@@ -30,6 +31,15 @@ const EmailDetail = () => {
   const [error, setError] = useState(null);
   const [processing, setProcessing] = useState(false);
   const [activeTab, setActiveTab] = useState('content');
+  
+  // Reply modal state
+  const [showReplyModal, setShowReplyModal] = useState(false);
+  const [replyData, setReplyData] = useState({
+    subject: '',
+    body: '',
+    plainText: ''
+  });
+  const [sendingReply, setSendingReply] = useState(false);
 
   useEffect(() => {
     fetchEmail();
@@ -121,6 +131,36 @@ const EmailDetail = () => {
       toast.error('Failed to generate response');
     } finally {
       setProcessing(false);
+    }
+  };
+
+  const handleOpenReplyModal = () => {
+    // Pre-fill reply data
+    setReplyData({
+      subject: `Re: ${email.subject}`,
+      body: email.generatedResponse?.body || '',
+      plainText: email.generatedResponse?.plainText || ''
+    });
+    setShowReplyModal(true);
+  };
+
+  const handleSendReply = async () => {
+    if (!replyData.subject || !replyData.body) {
+      toast.error('Please fill in subject and body');
+      return;
+    }
+
+    try {
+      setSendingReply(true);
+      await emailAPI.replyToEmail(id, replyData);
+      toast.success('Reply sent successfully!');
+      setShowReplyModal(false);
+      fetchEmail(); // Refresh to show manuallyReplied flag
+    } catch (error) {
+      console.error('Failed to send reply:', error);
+      toast.error(error.response?.data?.message || 'Failed to send reply');
+    } finally {
+      setSendingReply(false);
     }
   };
 
@@ -250,6 +290,23 @@ const EmailDetail = () => {
               >
                 <Send className="w-4 h-4" />
                 Generate Response
+              </button>
+            )}
+
+            {/* Reply Button - Always available for CUSTOMER emails */}
+            {email.category === 'CUSTOMER' && (
+              <button
+                onClick={handleOpenReplyModal}
+                disabled={processing}
+                className={`px-4 py-2 rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 ${
+                  email.manuallyReplied 
+                    ? 'bg-gray-600 text-white' 
+                    : 'bg-indigo-600 text-white'
+                }`}
+                title={email.manuallyReplied ? 'Already replied manually' : 'Send manual reply'}
+              >
+                <Reply className="w-4 h-4" />
+                {email.manuallyReplied ? 'Reply Again' : 'Reply'}
               </button>
             )}
           </div>
@@ -619,6 +676,126 @@ const EmailDetail = () => {
           </div>
         )}
       </div>
+
+      {/* Reply Modal */}
+      {showReplyModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b border-gray-200">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-bold text-gray-900">Reply to {email.from.email}</h2>
+                <button
+                  onClick={() => setShowReplyModal(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+            </div>
+
+            <div className="p-6 space-y-4">
+              {/* Show AI-generated response as suggestion */}
+              {email.generatedResponse && !email.manuallyReplied && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <div className="flex items-start gap-2">
+                    <AlertCircle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                    <div className="flex-1">
+                      <h4 className="font-semibold text-blue-900 mb-1">AI-Generated Response Available</h4>
+                      <p className="text-sm text-blue-700 mb-2">
+                        An AI response has been generated. You can use it as-is or modify it below.
+                      </p>
+                      <button
+                        onClick={() => {
+                          setReplyData({
+                            subject: email.generatedResponse.subject || `Re: ${email.subject}`,
+                            body: email.generatedResponse.body || '',
+                            plainText: email.generatedResponse.plainText || ''
+                          });
+                        }}
+                        className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+                      >
+                        Use AI Response
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Subject */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Subject
+                </label>
+                <input
+                  type="text"
+                  value={replyData.subject}
+                  onChange={(e) => setReplyData({ ...replyData, subject: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  placeholder="Re: ..."
+                />
+              </div>
+
+              {/* Body */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Message Body (HTML)
+                </label>
+                <textarea
+                  value={replyData.body}
+                  onChange={(e) => setReplyData({ ...replyData, body: e.target.value })}
+                  rows={12}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent font-mono text-sm"
+                  placeholder="<p>Hello...</p>"
+                />
+                <p className="mt-1 text-xs text-gray-500">
+                  You can use HTML tags for formatting
+                </p>
+              </div>
+
+              {/* Plain Text (Optional) */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Plain Text Version (Optional)
+                </label>
+                <textarea
+                  value={replyData.plainText}
+                  onChange={(e) => setReplyData({ ...replyData, plainText: e.target.value })}
+                  rows={6}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent font-mono text-sm"
+                  placeholder="Hello..."
+                />
+              </div>
+            </div>
+
+            <div className="p-6 border-t border-gray-200 bg-gray-50 flex justify-end gap-3">
+              <button
+                onClick={() => setShowReplyModal(false)}
+                disabled={sendingReply}
+                className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSendReply}
+                disabled={sendingReply || !replyData.subject || !replyData.body}
+                className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              >
+                {sendingReply ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />
+                    Sending...
+                  </>
+                ) : (
+                  <>
+                    <Send className="w-4 h-4" />
+                    Send Reply
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

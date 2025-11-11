@@ -5,7 +5,7 @@ class MatchingEngine {
   /**
    * Find matching packages for customer inquiry
    */
-  async matchPackages(extractedData, tenantId) {
+  async matchPackages(extractedData, tenantId, emailId = null) {
     const startTime = Date.now();
     
     try {
@@ -39,31 +39,47 @@ class MatchingEngine {
       // Take top 5 matches
       const topMatches = scoredPackages.slice(0, 5);
 
-      // Log the matching operation
-      await AIProcessingLog.create({
-        processingType: 'matching',
-        status: 'completed',
-        result: {
-          totalPackages: packages.length,
-          topMatches: topMatches.length,
-          criteria
-        },
-        confidence: topMatches.length > 0 ? topMatches[0].score : 0,
-        startedAt: new Date(startTime),
-        completedAt: new Date(),
-        tenantId
-      });
+      // Log the matching operation (only if emailId provided)
+      if (emailId) {
+        try {
+          await AIProcessingLog.create({
+            emailLogId: emailId,
+            processingType: 'matching',
+            status: 'completed',
+            result: {
+              totalPackages: packages.length,
+              topMatches: topMatches.length,
+              criteria
+            },
+            confidence: topMatches.length > 0 ? topMatches[0].score : 0,
+            startedAt: new Date(startTime),
+            completedAt: new Date(),
+            tenantId
+          });
+        } catch (logError) {
+          console.warn('Failed to log matching operation:', logError.message);
+          // Don't throw - logging failure shouldn't break matching
+        }
+      }
 
       return topMatches;
     } catch (error) {
       console.error('Matching engine error:', error);
       
-      await AIProcessingLog.create({
-        processingType: 'matching',
-        status: 'failed',
-        error: error.message,
-        tenantId
-      });
+      // Log error (only if emailId provided)
+      if (emailId) {
+        try {
+          await AIProcessingLog.create({
+            emailLogId: emailId,
+            processingType: 'matching',
+            status: 'failed',
+            error: error.message,
+            tenantId
+          });
+        } catch (logError) {
+          console.warn('Failed to log matching error:', logError.message);
+        }
+      }
       
       throw error;
     }

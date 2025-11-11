@@ -37,7 +37,7 @@ class EmailPollingService {
 
     try {
       const accounts = await EmailAccount.find({
-        status: 'active',
+        isActive: true,
         autoFetch: true,
         'imap.host': { $exists: true, $ne: '' }
       });
@@ -110,12 +110,15 @@ class EmailPollingService {
    */
   async fetchNewEmails(account) {
     return new Promise((resolve, reject) => {
+      // Convert to plain object to ensure getters (password decryption) are applied
+      const accountObj = account.toObject({ getters: true });
+      
       const imapConfig = {
-        user: account.email,
-        password: account.imap.password,
-        host: account.imap.host,
-        port: account.imap.port || 993,
-        tls: account.imap.tls !== false,
+        user: accountObj.email,
+        password: accountObj.imap.password,
+        host: accountObj.imap.host,
+        port: accountObj.imap.port || 993,
+        tls: accountObj.imap.secure === true, // Use the 'secure' field, not 'tls'
         tlsOptions: { 
           rejectUnauthorized: false // For self-signed certificates
         },
@@ -271,7 +274,7 @@ class EmailPollingService {
   async pollAllAccounts() {
     try {
       const accounts = await EmailAccount.find({
-        status: 'active',
+        isActive: true,
         autoFetch: true,
         'imap.host': { $exists: true, $ne: '' }
       });

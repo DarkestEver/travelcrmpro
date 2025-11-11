@@ -46,6 +46,12 @@ const emailAPI = {
     return response.data;
   },
 
+  // Reply to email manually
+  replyToEmail: async (id, replyData) => {
+    const response = await api.post(`/emails/${id}/reply`, replyData);
+    return response.data;
+  },
+
   // Delete email
   deleteEmail: async (id) => {
     const response = await api.delete(`/emails/${id}`);

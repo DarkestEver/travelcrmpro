@@ -12,7 +12,7 @@ const aiProcessingLogSchema = new mongoose.Schema({
   // Processing Type
   processingType: {
     type: String,
-    enum: ['categorization', 'extraction', 'matching', 'response_generation', 'sentiment_analysis', 'translation'],
+    enum: ['categorization', 'extraction', 'matching', 'response_generation', 'sentiment_analysis', 'translation', 'categorization_and_extraction'],
     required: true,
     index: true
   },

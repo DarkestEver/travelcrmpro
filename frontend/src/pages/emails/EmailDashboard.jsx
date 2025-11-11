@@ -36,10 +36,27 @@ const EmailDashboard = () => {
     pages: 0
   });
 
+  // Fetch on mount and when filters/page change
   useEffect(() => {
     fetchEmails();
     fetchStats();
   }, [filters, pagination.page]);
+
+  // Refetch when component becomes visible (browser back button)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        fetchEmails();
+        fetchStats();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, []);
 
   const fetchEmails = async () => {
     try {

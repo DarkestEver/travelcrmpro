@@ -146,7 +146,12 @@ const emailLogSchema = new mongoose.Schema({
     validation: {
       isValid: Boolean,
       completeness: Number,
-      missingFields: [String]
+      missingFields: [{
+        field: String,
+        label: String,
+        question: String,
+        priority: String
+      }]
     },
     workflowAction: {
       type: String,
@@ -188,7 +193,22 @@ const emailLogSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'EmailLog'
   },
+  responseMessageId: String, // SMTP Message-ID of sent response
   responseSentAt: Date,
+  responseType: {
+    type: String,
+    enum: ['auto', 'manual', 'none'],
+    default: 'none'
+  },
+  manuallyReplied: {
+    type: Boolean,
+    default: false,
+    index: true
+  },
+  repliedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  },
   
   // Manual Review
   requiresReview: { type: Boolean, default: false, index: true },

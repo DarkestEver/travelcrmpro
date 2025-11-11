@@ -21,6 +21,7 @@ router.post('/:id/extract', emailController.extractData);
 router.post('/:id/match', emailController.matchPackages);
 router.post('/:id/respond', emailController.generateResponse);
 router.post('/:id/retry', emailController.retryProcessing); // NEW: Retry failed processing
+router.post('/:id/reply', emailController.replyToEmail); // NEW: Manual reply from UI
 
 // Email-to-Quote workflow (NEW)
 router.post('/:id/convert-to-quote', emailController.convertEmailToQuote);
