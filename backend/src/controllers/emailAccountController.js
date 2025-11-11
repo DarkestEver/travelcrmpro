@@ -176,7 +176,32 @@ exports.updateEmailAccount = async (req, res) => {
     
     allowedUpdates.forEach(field => {
       if (req.body[field] !== undefined) {
-        emailAccount[field] = req.body[field];
+        // Special handling for imap and smtp to preserve passwords if not provided
+        if (field === 'imap' && req.body.imap) {
+          // If password is empty, remove it from the update to keep existing password
+          if (!req.body.imap.password) {
+            const { password, ...imapWithoutPassword } = req.body.imap;
+            emailAccount.imap = {
+              ...emailAccount.imap.toObject(),
+              ...imapWithoutPassword
+            };
+          } else {
+            emailAccount.imap = req.body.imap;
+          }
+        } else if (field === 'smtp' && req.body.smtp) {
+          // If password is empty, remove it from the update to keep existing password
+          if (!req.body.smtp.password) {
+            const { password, ...smtpWithoutPassword } = req.body.smtp;
+            emailAccount.smtp = {
+              ...emailAccount.smtp.toObject(),
+              ...smtpWithoutPassword
+            };
+          } else {
+            emailAccount.smtp = req.body.smtp;
+          }
+        } else {
+          emailAccount[field] = req.body[field];
+        }
       }
     });
     
