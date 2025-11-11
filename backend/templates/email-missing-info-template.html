@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Travel Inquiry - Additional Information Needed</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f4f4f4;">
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #f4f4f4; padding: 20px 0;">
+        <tr>
+            <td align="center">
+                <table width="600" cellpadding="0" cellspacing="0" border="0" style="background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                    
+                    <!-- Header -->
+                    <tr>
+                        <td style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px 40px; text-align: center;">
+                            <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 600;">
+                                ✈️ {{COMPANY_NAME}}
+                            </h1>
+                            <p style="margin: 10px 0 0 0; color: #ffffff; font-size: 14px; opacity: 0.9;">
+                                Your Dream Trip Awaits
+                            </p>
+                        </td>
+                    </tr>
+                    
+                    <!-- Greeting -->
+                    <tr>
+                        <td style="padding: 40px 40px 20px 40px;">
+                            <p style="margin: 0; color: #333333; font-size: 16px; line-height: 1.6;">
+                                Dear <strong>{{CUSTOMER_NAME}}</strong>,
+                            </p>
+                        </td>
+                    </tr>
+                    
+                    <!-- Introduction -->
+                    <tr>
+                        <td style="padding: 0 40px 30px 40px;">
+                            <p style="margin: 0; color: #555555; font-size: 15px; line-height: 1.6;">
+                                Thank you for your interest in traveling to <strong style="color: #667eea;">{{DESTINATION}}</strong>! 
+                                We're excited to help you plan the perfect trip. 🌍
+                            </p>
+                            <p style="margin: 15px 0 0 0; color: #555555; font-size: 15px; line-height: 1.6;">
+                                To provide you with the best travel packages and accurate pricing, we need a few more details:
+                            </p>
+                        </td>
+                    </tr>
+                    
+                    <!-- Missing Information Table -->
+                    <tr>
+                        <td style="padding: 0 40px 30px 40px;">
+                            <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #f8f9fa; border-radius: 6px; overflow: hidden;">
+                                <tr>
+                                    <td style="padding: 20px;">
+                                        <h3 style="margin: 0 0 15px 0; color: #333333; font-size: 16px; font-weight: 600;">
+                                            📋 Information Needed:
+                                        </h3>
+                                        
+                                        <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                                            {{MISSING_FIELDS_ROWS}}
+                                        </table>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                    
+                    <!-- Call to Action -->
+                    <tr>
+                        <td style="padding: 0 40px 30px 40px;">
+                            <p style="margin: 0; color: #555555; font-size: 15px; line-height: 1.6;">
+                                Simply reply to this email with the above information, and we'll get back to you within <strong>24 hours</strong> with personalized recommendations! 🎉
+                            </p>
+                        </td>
+                    </tr>
+                    
+                    <!-- What's Included Preview (if destination known) -->
+                    {{DESTINATION_PREVIEW}}
+                    
+                    <!-- Why Choose Us -->
+                    <tr>
+                        <td style="padding: 0 40px 30px 40px; border-top: 1px solid #e0e0e0;">
+                            <h3 style="margin: 20px 0 15px 0; color: #333333; font-size: 16px; font-weight: 600;">
+                                ✨ Why Choose Us?
+                            </h3>
+                            <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                                <tr>
+                                    <td width="50%" style="padding: 5px 10px 5px 0; vertical-align: top;">
+                                        <span style="color: #667eea; font-size: 18px;">✓</span>
+                                        <span style="color: #555555; font-size: 14px;"> Best Price Guarantee</span>
+                                    </td>
+                                    <td width="50%" style="padding: 5px 0 5px 10px; vertical-align: top;">
+                                        <span style="color: #667eea; font-size: 18px;">✓</span>
+                                        <span style="color: #555555; font-size: 14px;"> 24/7 Customer Support</span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td width="50%" style="padding: 5px 10px 5px 0; vertical-align: top;">
+                                        <span style="color: #667eea; font-size: 18px;">✓</span>
+                                        <span style="color: #555555; font-size: 14px;"> Flexible Cancellation</span>
+                                    </td>
+                                    <td width="50%" style="padding: 5px 0 5px 10px; vertical-align: top;">
+                                        <span style="color: #667eea; font-size: 18px;">✓</span>
+                                        <span style="color: #555555; font-size: 14px;"> Trusted by 10,000+ Travelers</span>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                    
+                    <!-- Footer -->
+                    <tr>
+                        <td style="background-color: #f8f9fa; padding: 30px 40px; border-top: 1px solid #e0e0e0;">
+                            <p style="margin: 0 0 10px 0; color: #555555; font-size: 14px; line-height: 1.6;">
+                                Best regards,<br>
+                                <strong>{{AGENT_NAME}}</strong><br>
+                                <span style="color: #667eea;">{{COMPANY_NAME}}</span>
+                            </p>
+                            <p style="margin: 15px 0 0 0; color: #888888; font-size: 13px; line-height: 1.5;">
+                                📧 {{COMPANY_EMAIL}}<br>
+                                📞 {{COMPANY_PHONE}}<br>
+                                🌐 {{COMPANY_WEBSITE}}
+                            </p>
+                        </td>
+                    </tr>
+                    
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>

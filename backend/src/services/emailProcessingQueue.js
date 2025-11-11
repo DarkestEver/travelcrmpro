@@ -5,6 +5,7 @@ const openaiService = require('./openaiService');
 const matchingEngine = require('./matchingEngine');
 const itineraryMatchingService = require('./itineraryMatchingService');
 const emailService = require('./emailService');
+const emailTemplateService = require('./emailTemplateService');
 const nodemailer = require('nodemailer');
 const SupplierPackageCache = require('../models/SupplierPackageCache');
 const ManualReviewQueue = require('../models/ManualReviewQueue');
@@ -266,16 +267,14 @@ class EmailProcessingQueue {
         const workflow = itineraryMatching.workflow;
         
         if (workflow.action === 'ASK_CUSTOMER') {
-          // Missing required fields - ask customer
-          response = await openaiService.generateResponse(
+          // Missing required fields - use static template (no AI cost)
+          console.log('📋 Using template for missing information request (cost savings)');
+          response = await emailTemplateService.generateMissingInfoEmail({
             email,
-            {
-              extractedData,
-              missingFields: workflow.missingFields
-            },
-            'ASK_CUSTOMER',
+            extractedData,
+            missingFields: workflow.missingFields,
             tenantId
-          );
+          });
         } else if (workflow.action === 'SEND_ITINERARIES') {
           // Good matches found (≥70%)
           response = await openaiService.generateResponse(
