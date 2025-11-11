@@ -11,7 +11,9 @@ User requested improvements to email extraction to handle:
 
 ## ✅ Implemented Enhancements
 
-### 1. Advanced Date Parsing (3 Cases)
+### 1. Advanced Date Parsing (3 Cases + Dynamic Year)
+
+**Dynamic Year Support:** The system now automatically uses the current year instead of hardcoded 2025. It calculates `new Date().getFullYear()` at runtime.
 
 #### Case 1: Both Dates Provided
 ```javascript
@@ -19,8 +21,8 @@ Email: "December 20-27, 2025"
 Result: {
   dates: {
     flexible: false,
-    startDate: "2025-12-20",
-    endDate: "2025-12-27",
+    startDate: "YYYY-12-20",  // Uses current year dynamically
+    endDate: "YYYY-12-27",    // Uses current year dynamically
     duration: 7
   }
 }
@@ -32,8 +34,8 @@ Email: "December 20 for 7 nights"
 Result: {
   dates: {
     flexible: false,
-    startDate: "2025-12-20",
-    endDate: "2025-12-27",  // Calculated
+    startDate: "YYYY-12-20",  // Current year
+    endDate: "YYYY-12-27",    // Calculated
     duration: 7
   }
 }
@@ -54,7 +56,7 @@ Result: {
 ```
 
 **Key Rules:**
-- Always use **2025** as current year for upcoming months
+- Always use **current year dynamically** (calculated at runtime via `new Date().getFullYear()`)
 - Calculate `endDate` from `startDate + duration` when both provided
 - Set `flexible: true` and no dates when only month mentioned
 - Calculate duration from dates when not explicitly mentioned

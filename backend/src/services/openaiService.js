@@ -227,6 +227,7 @@ Respond with ONLY valid JSON:
     }
 
     const startTime = Date.now();
+    const currentYear = new Date().getFullYear();
     
     const prompt = `Extract structured travel inquiry data from this email:
 
@@ -238,22 +239,22 @@ Body: ${email.bodyText}
 CRITICAL INSTRUCTIONS:
 1. MANDATORY FIELDS - These MUST be extracted if present in the email:
    - destination: The city/country they want to visit (e.g., "Paris", "France", "Paris, France")
-   - dates.startDate: Specific departure date in YYYY-MM-DD format (e.g., "December 20" → "2025-12-20")
-   - dates.endDate: Specific return date in YYYY-MM-DD format (e.g., "December 27" → "2025-12-27")
+   - dates.startDate: Specific departure date in YYYY-MM-DD format (e.g., "December 20" → "${currentYear}-12-20")
+   - dates.endDate: Specific return date in YYYY-MM-DD format (e.g., "December 27" → "${currentYear}-12-27")
    - travelers.adults: Number of adults (extract from "family of 4", "2 adults", etc.)
    - travelers.children: Number of children (extract from "family of 4 with 2 kids", "2 children", etc.)
    - budget.amount: Total budget amount as a number (e.g., "$8,000" → 8000, "8000 USD" → 8000)
 
 2. DATE PARSING RULES:
-   - Current year is 2025. Use 2025 for any upcoming month without a year specified.
+   - Current year is ${currentYear}. Use ${currentYear} for any upcoming month without a year specified.
    
    CASE 1 - Both dates provided:
-   - "December 20-27, 2025" → startDate: "2025-12-20", endDate: "2025-12-27", flexible: false
-   - "March 15 to March 22" → startDate: "2025-03-15", endDate: "2025-03-22", flexible: false
+   - "December 20-27, ${currentYear}" → startDate: "${currentYear}-12-20", endDate: "${currentYear}-12-27", flexible: false
+   - "March 15 to March 22" → startDate: "${currentYear}-03-15", endDate: "${currentYear}-03-22", flexible: false
    
    CASE 2 - Start date + duration:
-   - "December 20 for 7 nights" → startDate: "2025-12-20", calculate endDate: "2025-12-27", flexible: false
-   - "January 10, 5 days" → startDate: "2025-01-10", calculate endDate: "2025-01-14" (5 days = 4 nights)
+   - "December 20 for 7 nights" → startDate: "${currentYear}-12-20", calculate endDate: "${currentYear}-12-27", flexible: false
+   - "January 10, 5 days" → startDate: "${currentYear}-01-10", calculate endDate: "${currentYear}-01-14" (5 days = 4 nights)
    
    CASE 3 - Only month + duration:
    - "December for 7 nights" → flexible: true, NO startDate/endDate, only duration: 7 nights
@@ -302,8 +303,8 @@ Extract ALL available information and respond with ONLY valid JSON:
   "additionalDestinations": ["array of other destinations if multi-city"],
   "dates": {
     "flexible": boolean (true if only month provided, false if specific dates given),
-    "startDate": "YYYY-MM-DD (REQUIRED if specific date given - e.g., '2025-12-20', null if only month)",
-    "endDate": "YYYY-MM-DD (REQUIRED if specific date given OR calculated from duration - e.g., '2025-12-27', null if only month)",
+    "startDate": "YYYY-MM-DD (REQUIRED if specific date given - e.g., '${currentYear}-12-20', null if only month)",
+    "endDate": "YYYY-MM-DD (REQUIRED if specific date given OR calculated from duration - e.g., '${currentYear}-12-27', null if only month)",
     "duration": number (nights count - required if mentioned or calculable from dates)
   },
   "travelers": {

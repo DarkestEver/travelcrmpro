@@ -4,15 +4,17 @@
 This document outlines the comprehensive rules for extracting customer inquiry data from emails using AI.
 
 **Last Updated:** November 11, 2025  
-**Current Year for Extraction:** 2025
+**Current Year for Extraction:** Dynamic (automatically uses current year)
 
 ---
 
 ## 1. DATE EXTRACTION RULES
 
 ### Current Year Context
-- **Always use 2025** for any upcoming month without a year specified
-- Example: "March trip" → assumes March 2025 (not 2024 or 2026)
+- **Automatically uses the current year** for any upcoming month without a year specified
+- The system dynamically determines the current year at runtime
+- Example: In 2025, "March trip" → assumes March 2025
+- Example: In 2026, "March trip" → assumes March 2026
 
 ### Case 1: Both Dates Provided
 When customer specifies both start and end dates:
@@ -23,17 +25,17 @@ Extracted:
 {
   dates: {
     flexible: false,
-    startDate: "2025-12-20",
-    endDate: "2025-12-27",
+    startDate: "YYYY-12-20",  // Uses current year dynamically
+    endDate: "YYYY-12-27",    // Uses current year dynamically
     duration: 7  // calculated
   }
 }
 ```
 
 **Examples:**
-- "March 15 to March 22" → `2025-03-15` to `2025-03-22`
-- "June 10-17" → `2025-06-10` to `2025-06-17`
-- "July 4th through July 11th, 2025" → `2025-07-04` to `2025-07-11`
+- "March 15 to March 22" → `YYYY-03-15` to `YYYY-03-22`
+- "June 10-17" → `YYYY-06-10` to `YYYY-06-17`
+- "July 4th through July 11th, 2025" → `2025-07-04` to `2025-07-11` (year specified)
 
 ### Case 2: Start Date + Duration
 When customer specifies start date and number of days/nights:
@@ -44,8 +46,8 @@ Extracted:
 {
   dates: {
     flexible: false,
-    startDate: "2025-12-20",
-    endDate: "2025-12-27",  // calculated: start + 7 nights
+    startDate: "YYYY-12-20",              // Current year
+    endDate: "YYYY-12-27",                // Calculated: start + 7 nights
     duration: 7
   }
 }
@@ -58,8 +60,8 @@ Extracted:
 - "10 days" = 10 days with 9 nights
 
 **Examples:**
-- "January 10, 5 days" → `2025-01-10` to `2025-01-14` (4 nights)
-- "March 5 for 2 weeks" → `2025-03-05` to `2025-03-19` (14 nights)
+- "January 10, 5 days" → `YYYY-01-10` to `YYYY-01-14` (4 nights)
+- "March 5 for 2 weeks" → `YYYY-03-05` to `YYYY-03-19` (14 nights)
 
 ### Case 3: Only Month + Duration (Flexible Dates)
 When customer mentions only the month with duration but no specific date:
@@ -322,7 +324,7 @@ Common phrases indicating start of signature:
 ```json
 {
   "destination": "Paris",
-  "dates": { "flexible": false, "startDate": "2025-12-20", "endDate": "2025-12-27" },
+  "dates": { "flexible": false, "startDate": "YYYY-12-20", "endDate": "YYYY-12-27" },
   "travelers": { "adults": 2, "children": 0, "infants": 0 },
   "budget": { "amount": null, "flexible": true },
   "missingInfo": []  // Empty - all required fields present
@@ -343,7 +345,7 @@ Common phrases indicating start of signature:
 ```json
 {
   "destination": "London",
-  "dates": { "flexible": false, "startDate": "2025-06-15", "endDate": "2025-06-22" },
+  "dates": { "flexible": false, "startDate": "YYYY-06-15", "endDate": "YYYY-06-22" },
   "travelers": { "adults": 2, "children": 3, "childAges": [] },
   "missingInfo": ["children ages"]  // Children count present but ages not specified
 }
