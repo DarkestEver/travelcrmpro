@@ -985,8 +985,19 @@ const EmailDetail = () => {
                   });
               }
               
-              // 4. Sort by timestamp (chronological order)
-              timeline.sort((a, b) => a.timestamp - b.timestamp);
+              // 4. Add reply emails (threaded conversation)
+              if (email.replies && email.replies.length > 0) {
+                email.replies.forEach(reply => {
+                  timeline.push({
+                    type: 'customer_reply',
+                    timestamp: new Date(reply.receivedAt),
+                    data: reply
+                  });
+                });
+              }
+              
+              // 5. Sort by timestamp (REVERSE chronological order - latest first)
+              timeline.sort((a, b) => b.timestamp - a.timestamp);
               
               // 5. Render timeline
               return (
@@ -1011,9 +1022,9 @@ const EmailDetail = () => {
                                 </span>
                               </div>
                               <p className="text-sm font-medium text-gray-800 mb-2">{email.subject}</p>
-                              <p className="text-sm text-gray-700 whitespace-pre-wrap line-clamp-4">
-                                {email.plainText || email.htmlContent?.replace(/<[^>]*>/g, '') || 'No content'}
-                              </p>
+                              <div className="text-sm text-gray-700 whitespace-pre-wrap">
+                                {email.bodyText || email.plainText || email.htmlContent?.replace(/<[^>]*>/g, '') || 'No content'}
+                              </div>
                             </div>
                           </div>
                         </div>
@@ -1129,6 +1140,40 @@ const EmailDetail = () => {
                                     Download PDF
                                   </a>
                                 )}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    }
+                    
+                    // Customer Reply Email (Threaded)
+                    if (item.type === 'customer_reply') {
+                      const reply = item.data;
+                      return (
+                        <div key={`reply-${reply.emailId || index}`} className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-lg ml-6">
+                          <div className="flex items-start gap-3">
+                            <div className="w-10 h-10 rounded-full bg-blue-500 text-white flex items-center justify-center font-semibold flex-shrink-0">
+                              {reply.from?.name?.charAt(0) || 'C'}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-start justify-between gap-4 mb-2">
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-2">
+                                    <p className="font-semibold text-gray-900">{reply.from?.name || 'Customer'}</p>
+                                    <span className="px-2 py-0.5 bg-blue-100 text-blue-700 text-xs rounded-full font-medium">
+                                      Reply
+                                    </span>
+                                  </div>
+                                  <p className="text-sm text-gray-600">{reply.from?.email}</p>
+                                </div>
+                                <span className="text-xs text-gray-500 whitespace-nowrap flex-shrink-0">
+                                  {item.timestamp.toLocaleString()}
+                                </span>
+                              </div>
+                              <p className="text-sm font-medium text-gray-800 mb-2">{reply.subject}</p>
+                              <div className="text-sm text-gray-700 whitespace-pre-wrap max-h-48 overflow-y-auto">
+                                {reply.snippet || 'No preview available'}
                               </div>
                             </div>
                           </div>

@@ -27,4 +27,8 @@ router.patch('/:id/extracted-data', emailController.updateExtractedData); // NEW
 // Email-to-Quote workflow (NEW)
 router.post('/:id/convert-to-quote', emailController.convertEmailToQuote);
 
+// Email Threading (NEW)
+router.get('/:id/thread', emailController.getEmailThread);
+router.post('/:id/rebuild-thread', emailController.rebuildEmailThread);
+
 module.exports = router;

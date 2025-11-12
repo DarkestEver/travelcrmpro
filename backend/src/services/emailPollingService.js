@@ -15,6 +15,7 @@ const { simpleParser } = require('mailparser');
 const EmailAccount = require('../models/EmailAccount');
 const EmailLog = require('../models/EmailLog');
 const emailProcessingQueue = require('./emailProcessingQueue');
+const EmailThreadingService = require('./emailThreadingService');
 const logger = require('../utils/logger');
 
 class EmailPollingService {
@@ -210,6 +211,15 @@ class EmailPollingService {
                     });
 
                     logger.info(`✅ Saved email: ${emailLog._id} - "${emailLog.subject}"`);
+
+                    // Process email threading (detect replies/forwards)
+                    try {
+                      await EmailThreadingService.processEmailThreading(emailLog, account.tenantId.toString());
+                      logger.info(`🔗 Threading processed for email: ${emailLog._id}`);
+                    } catch (threadError) {
+                      logger.error(`⚠️  Threading error for ${emailLog._id}:`, threadError.message);
+                      // Don't fail the whole process if threading fails
+                    }
 
                     // Add to processing queue
                     await emailProcessingQueue.addToQueue(

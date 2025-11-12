@@ -1,5 +1,6 @@
 const EmailLog = require('../models/EmailLog');
 const emailProcessingQueue = require('../services/emailProcessingQueue');
+const EmailThreadingService = require('../services/emailThreadingService');
 const openaiService = require('../services/openaiService');
 const matchingEngine = require('../services/matchingEngine');
 const emailToQuoteService = require('../services/emailToQuoteService');
@@ -83,6 +84,15 @@ class EmailController {
 
       // Save to database
       const email = await EmailLog.create(emailData);
+
+      // Process email threading (detect replies/forwards)
+      try {
+        await EmailThreadingService.processEmailThreading(email, email.tenantId.toString());
+        console.log(`🔗 Threading processed for email: ${email._id}`);
+      } catch (threadError) {
+        console.error(`⚠️  Threading error for ${email._id}:`, threadError.message);
+        // Don't fail the whole process if threading fails
+      }
 
       // Add to processing queue
       await emailProcessingQueue.addToQueue(email._id, email.tenantId);
@@ -895,6 +905,77 @@ class EmailController {
       res.status(500).json({
         success: false,
         message: 'Failed to update extracted data',
+        error: error.message
+      });
+    }
+  }
+
+  /**
+   * Get full email thread (conversation)
+   * GET /api/v1/emails/:id/thread
+   */
+  async getEmailThread(req, res) {
+    try {
+      const { id } = req.params;
+
+      const thread = await EmailThreadingService.getConversationThread(id);
+
+      if (!thread || thread.length === 0) {
+        return res.status(404).json({
+          success: false,
+          message: 'Email or thread not found'
+        });
+      }
+
+      res.json({
+        success: true,
+        data: {
+          threadCount: thread.length,
+          emails: thread
+        }
+      });
+    } catch (error) {
+      console.error('Get email thread error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to get email thread',
+        error: error.message
+      });
+    }
+  }
+
+  /**
+   * Rebuild thread for specific email
+   * POST /api/v1/emails/:id/rebuild-thread
+   */
+  async rebuildEmailThread(req, res) {
+    try {
+      const { id } = req.params;
+
+      const email = await EmailLog.findById(id);
+      if (!email) {
+        return res.status(404).json({
+          success: false,
+          message: 'Email not found'
+        });
+      }
+
+      // Process threading for this email
+      const result = await EmailThreadingService.processEmailThreading(
+        email, 
+        email.tenantId.toString()
+      );
+
+      res.json({
+        success: true,
+        message: 'Thread rebuilt successfully',
+        data: result
+      });
+    } catch (error) {
+      console.error('Rebuild email thread error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to rebuild thread',
         error: error.message
       });
     }

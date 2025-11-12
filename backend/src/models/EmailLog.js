@@ -316,7 +316,43 @@ const emailLogSchema = new mongoose.Schema({
   tokensUsed: {
     type: Number,
     default: 0
-  }
+  },
+  
+  // Email Threading & Conversation
+  threadMetadata: {
+    isReply: { type: Boolean, default: false },
+    isForward: { type: Boolean, default: false },
+    parentEmailId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'EmailLog',
+      index: true
+    },
+    threadId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'EmailLog',
+      index: true
+    },
+    messageId: String,
+    inReplyTo: String,
+    references: [String]
+  },
+  
+  // Conversation tracking
+  replies: [{
+    emailId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'EmailLog'
+    },
+    from: {
+      email: String,
+      name: String
+    },
+    subject: String,
+    receivedAt: Date,
+    snippet: String
+  }],
+  
+  conversationParticipants: [String] // Array of email addresses in this thread
 }, {
   timestamps: true
 });
