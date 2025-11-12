@@ -18,10 +18,13 @@ import {
   MapPin,
   Users,
   Plane,
-  Reply
+  Reply,
+  Edit2,
+  Save
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import emailAPI from '../../services/emailAPI';
+import QuotesTab from '../../components/emails/QuotesTab';
 
 const EmailDetail = () => {
   const { id } = useParams();
@@ -40,6 +43,12 @@ const EmailDetail = () => {
     plainText: ''
   });
   const [sendingReply, setSendingReply] = useState(false);
+  
+  // Edit mode state
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedData, setEditedData] = useState({});
+  const [saving, setSaving] = useState(false);
+  const [addingToQuote, setAddingToQuote] = useState(null); // Track which package is being added
 
   useEffect(() => {
     fetchEmail();
@@ -109,7 +118,12 @@ const EmailDetail = () => {
     try {
       setProcessing(true);
       const response = await emailAPI.matchPackages(id);
-      toast.success(`Found ${response.data.length} matching packages`);
+      
+      // Response is { success: true, data: [...matches...] }
+      const matches = response.data || response || [];
+      const matchCount = Array.isArray(matches) ? matches.length : (matches.length || 0);
+      
+      toast.success(`Found ${matchCount} matching packages`);
       fetchEmail();
     } catch (error) {
       console.error('Failed to match packages:', error);
@@ -162,6 +176,78 @@ const EmailDetail = () => {
     } finally {
       setSendingReply(false);
     }
+  };
+
+  // Edit mode handlers
+  const handleStartEdit = () => {
+    setEditedData({ ...email.extractedData });
+    setIsEditing(true);
+  };
+
+  const handleCancelEdit = () => {
+    setEditedData({});
+    setIsEditing(false);
+  };
+
+  const handleSaveEdit = async () => {
+    try {
+      setSaving(true);
+      await emailAPI.updateExtractedData(id, editedData);
+      toast.success('Extracted data updated successfully');
+      setIsEditing(false);
+      fetchEmail();
+    } catch (error) {
+      console.error('Failed to update extracted data:', error);
+      toast.error(error.response?.data?.message || 'Failed to update data');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleEditChange = (field, value) => {
+    setEditedData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const handleNestedChange = (parent, field, value) => {
+    setEditedData(prev => ({
+      ...prev,
+      [parent]: {
+        ...prev[parent],
+        [field]: value
+      }
+    }));
+  };
+
+  const handleAddToQuote = async (match) => {
+    // Switch to quotes tab and pass the selected match
+    setActiveTab('quotes');
+    // Store the selected match in a way the QuotesTab can access it
+    window.selectedMatchForQuote = match;
+    toast.success('Switched to Quotes tab. Complete the pricing and click "Create Quote".');
+  };
+
+  // Calculate missing information dynamically
+  const getMissingInfo = () => {
+    const data = isEditing ? editedData : email.extractedData;
+    const missing = [];
+
+    if (!data.destination) {
+      missing.push('destination');
+    }
+    if (!data.dates || (!data.dates.preferredStart && !data.dates.duration)) {
+      missing.push('travel dates');
+    }
+    if (!data.travelers || (data.travelers.adults === 0 && !data.travelers.children && !data.travelers.infants)) {
+      missing.push('travelers');
+    }
+    if (!data.budget || !data.budget.amount) {
+      missing.push('budget');
+    }
+
+    return missing;
   };
 
   const getCategoryColor = (category) => {
@@ -316,11 +402,11 @@ const EmailDetail = () => {
       {/* Tabs */}
       <div className="mb-6 border-b border-gray-200">
         <nav className="flex gap-4">
-          {['content', 'extracted', 'matches', 'response', 'technical'].map((tab) => (
+          {['content', 'extracted', 'matches', 'quotes', 'conversation', 'technical'].map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`px-4 py-2 border-b-2 font-medium transition-colors ${
+              className={`px-4 py-2 border-b-2 font-medium transition-colors capitalize ${
                 activeTab === tab
                   ? 'border-blue-600 text-blue-600'
                   : 'border-transparent text-gray-600 hover:text-gray-900'
@@ -376,20 +462,72 @@ const EmailDetail = () => {
               </div>
             ) : email.category === 'CUSTOMER' ? (
               <div className="space-y-6">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-lg font-semibold">Customer Inquiry Details</h3>
+                  {!isEditing ? (
+                    <button
+                      onClick={handleStartEdit}
+                      className="flex items-center gap-2 px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm"
+                    >
+                      <Edit2 className="w-4 h-4" />
+                      Edit
+                    </button>
+                  ) : (
+                    <div className="flex gap-2">
+                      <button
+                        onClick={handleCancelEdit}
+                        disabled={saving}
+                        className="flex items-center gap-2 px-3 py-1 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 text-sm"
+                      >
+                        <X className="w-4 h-4" />
+                        Cancel
+                      </button>
+                      <button
+                        onClick={handleSaveEdit}
+                        disabled={saving}
+                        className="flex items-center gap-2 px-3 py-1 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm disabled:opacity-50"
+                      >
+                        <Save className="w-4 h-4" />
+                        {saving ? 'Saving...' : 'Save'}
+                      </button>
+                    </div>
+                  )}
+                </div>
+                
                 <div>
-                  <h3 className="text-lg font-semibold mb-4">Customer Inquiry Details</h3>
-                  
                   {/* Destination */}
                   <div className="mb-4">
                     <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1">
                       <MapPin className="w-4 h-4" />
                       Destination
                     </label>
-                    <p className="text-gray-900">{email.extractedData.destination || 'Not specified'}</p>
-                    {email.extractedData.additionalDestinations?.length > 0 && (
-                      <p className="text-sm text-gray-600 mt-1">
-                        Also interested in: {email.extractedData.additionalDestinations.join(', ')}
-                      </p>
+                    {isEditing ? (
+                      <div className="space-y-2">
+                        <input
+                          type="text"
+                          value={editedData.destination || ''}
+                          onChange={(e) => handleEditChange('destination', e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          placeholder="Enter primary destination"
+                        />
+                        <input
+                          type="text"
+                          value={editedData.additionalDestinations?.join(', ') || ''}
+                          onChange={(e) => handleEditChange('additionalDestinations', e.target.value.split(',').map(d => d.trim()).filter(d => d))}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                          placeholder="Additional destinations (comma-separated)"
+                        />
+                        <p className="text-xs text-gray-500">Additional destinations help find multi-city packages</p>
+                      </div>
+                    ) : (
+                      <>
+                        <p className="text-gray-900">{email.extractedData.destination || 'Not specified'}</p>
+                        {email.extractedData.additionalDestinations?.length > 0 && (
+                          <p className="text-sm text-gray-600 mt-1">
+                            Also interested in: {email.extractedData.additionalDestinations.join(', ')}
+                          </p>
+                        )}
+                      </>
                     )}
                   </div>
 
@@ -400,15 +538,51 @@ const EmailDetail = () => {
                         <Calendar className="w-4 h-4" />
                         Travel Dates
                       </label>
-                      <div className="text-gray-900">
-                        {email.extractedData.dates.preferredStart && email.extractedData.dates.preferredEnd ? (
-                          <p>{email.extractedData.dates.preferredStart} to {email.extractedData.dates.preferredEnd}</p>
-                        ) : email.extractedData.dates.duration ? (
-                          <p>{email.extractedData.dates.duration} days</p>
-                        ) : (
-                          <p>Flexible</p>
-                        )}
-                      </div>
+                      {isEditing ? (
+                        <div className="space-y-2">
+                          <div className="grid grid-cols-2 gap-2">
+                            <div>
+                              <label className="text-xs text-gray-600">Start Date</label>
+                              <input
+                                type="date"
+                                value={editedData.dates?.preferredStart || ''}
+                                onChange={(e) => handleNestedChange('dates', 'preferredStart', e.target.value)}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                              />
+                            </div>
+                            <div>
+                              <label className="text-xs text-gray-600">End Date</label>
+                              <input
+                                type="date"
+                                value={editedData.dates?.preferredEnd || ''}
+                                onChange={(e) => handleNestedChange('dates', 'preferredEnd', e.target.value)}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                              />
+                            </div>
+                          </div>
+                          <div>
+                            <label className="text-xs text-gray-600">Or Duration (days)</label>
+                            <input
+                              type="number"
+                              min="1"
+                              value={editedData.dates?.duration || ''}
+                              onChange={(e) => handleNestedChange('dates', 'duration', parseInt(e.target.value) || '')}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                              placeholder="Number of days"
+                            />
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="text-gray-900">
+                          {email.extractedData.dates.preferredStart && email.extractedData.dates.preferredEnd ? (
+                            <p>{email.extractedData.dates.preferredStart} to {email.extractedData.dates.preferredEnd}</p>
+                          ) : email.extractedData.dates.duration ? (
+                            <p>{email.extractedData.dates.duration} days</p>
+                          ) : (
+                            <p>Flexible</p>
+                          )}
+                        </div>
+                      )}
                     </div>
                   )}
 
@@ -419,13 +593,48 @@ const EmailDetail = () => {
                         <Users className="w-4 h-4" />
                         Travelers
                       </label>
-                      <div className="text-gray-900">
-                        <p>
-                          {email.extractedData.travelers.adults || 0} Adults
-                          {email.extractedData.travelers.children > 0 && `, ${email.extractedData.travelers.children} Children`}
-                          {email.extractedData.travelers.infants > 0 && `, ${email.extractedData.travelers.infants} Infants`}
-                        </p>
-                      </div>
+                      {isEditing ? (
+                        <div className="grid grid-cols-3 gap-2">
+                          <div>
+                            <label className="text-xs text-gray-600">Adults</label>
+                            <input
+                              type="number"
+                              min="0"
+                              value={editedData.travelers?.adults || 0}
+                              onChange={(e) => handleNestedChange('travelers', 'adults', parseInt(e.target.value) || 0)}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-xs text-gray-600">Children</label>
+                            <input
+                              type="number"
+                              min="0"
+                              value={editedData.travelers?.children || 0}
+                              onChange={(e) => handleNestedChange('travelers', 'children', parseInt(e.target.value) || 0)}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-xs text-gray-600">Infants</label>
+                            <input
+                              type="number"
+                              min="0"
+                              value={editedData.travelers?.infants || 0}
+                              onChange={(e) => handleNestedChange('travelers', 'infants', parseInt(e.target.value) || 0)}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                            />
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="text-gray-900">
+                          <p>
+                            {email.extractedData.travelers.adults || 0} Adults
+                            {email.extractedData.travelers.children > 0 && `, ${email.extractedData.travelers.children} Children`}
+                            {email.extractedData.travelers.infants > 0 && `, ${email.extractedData.travelers.infants} Infants`}
+                          </p>
+                        </div>
+                      )}
                     </div>
                   )}
 
@@ -436,53 +645,118 @@ const EmailDetail = () => {
                         <DollarSign className="w-4 h-4" />
                         Budget
                       </label>
-                      <div className="text-gray-900">
-                        {email.extractedData.budget.amount ? (
-                          <p>
-                            {email.extractedData.budget.currency} {email.extractedData.budget.amount.toLocaleString()}
-                            {email.extractedData.budget.perPerson && ' per person'}
-                            {email.extractedData.budget.flexible && ' (Flexible)'}
-                          </p>
-                        ) : (
-                          <p>Not specified</p>
-                        )}
-                      </div>
+                      {isEditing ? (
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <label className="text-xs text-gray-600">Amount</label>
+                            <input
+                              type="number"
+                              min="0"
+                              value={editedData.budget?.amount || ''}
+                              onChange={(e) => handleNestedChange('budget', 'amount', parseFloat(e.target.value) || 0)}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                              placeholder="0"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-xs text-gray-600">Currency</label>
+                            <select
+                              value={editedData.budget?.currency || 'USD'}
+                              onChange={(e) => handleNestedChange('budget', 'currency', e.target.value)}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                            >
+                              <option value="USD">USD</option>
+                              <option value="EUR">EUR</option>
+                              <option value="GBP">GBP</option>
+                              <option value="INR">INR</option>
+                              <option value="AUD">AUD</option>
+                            </select>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="text-gray-900">
+                          {email.extractedData.budget.amount ? (
+                            <p>
+                              {email.extractedData.budget.currency} {email.extractedData.budget.amount.toLocaleString()}
+                              {email.extractedData.budget.perPerson && ' per person'}
+                              {email.extractedData.budget.flexible && ' (Flexible)'}
+                            </p>
+                          ) : (
+                            <p>Not specified</p>
+                          )}
+                        </div>
+                      )}
                     </div>
                   )}
 
                   {/* Package Type */}
-                  {email.extractedData.packageType && (
-                    <div className="mb-4">
-                      <label className="text-sm font-medium text-gray-700 mb-1 block">Package Type</label>
+                  <div className="mb-4">
+                    <label className="text-sm font-medium text-gray-700 mb-1 block">Package Type</label>
+                    {isEditing ? (
+                      <select
+                        value={editedData.packageType || ''}
+                        onChange={(e) => handleEditChange('packageType', e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="">Select package type</option>
+                        <option value="Honeymoon">Honeymoon</option>
+                        <option value="Family">Family</option>
+                        <option value="Adventure">Adventure</option>
+                        <option value="Luxury">Luxury</option>
+                        <option value="Budget">Budget</option>
+                        <option value="Group">Group</option>
+                        <option value="Solo">Solo</option>
+                        <option value="Business">Business</option>
+                        <option value="Pilgrimage">Pilgrimage</option>
+                        <option value="Beach">Beach</option>
+                        <option value="Cultural">Cultural</option>
+                        <option value="Wildlife">Wildlife</option>
+                      </select>
+                    ) : (
                       <span className="inline-block px-3 py-1 bg-purple-100 text-purple-800 rounded-full text-sm">
-                        {email.extractedData.packageType}
+                        {email.extractedData.packageType || 'Not specified'}
                       </span>
-                    </div>
-                  )}
+                    )}
+                  </div>
 
                   {/* Activities */}
-                  {email.extractedData.activities?.length > 0 && (
-                    <div className="mb-4">
-                      <label className="text-sm font-medium text-gray-700 mb-1 block">Activities</label>
-                      <div className="flex flex-wrap gap-2">
-                        {email.extractedData.activities.map((activity, idx) => (
-                          <span key={idx} className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-sm">
-                            {activity}
-                          </span>
-                        ))}
+                  <div className="mb-4">
+                    <label className="text-sm font-medium text-gray-700 mb-1 block">Activities</label>
+                    {isEditing ? (
+                      <div className="space-y-2">
+                        <input
+                          type="text"
+                          value={editedData.activities?.join(', ') || ''}
+                          onChange={(e) => handleEditChange('activities', e.target.value.split(',').map(a => a.trim()).filter(a => a))}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                          placeholder="Enter activities separated by commas (e.g., Sightseeing, Shopping, Beach)"
+                        />
+                        <p className="text-xs text-gray-500">Separate multiple activities with commas</p>
                       </div>
-                    </div>
-                  )}
+                    ) : (
+                      <div className="flex flex-wrap gap-2">
+                        {email.extractedData.activities?.length > 0 ? (
+                          email.extractedData.activities.map((activity, idx) => (
+                            <span key={idx} className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-sm">
+                              {activity}
+                            </span>
+                          ))
+                        ) : (
+                          <span className="text-gray-500 text-sm">No activities specified</span>
+                        )}
+                      </div>
+                    )}
+                  </div>
 
                   {/* Missing Info */}
-                  {email.extractedData.missingInfo?.length > 0 && (
+                  {getMissingInfo().length > 0 && (
                     <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
                       <h4 className="font-medium text-yellow-800 mb-2 flex items-center gap-2">
                         <AlertCircle className="w-5 h-5" />
                         Missing Information
                       </h4>
                       <ul className="list-disc list-inside text-sm text-yellow-700">
-                        {email.extractedData.missingInfo.map((info, idx) => (
+                        {getMissingInfo().map((info, idx) => (
                           <li key={idx}>{info}</li>
                         ))}
                       </ul>
@@ -519,41 +793,147 @@ const EmailDetail = () => {
               </div>
             ) : (
               <div className="space-y-4">
-                <h3 className="text-lg font-semibold">Matching Packages ({email.matchingResults.length})</h3>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold">Matching Packages ({email.matchingResults.length})</h3>
+                  <button
+                    onClick={handleMatch}
+                    disabled={processing}
+                    className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                  >
+                    {processing ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />
+                        Re-matching...
+                      </>
+                    ) : (
+                      <>
+                        <TrendingUp className="w-4 h-4" />
+                        Re-match Packages
+                      </>
+                    )}
+                  </button>
+                </div>
                 {email.matchingResults.map((match, idx) => (
-                  <div key={idx} className="border border-gray-200 rounded-lg p-4">
-                    <div className="flex items-start justify-between mb-2">
-                      <div>
-                        <h4 className="font-semibold">Match #{idx + 1}</h4>
-                        <p className="text-sm text-gray-600">Package ID: {match.packageId}</p>
+                  <div key={idx} className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-2">
+                          <span className="text-sm font-medium text-gray-500">#{idx + 1}</span>
+                          <h4 className="text-xl font-bold text-gray-900">
+                            {match.itineraryTitle || 'Untitled Package'}
+                          </h4>
+                        </div>
+                        
+                        <div className="grid grid-cols-2 gap-4 mt-3">
+                          <div className="flex items-center gap-2 text-sm">
+                            <MapPin className="w-4 h-4 text-gray-400" />
+                            <span className="text-gray-700">{match.destination || 'N/A'}</span>
+                          </div>
+                          <div className="flex items-center gap-2 text-sm">
+                            <Calendar className="w-4 h-4 text-gray-400" />
+                            <span className="text-gray-700">{match.duration} days</span>
+                          </div>
+                          <div className="flex items-center gap-2 text-sm">
+                            <DollarSign className="w-4 h-4 text-gray-400" />
+                            <span className="text-gray-700 font-semibold">
+                              {match.currency} {match.price?.toLocaleString() || 'N/A'}
+                            </span>
+                          </div>
+                          {match.travelStyle && (
+                            <div className="flex items-center gap-2 text-sm">
+                              <Tag className="w-4 h-4 text-gray-400" />
+                              <span className="text-gray-700 capitalize">{match.travelStyle}</span>
+                            </div>
+                          )}
+                        </div>
+
+                        {match.themes && match.themes.length > 0 && (
+                          <div className="flex flex-wrap gap-2 mt-3">
+                            {match.themes.map((theme, tidx) => (
+                              <span key={tidx} className="px-2 py-1 bg-purple-100 text-purple-700 rounded-full text-xs">
+                                {theme}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+
+                        {match.overview && (
+                          <p className="text-sm text-gray-600 mt-3 line-clamp-2">{match.overview}</p>
+                        )}
                       </div>
-                      <div className="text-right">
-                        <p className="text-2xl font-bold text-green-600">{match.score}/100</p>
-                        <p className="text-xs text-gray-500">Match Score</p>
+
+                      <div className="text-right ml-4">
+                        <p className="text-3xl font-bold text-green-600">{match.score}</p>
+                        <p className="text-xs text-gray-500 mt-1">Match Score</p>
+                        <div className="w-20 h-2 bg-gray-200 rounded-full mt-2">
+                          <div 
+                            className="h-full bg-green-600 rounded-full" 
+                            style={{ width: `${match.score}%` }}
+                          />
+                        </div>
                       </div>
                     </div>
 
                     {match.matchReasons?.length > 0 && (
-                      <div className="mb-2">
-                        <p className="text-sm font-medium text-gray-700 mb-1">Why it matches:</p>
-                        <ul className="list-disc list-inside text-sm text-green-600">
+                      <div className="mb-3 p-3 bg-green-50 rounded-lg">
+                        <p className="text-sm font-medium text-green-800 mb-2 flex items-center gap-2">
+                          <Check className="w-4 h-4" />
+                          Why it matches:
+                        </p>
+                        <ul className="space-y-1">
                           {match.matchReasons.map((reason, ridx) => (
-                            <li key={ridx}>{reason}</li>
+                            <li key={ridx} className="text-sm text-green-700 flex items-start gap-2">
+                              <span className="text-green-500 mt-0.5">•</span>
+                              <span>{reason}</span>
+                            </li>
                           ))}
                         </ul>
                       </div>
                     )}
 
                     {match.gaps?.length > 0 && (
-                      <div>
-                        <p className="text-sm font-medium text-gray-700 mb-1">Gaps:</p>
-                        <ul className="list-disc list-inside text-sm text-orange-600">
+                      <div className="p-3 bg-orange-50 rounded-lg">
+                        <p className="text-sm font-medium text-orange-800 mb-2 flex items-center gap-2">
+                          <AlertCircle className="w-4 h-4" />
+                          Considerations:
+                        </p>
+                        <ul className="space-y-1">
                           {match.gaps.map((gap, gidx) => (
-                            <li key={gidx}>{gap}</li>
+                            <li key={gidx} className="text-sm text-orange-700 flex items-start gap-2">
+                              <span className="text-orange-500 mt-0.5">•</span>
+                              <span>{gap}</span>
+                            </li>
                           ))}
                         </ul>
                       </div>
                     )}
+
+                    <div className="mt-4 flex gap-2">
+                      <button
+                        onClick={() => navigate(`/itineraries/${match.packageId}`)}
+                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm flex items-center gap-2"
+                      >
+                        <Package className="w-4 h-4" />
+                        View Details
+                      </button>
+                      <button
+                        onClick={() => handleAddToQuote(match)}
+                        disabled={addingToQuote === match.packageId}
+                        className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                      >
+                        {addingToQuote === match.packageId ? (
+                          <>
+                            <div className="animate-spin rounded-full h-4 w-4 border-2 border-gray-600 border-t-transparent" />
+                            Adding...
+                          </>
+                        ) : (
+                          <>
+                            <FileText className="w-4 h-4" />
+                            Add to Quote
+                          </>
+                        )}
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -561,47 +941,226 @@ const EmailDetail = () => {
           </div>
         )}
 
-        {activeTab === 'response' && (
-          <div>
-            {!email.generatedResponse ? (
-              <div className="text-center py-12">
-                <Send className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-600">No response generated yet</p>
-                {email.extractedData && (
-                  <button
-                    onClick={handleGenerateResponse}
-                    disabled={processing}
-                    className="mt-4 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700"
-                  >
-                    Generate Response Now
-                  </button>
-                )}
-              </div>
-            ) : (
-              <div className="space-y-4">
-                <div>
-                  <label className="text-sm font-medium text-gray-700 mb-1 block">Subject</label>
-                  <p className="text-gray-900 font-medium">{email.generatedResponse.subject}</p>
-                </div>
+        {/* Quotes Tab */}
+        {activeTab === 'quotes' && (
+          <QuotesTab email={email} onRefresh={fetchEmail} />
+        )}
 
-                <div>
-                  <label className="text-sm font-medium text-gray-700 mb-1 block">Body (Plain Text)</label>
-                  <div className="bg-gray-50 p-4 rounded-lg">
-                    <p className="whitespace-pre-wrap">{email.generatedResponse.plainText}</p>
-                  </div>
+        {activeTab === 'conversation' && (
+          <div className="space-y-6">
+            <h3 className="text-lg font-semibold text-gray-900">Email Conversation & Quote History</h3>
+            
+            {(() => {
+              // Build conversation timeline dynamically
+              const timeline = [];
+              
+              // 1. Add customer email (always first)
+              timeline.push({
+                type: 'customer_email',
+                timestamp: new Date(email.receivedAt),
+                data: email
+              });
+              
+              // 2. Add AI generated response (if exists)
+              if (email.generatedResponse) {
+                timeline.push({
+                  type: 'ai_response',
+                  timestamp: email.generatedResponse.createdAt 
+                    ? new Date(email.generatedResponse.createdAt)
+                    : new Date(email.processedAt || email.receivedAt),
+                  data: email.generatedResponse
+                });
+              }
+              
+              // 3. Add all sent quotes
+              if (email.quotesGenerated && email.quotesGenerated.length > 0) {
+                email.quotesGenerated
+                  .filter(q => q.status === 'sent' || q.sentAt)
+                  .forEach(quote => {
+                    timeline.push({
+                      type: 'quote_sent',
+                      timestamp: new Date(quote.sentAt || quote.createdAt),
+                      data: quote
+                    });
+                  });
+              }
+              
+              // 4. Sort by timestamp (chronological order)
+              timeline.sort((a, b) => a.timestamp - b.timestamp);
+              
+              // 5. Render timeline
+              return (
+                <div className="space-y-4">
+                  {timeline.map((item, index) => {
+                    // Customer Email
+                    if (item.type === 'customer_email') {
+                      return (
+                        <div key={`customer-${index}`} className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-lg">
+                          <div className="flex items-start gap-3">
+                            <div className="w-10 h-10 rounded-full bg-blue-500 text-white flex items-center justify-center font-semibold flex-shrink-0">
+                              {email.from.name?.charAt(0) || 'C'}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-start justify-between gap-4 mb-2">
+                                <div className="flex-1 min-w-0">
+                                  <p className="font-semibold text-gray-900">{email.from.name || 'Customer'}</p>
+                                  <p className="text-sm text-gray-600">{email.from.email}</p>
+                                </div>
+                                <span className="text-xs text-gray-500 whitespace-nowrap flex-shrink-0">
+                                  {item.timestamp.toLocaleString()}
+                                </span>
+                              </div>
+                              <p className="text-sm font-medium text-gray-800 mb-2">{email.subject}</p>
+                              <p className="text-sm text-gray-700 whitespace-pre-wrap line-clamp-4">
+                                {email.plainText || email.htmlContent?.replace(/<[^>]*>/g, '') || 'No content'}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    }
+                    
+                    // AI Generated Response
+                    if (item.type === 'ai_response') {
+                      return (
+                        <div key={`ai-${index}`} className="bg-indigo-50 border-l-4 border-indigo-500 p-4 rounded-r-lg">
+                          <div className="flex items-start gap-3">
+                            <div className="w-10 h-10 rounded-full bg-indigo-500 text-white flex items-center justify-center flex-shrink-0">
+                              <Send className="w-5 h-5" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-start justify-between gap-4 mb-2">
+                                <div className="flex-1 min-w-0">
+                                  <p className="font-semibold text-gray-900">AI Generated Response</p>
+                                  <p className="text-sm text-gray-600">Ready to send</p>
+                                </div>
+                                <span className="text-xs text-gray-500 whitespace-nowrap flex-shrink-0">
+                                  {item.timestamp.toLocaleString()}
+                                </span>
+                              </div>
+                              
+                              <div className="bg-white p-3 rounded-lg border border-indigo-200 space-y-2">
+                                <div>
+                                  <label className="text-xs font-medium text-gray-700">Subject:</label>
+                                  <p className="text-sm text-gray-900 font-medium">{item.data.subject}</p>
+                                </div>
+                                
+                                <div>
+                                  <label className="text-xs font-medium text-gray-700">Body:</label>
+                                  <div className="text-sm text-gray-700 whitespace-pre-wrap max-h-48 overflow-y-auto">
+                                    {item.data.plainText}
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    }
+                    
+                    // Quote Sent
+                    if (item.type === 'quote_sent') {
+                      const quote = item.data;
+                      return (
+                        <div key={`quote-${quote.quoteId || index}`} className="bg-green-50 border-l-4 border-green-500 p-4 rounded-r-lg">
+                          <div className="flex items-start gap-3">
+                            <div className="w-10 h-10 rounded-full bg-green-500 text-white flex items-center justify-center flex-shrink-0">
+                              <Send className="w-5 h-5" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-start justify-between gap-4 mb-2">
+                                <div className="flex-1 min-w-0">
+                                  <p className="font-semibold text-gray-900">Quote Sent: {quote.quoteNumber}</p>
+                                  <p className="text-sm text-gray-600">
+                                    To: {email.from.email}
+                                    {quote.includedItineraries?.length > 0 && 
+                                      ` • ${quote.includedItineraries.map(it => it.title).join(', ')}`
+                                    }
+                                  </p>
+                                </div>
+                                <span className="text-xs text-gray-500 whitespace-nowrap flex-shrink-0">
+                                  {item.timestamp.toLocaleString()}
+                                </span>
+                              </div>
+                              
+                              <div className="bg-white p-3 rounded-lg border border-green-200">
+                                <div className="grid grid-cols-2 gap-3 text-sm">
+                                  <div>
+                                    <span className="text-gray-600">Total Price:</span>
+                                    <span className="font-semibold text-gray-900 ml-2">
+                                      {quote.currency} {quote.totalPrice?.toLocaleString()}
+                                    </span>
+                                  </div>
+                                  <div>
+                                    <span className="text-gray-600">Status:</span>
+                                    <span className={`ml-2 px-2 py-1 rounded-full text-xs font-medium ${
+                                      quote.status === 'sent' ? 'bg-blue-100 text-blue-700' :
+                                      quote.status === 'viewed' ? 'bg-purple-100 text-purple-700' :
+                                      quote.status === 'accepted' ? 'bg-green-100 text-green-700' :
+                                      quote.status === 'rejected' ? 'bg-red-100 text-red-700' :
+                                      'bg-gray-100 text-gray-700'
+                                    }`}>
+                                      {quote.status}
+                                    </span>
+                                  </div>
+                                </div>
+                                
+                                {quote.viewedAt && (
+                                  <p className="text-xs text-gray-600 mt-2">
+                                    👁️ Viewed at: {new Date(quote.viewedAt).toLocaleString()}
+                                  </p>
+                                )}
+                                
+                                {quote.respondedAt && (
+                                  <p className="text-xs text-gray-600 mt-1">
+                                    💬 Responded at: {new Date(quote.respondedAt).toLocaleString()}
+                                    {quote.response && ` - ${quote.response}`}
+                                  </p>
+                                )}
+                                
+                                {quote.pdfUrl && (
+                                  <a 
+                                    href={quote.pdfUrl} 
+                                    target="_blank" 
+                                    rel="noopener noreferrer"
+                                    className="text-sm text-blue-600 hover:text-blue-700 mt-2 inline-flex items-center gap-1"
+                                  >
+                                    <FileText className="w-4 h-4" />
+                                    Download PDF
+                                  </a>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    }
+                    
+                    return null;
+                  })}
+                  
+                  {/* Empty State */}
+                  {timeline.length === 1 && (
+                    <div className="text-center py-12 bg-gray-50 rounded-lg">
+                      <Send className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                      <p className="text-gray-600 mb-2">No responses or quotes sent yet</p>
+                      <p className="text-sm text-gray-500">
+                        Create quotes from the Quotes tab or generate a response
+                      </p>
+                      {email.extractedData && (
+                        <button
+                          onClick={handleGenerateResponse}
+                          disabled={processing}
+                          className="mt-4 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50"
+                        >
+                          Generate AI Response
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </div>
-
-                {email.generatedResponse.body && (
-                  <div>
-                    <label className="text-sm font-medium text-gray-700 mb-1 block">Body (HTML)</label>
-                    <div 
-                      className="bg-gray-50 p-4 rounded-lg border border-gray-200"
-                      dangerouslySetInnerHTML={{ __html: email.generatedResponse.body }}
-                    />
-                  </div>
-                )}
-              </div>
-            )}
+              );
+            })()}
           </div>
         )}
 

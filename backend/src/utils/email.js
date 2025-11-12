@@ -68,11 +68,15 @@ const sendEmail = async (options) => {
     }
     return { success: true, messageId: info.messageId };
   } catch (error) {
-    if (useMockEmail) {
-      // In mock mode, don't throw errors
-      console.warn(`⚠️ Mock email error (ignored): ${error.message}`);
-      return { success: true, messageId: `mock-error-${Date.now()}@travelcrm.local` };
+    // In development mode, log error but don't fail
+    if (isDevelopment) {
+      console.warn(`⚠️ Email error in development mode (ignored): ${error.message}`);
+      console.warn('   To:', mailOptions.to);
+      console.warn('   Subject:', mailOptions.subject);
+      return { success: true, messageId: `dev-ignored-${Date.now()}@travelcrm.local` };
     }
+    
+    // In production, throw the error
     console.error('❌ Email send error:', error);
     throw new Error('Failed to send email');
   }

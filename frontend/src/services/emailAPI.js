@@ -52,6 +52,12 @@ const emailAPI = {
     return response.data;
   },
 
+  // Update extracted data
+  updateExtractedData: async (id, extractedData) => {
+    const response = await api.patch(`/emails/${id}/extracted-data`, { extractedData });
+    return response.data;
+  },
+
   // Delete email
   deleteEmail: async (id) => {
     const response = await api.delete(`/emails/${id}`);

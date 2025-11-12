@@ -2,7 +2,6 @@ const { Quote, Itinerary, Agent, Customer } = require('../models');
 const { asyncHandler, AppError } = require('../middleware/errorHandler');
 const { successResponse, paginatedResponse } = require('../utils/response');
 const { parsePagination, parseSort } = require('../utils/pagination');
-const { sendQuoteEmail } = require('../utils/email');
 
 // Helper function to ensure agent profile exists
 const ensureAgentProfile = (req, res) => {
@@ -417,6 +416,319 @@ const getQuoteStats = asyncHandler(async (req, res) => {
   successResponse(res, 200, 'Quote statistics fetched successfully', { stats });
 });
 
+// @desc    Create quote from email match
+// @route   POST /api/v1/quotes/from-email
+// @access  Private
+const createQuoteFromEmail = asyncHandler(async (req, res) => {
+  const { 
+    emailId, 
+    matchedItineraryIds, 
+    includePdfAttachment = false,
+    customPricing 
+  } = req.body;
+
+  // Get email with extracted data
+  const EmailLog = require('../models/EmailLog');
+  const email = await EmailLog.findById(emailId);
+  
+  if (!email) {
+    throw new AppError('Email not found', 404);
+  }
+
+  if (!email.extractedData) {
+    throw new AppError('No extracted data found in email', 400);
+  }
+
+  const extractedData = email.extractedData;
+
+  // Fetch matched itineraries
+  const itineraries = await Itinerary.find({
+    _id: { $in: matchedItineraryIds },
+    tenantId: req.tenantId
+  });
+
+  if (itineraries.length === 0) {
+    throw new AppError('No itineraries found', 404);
+  }
+
+  // Calculate total pricing
+  let totalBaseCost = 0;
+  itineraries.forEach(itinerary => {
+    totalBaseCost += itinerary.estimatedCost?.baseCost || itinerary.estimatedCost?.totalCost || 0;
+  });
+
+  // Apply custom pricing if provided
+  const baseCost = customPricing?.baseCost || totalBaseCost;
+  const markup = customPricing?.markup || { percentage: 15, amount: baseCost * 0.15 };
+  const totalPrice = baseCost + markup.amount;
+
+  // Generate quote number
+  const count = await Quote.countDocuments({ tenantId: req.tenantId });
+  const year = new Date().getFullYear();
+  const quoteNumber = `Q${year}-${String(count + 1).padStart(6, '0')}`;
+
+  // Create quote
+  const quote = await Quote.create({
+    tenantId: req.tenantId,
+    quoteNumber,
+    itineraryId: itineraries[0]._id, // Primary itinerary
+    matchedItineraries: matchedItineraryIds,
+    
+    // Customer details from email
+    customerName: extractedData.customerInfo?.name || email.from.name,
+    customerEmail: email.from.email,
+    customerPhone: extractedData.customerInfo?.phone,
+    
+    // Travel details
+    destination: extractedData.destination,
+    additionalDestinations: extractedData.additionalDestinations,
+    startDate: extractedData.dates?.preferredStart,
+    endDate: extractedData.dates?.preferredEnd,
+    duration: extractedData.dates?.duration,
+    
+    // Travelers
+    adults: extractedData.travelers?.adults || 1,
+    children: extractedData.travelers?.children || 0,
+    childAges: extractedData.travelers?.childAges || [],
+    infants: extractedData.travelers?.infants || 0,
+    
+    // Package details
+    packageType: extractedData.packageType,
+    mealPlan: extractedData.mealPlan,
+    activities: extractedData.activities || [],
+    specialRequirements: extractedData.specialRequirements || [],
+    
+    // Budget
+    estimatedBudget: extractedData.budget?.amount,
+    currency: extractedData.budget?.currency || 'USD',
+    
+    // Source tracking
+    source: 'email',
+    emailId: emailId,
+    extractionConfidence: extractedData.confidence,
+    dataCompleteness: extractedData.completeness,
+    missingFields: extractedData.missingFields || [],
+    
+    // Pricing
+    pricing: {
+      baseCost,
+      markup,
+      totalPrice,
+      currency: extractedData.budget?.currency || 'USD'
+    },
+    
+    // Validity (30 days default)
+    validUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+    
+    status: 'draft',
+    createdBy: req.user._id
+  });
+
+  // Update email with quote reference
+  email.quotesGenerated = email.quotesGenerated || [];
+  email.quotesGenerated.push({
+    quoteId: quote._id,
+    quoteNumber: quote.quoteNumber,
+    status: 'draft',
+    totalPrice: quote.pricing.totalPrice,
+    currency: quote.pricing.currency,
+    includedItineraries: itineraries.map(it => ({
+      itineraryId: it._id,
+      title: it.title
+    })),
+    includePdfAttachment,
+    sentBy: req.user._id,
+    createdAt: new Date()
+  });
+  
+  if (!email.linkedQuote) {
+    email.linkedQuote = quote._id;
+  }
+  
+  await email.save();
+
+  // Populate for response
+  await quote.populate('itineraryId', 'title destination duration estimatedCost');
+
+  successResponse(res, 201, 'Quote created successfully from email', { quote });
+});
+
+// @desc    Send multiple quotes in a single email
+// @route   POST /api/v1/quotes/send-multiple
+// @access  Private (Operator, Admin, Super Admin)
+const sendMultipleQuotes = asyncHandler(async (req, res) => {
+  const { quoteIds, emailId, message } = req.body;
+
+  if (!quoteIds || quoteIds.length === 0) {
+    throw new AppError('Please provide at least one quote to send', 400);
+  }
+
+  // Fetch all quotes
+  const quotes = await Quote.find({
+    _id: { $in: quoteIds },
+    tenantId: req.tenantId
+  }).populate('itineraryId', 'title destination duration estimatedCost themes inclusions');
+
+  if (quotes.length === 0) {
+    throw new AppError('No quotes found', 404);
+  }
+
+  // Validate all quotes have the same customer email
+  const customerEmail = quotes[0].customerEmail;
+  const allSameCustomer = quotes.every(q => q.customerEmail === customerEmail);
+  
+  if (!allSameCustomer) {
+    throw new AppError('All quotes must be for the same customer', 400);
+  }
+
+  // Get email log if provided
+  const EmailLog = require('../models/EmailLog');
+  let email = null;
+  if (emailId) {
+    email = await EmailLog.findById(emailId);
+  }
+
+  // Prepare email content with all quotes
+  const emailSubject = `Travel Packages - ${quotes.length} Quote${quotes.length > 1 ? 's' : ''} for Your Trip`;
+  
+  let emailBody = `
+    <div style="font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto;">
+      <h2 style="color: #4F46E5;">Your Travel Quote${quotes.length > 1 ? 's' : ''}</h2>
+      <p>Dear ${quotes[0].customerName || 'Valued Customer'},</p>
+      ${message ? `<p>${message}</p>` : '<p>Thank you for your inquiry! We have prepared the following package options for you:</p>'}
+      
+      <div style="margin: 20px 0;">
+  `;
+
+  // Add each quote details
+  quotes.forEach((quote, index) => {
+    const itinerary = quote.itineraryId;
+    emailBody += `
+      <div style="border: 2px solid #E5E7EB; border-radius: 8px; padding: 20px; margin-bottom: 20px; background: #F9FAFB;">
+        <h3 style="color: #1F2937; margin-top: 0;">Option ${index + 1}: ${itinerary?.title || 'Custom Package'}</h3>
+        <p style="color: #6B7280; margin: 8px 0;">Quote Number: <strong>${quote.quoteNumber}</strong></p>
+        
+        <div style="margin: 15px 0;">
+          <p style="margin: 5px 0;"><strong>📍 Destination:</strong> ${quote.destination || itinerary?.destination || 'N/A'}</p>
+          <p style="margin: 5px 0;"><strong>📅 Duration:</strong> ${quote.duration || itinerary?.duration || 'N/A'} days</p>
+          <p style="margin: 5px 0;"><strong>👥 Travelers:</strong> ${quote.adults || 0} Adult(s)${quote.children > 0 ? `, ${quote.children} Child(ren)` : ''}</p>
+          ${quote.packageType ? `<p style="margin: 5px 0;"><strong>📦 Package Type:</strong> ${quote.packageType}</p>` : ''}
+          ${quote.mealPlan ? `<p style="margin: 5px 0;"><strong>🍽️ Meal Plan:</strong> ${quote.mealPlan}</p>` : ''}
+        </div>
+        
+        ${itinerary?.inclusions?.length ? `
+          <div style="margin: 15px 0;">
+            <strong>✅ Inclusions:</strong>
+            <ul style="margin: 5px 0; padding-left: 20px;">
+              ${itinerary.inclusions.map(inc => `<li>${inc}</li>`).join('')}
+            </ul>
+          </div>
+        ` : ''}
+        
+        <div style="background: #4F46E5; color: white; padding: 15px; border-radius: 6px; margin-top: 15px;">
+          <p style="margin: 0; font-size: 18px;"><strong>Total Price: ${quote.pricing?.currency || 'USD'} ${quote.pricing?.totalPrice?.toLocaleString() || 'N/A'}</strong></p>
+          <p style="margin: 5px 0 0 0; font-size: 12px; opacity: 0.9;">Valid until: ${new Date(quote.validUntil).toLocaleDateString()}</p>
+        </div>
+        
+        ${quote.pdfUrl ? `
+          <p style="margin-top: 15px;">
+            <a href="${quote.pdfUrl}" style="color: #4F46E5; text-decoration: none;">📄 Download Detailed Itinerary PDF</a>
+          </p>
+        ` : ''}
+      </div>
+    `;
+  });
+
+  emailBody += `
+      </div>
+      
+      <div style="background: #F3F4F6; padding: 20px; border-radius: 8px; margin-top: 20px;">
+        <h4 style="margin-top: 0; color: #1F2937;">Next Steps:</h4>
+        <ol style="color: #4B5563; line-height: 1.8;">
+          <li>Review all the package options above</li>
+          <li>Reply to this email with your preferred option</li>
+          <li>We'll confirm availability and proceed with booking</li>
+        </ol>
+      </div>
+      
+      <p style="margin-top: 20px; color: #6B7280; font-size: 14px;">
+        If you have any questions or would like to customize any package, please don't hesitate to reach out!
+      </p>
+      
+      <p style="margin-top: 20px; color: #9CA3AF; font-size: 12px; border-top: 1px solid #E5E7EB; padding-top: 15px;">
+        This quote is valid for 30 days from the date of issue. Terms and conditions apply.
+      </p>
+    </div>
+  `;
+
+  // Send email using your email service
+  try {
+    const { sendEmail } = require('../utils/email');
+    console.log('📧 Attempting to send email to:', customerEmail);
+    console.log('📧 Email subject:', emailSubject);
+    
+    await sendEmail({
+      to: customerEmail,
+      subject: emailSubject,
+      html: emailBody
+    });
+    
+    console.log('✅ Email sent successfully');
+  } catch (emailError) {
+    console.error('❌ Failed to send email:', emailError);
+    console.error('Error details:', {
+      message: emailError.message,
+      stack: emailError.stack,
+      to: customerEmail
+    });
+    
+    // In development, don't fail the request if email fails
+    if (process.env.NODE_ENV === 'development') {
+      console.warn('⚠️  Development mode: Continuing despite email error');
+    } else {
+      throw new AppError('Failed to send email. Please try again.', 500);
+    }
+  }
+
+  // Update all quotes status to 'sent'
+  const sentAt = new Date();
+  await Quote.updateMany(
+    { _id: { $in: quoteIds } },
+    { 
+      $set: { 
+        status: 'sent',
+        emailSentAt: sentAt
+      } 
+    }
+  );
+
+  // Update email log if provided
+  if (email) {
+    email.quotesGenerated.forEach(q => {
+      if (quoteIds.includes(q.quoteId.toString())) {
+        q.status = 'sent';
+        q.sentAt = sentAt;
+        q.sentBy = req.user._id;
+      }
+    });
+    
+    // Add to response/reply tracking
+    if (!email.responseData) {
+      email.responseData = {};
+    }
+    email.responseData.lastQuoteSentAt = sentAt;
+    email.responseData.totalQuotesSent = quoteIds.length;
+    
+    await email.save();
+  }
+
+  successResponse(res, 200, `Successfully sent ${quotes.length} quote${quotes.length > 1 ? 's' : ''} to ${customerEmail}`, {
+    sentQuotes: quotes.length,
+    customerEmail,
+    quoteNumbers: quotes.map(q => q.quoteNumber)
+  });
+});
+
 module.exports = {
   getAllQuotes,
   getQuote,
@@ -427,4 +739,6 @@ module.exports = {
   rejectQuote,
   deleteQuote,
   getQuoteStats,
+  createQuoteFromEmail,
+  sendMultipleQuotes,
 };

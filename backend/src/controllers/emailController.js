@@ -345,13 +345,37 @@ class EmailController {
       // Match packages
       const matches = await matchingEngine.matchPackages(email.extractedData, tenantId);
 
-      // Update email
-      email.matchingResults = matches.map(m => ({
-        packageId: m.package._id,
-        score: m.score,
-        matchReasons: m.matchReasons,
-        gaps: m.gaps
-      }));
+      console.log('\n🔍 DEBUG: Matches returned from engine:', matches.length);
+      console.log('🔍 DEBUG: First match structure:', JSON.stringify(matches[0], null, 2));
+
+      // Update email with full itinerary details
+      email.matchingResults = matches.map(m => {
+        console.log('\n📦 Processing match:', m.package._id);
+        console.log('   Title:', m.package.title);
+        console.log('   Destination:', m.package.destination);
+        console.log('   Duration:', m.package.duration);
+        console.log('   EstimatedCost:', m.package.estimatedCost);
+        
+        const result = {
+          packageId: m.package._id,
+          itineraryTitle: m.package.title,
+          destination: m.package.destination?.city || m.package.destination?.country || m.package.destination,
+          duration: m.package.duration?.days || m.package.duration,
+          price: m.package.estimatedCost?.baseCost || m.package.estimatedCost?.totalCost || m.package.estimatedCost,
+          currency: m.package.estimatedCost?.currency || 'USD',
+          travelStyle: m.package.travelStyle,
+          themes: m.package.themes,
+          overview: m.package.overview,
+          score: m.score,
+          matchReasons: m.matchReasons,
+          gaps: m.gaps
+        };
+        
+        console.log('💾 Will save:', JSON.stringify(result, null, 2));
+        return result;
+      });
+      
+      console.log('\n💾 Saving email with', email.matchingResults.length, 'matches...');
       await email.save();
 
       res.json({
@@ -832,6 +856,50 @@ class EmailController {
       });
     }
   }
+  /**
+   * Update extracted data from email
+   */
+  async updateExtractedData(req, res) {
+    try {
+      const { id } = req.params;
+      const { extractedData } = req.body;
+      const userId = req.user._id;
+      const tenantId = req.user.tenantId;
+
+      const email = await EmailLog.findOne({ _id: id, tenantId });
+      if (!email) {
+        return res.status(404).json({
+          success: false,
+          message: 'Email not found'
+        });
+      }
+
+      // Update extracted data
+      email.extractedData = {
+        ...email.extractedData,
+        ...extractedData,
+        manuallyEdited: true,
+        editedBy: userId,
+        editedAt: new Date()
+      };
+
+      await email.save();
+
+      res.json({
+        success: true,
+        message: 'Extracted data updated successfully',
+        data: email
+      });
+    } catch (error) {
+      console.error('Update extracted data error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to update extracted data',
+        error: error.message
+      });
+    }
+  }
 }
 
 module.exports = new EmailController();
+

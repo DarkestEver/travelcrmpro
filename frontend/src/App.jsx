@@ -21,6 +21,7 @@ import Customers from './pages/Customers'
 import Suppliers from './pages/Suppliers'
 import Itineraries from './pages/Itineraries'
 import ItineraryBuilder from './pages/ItineraryBuilder'
+import ItineraryDetail from './pages/itineraries/ItineraryDetail'
 import ItineraryPreview from './pages/ItineraryPreview'
 import Quotes from './pages/Quotes'
 import Bookings from './pages/Bookings'
@@ -241,6 +242,11 @@ function App() {
         <Route path="itineraries" element={
           <RoleBasedRoute allowedRoles={['super_admin', 'operator', 'agent']}>
             <Itineraries />
+          </RoleBasedRoute>
+        } />
+        <Route path="itineraries/:id" element={
+          <RoleBasedRoute allowedRoles={['super_admin', 'operator', 'agent']}>
+            <ItineraryDetail />
           </RoleBasedRoute>
         } />
         <Route path="itineraries/:id/build" element={

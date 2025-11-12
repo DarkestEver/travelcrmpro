@@ -1,0 +1,51 @@
+/**
+ * Update extracted data from email
+ * Add this method before the closing brace of the EmailController class
+ */
+async updateExtractedData(req, res) {
+  try {
+    const { id } = req.params;
+    const { extractedData } = req.body;
+    const userId = req.user._id;
+
+    const email = await Email.findById(id);
+    if (!email) {
+      return res.status(404).json({
+        success: false,
+        message: 'Email not found'
+      });
+    }
+
+    // Check tenant access
+    if (email.tenantId.toString() !== req.user.tenantId.toString()) {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied'
+      });
+    }
+
+    // Update extracted data
+    email.extractedData = {
+      ...email.extractedData,
+      ...extractedData,
+      manuallyEdited: true,
+      editedBy: userId,
+      editedAt: new Date()
+    };
+
+    await email.save();
+
+    res.json({
+      success: true,
+      message: 'Extracted data updated successfully',
+      data: email
+    });
+  } catch (error) {
+    console.error('Update extracted data error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to update extracted data',
+      error: error.message
+    });
+  }
+}

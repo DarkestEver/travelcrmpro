@@ -137,8 +137,18 @@ const emailLogSchema = new mongoose.Schema({
   // Matching Results
   matchingResults: [{
     packageId: mongoose.Schema.Types.ObjectId,
+    itineraryTitle: String,
+    destination: String,
+    duration: Number,
+    price: Number,
+    currency: String,
+    travelStyle: String,
+    themes: [String],
+    overview: String,
     score: Number,
-    reasons: [String]
+    matchReasons: [String],
+    gaps: [String],
+    reasons: [String] // Legacy field, keep for backward compatibility
   }],
   
   // Itinerary Matching Results (New Workflow)
@@ -250,6 +260,33 @@ const emailLogSchema = new mongoose.Schema({
     ref: 'Quote',
     index: true
   },
+  
+  // Quote History - Track all quotes generated/sent for this email
+  quotesGenerated: [{
+    quoteId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Quote'
+    },
+    quoteNumber: String,
+    status: String,
+    totalPrice: Number,
+    currency: String,
+    includedItineraries: [{
+      itineraryId: mongoose.Schema.Types.ObjectId,
+      title: String
+    }],
+    includePdfAttachment: { type: Boolean, default: false },
+    pdfUrl: String,
+    sentAt: Date,
+    sentBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
+    },
+    viewedAt: Date,
+    respondedAt: Date,
+    response: String,
+    createdAt: { type: Date, default: Date.now }
+  }],
   
   // Tenant
   tenantId: {

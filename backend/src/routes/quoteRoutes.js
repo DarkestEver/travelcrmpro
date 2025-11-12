@@ -10,6 +10,8 @@ const {
   rejectQuote,
   deleteQuote,
   getQuoteStats,
+  createQuoteFromEmail,
+  sendMultipleQuotes,
 } = require('../controllers/quoteController');
 const { protect, restrictTo, loadAgent } = require('../middleware/auth');
 const { auditLogger } = require('../middleware/auditLogger');
@@ -19,6 +21,12 @@ router.use(protect);
 
 // Stats route
 router.get('/stats', restrictTo('super_admin', 'operator', 'agent'), loadAgent, getQuoteStats);
+
+// Create quote from email match
+router.post('/from-email', restrictTo('super_admin', 'operator', 'admin'), auditLogger('create', 'quote'), createQuoteFromEmail);
+
+// Send multiple quotes in single email
+router.post('/send-multiple', restrictTo('super_admin', 'operator', 'admin'), auditLogger('update', 'quote'), sendMultipleQuotes);
 
 // CRUD routes
 router.get('/', restrictTo('super_admin', 'operator', 'agent'), loadAgent, getAllQuotes);

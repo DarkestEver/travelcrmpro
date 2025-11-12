@@ -1,5 +1,6 @@
 const SupplierPackageCache = require('../models/SupplierPackageCache');
 const AIProcessingLog = require('../models/AIProcessingLog');
+const Itinerary = require('../models/Itinerary');
 
 class MatchingEngine {
   /**
@@ -18,8 +19,41 @@ class MatchingEngine {
         packageType: extractedData.packageType
       };
 
-      // Get all active packages for tenant
-      const packages = await SupplierPackageCache.searchPackages(tenantId, criteria);
+      // Get all active packages for tenant from SupplierPackageCache
+      let packages = await SupplierPackageCache.searchPackages(tenantId, criteria);
+
+      // ALSO get published itineraries and convert them to package format
+      const itineraries = await Itinerary.find({
+        tenantId,
+        status: 'published'
+      }).lean();
+
+      // Convert itineraries to package format
+      const itineraryPackages = itineraries.map(it => ({
+        _id: it._id,
+        title: it.title,
+        destination: it.destination,
+        duration: it.duration,
+        estimatedCost: it.estimatedCost,
+        travelStyle: it.travelStyle,
+        themes: it.themes,
+        overview: it.overview,
+        inclusions: it.inclusions,
+        exclusions: it.exclusions,
+        suitableFor: it.suitableFor,
+        // Map to expected package structure
+        packageData: {
+          destination: it.destination?.city || it.destination?.country,
+          duration: it.duration?.days || it.duration,
+          price: it.estimatedCost?.baseCost || it.estimatedCost?.totalCost,
+          currency: it.estimatedCost?.currency || 'USD',
+          themes: it.themes || [],
+          style: it.travelStyle
+        }
+      }));
+
+      // Combine both sources
+      packages = [...packages, ...itineraryPackages];
 
       // Score each package
       const scoredPackages = packages.map(pkg => {
@@ -156,13 +190,25 @@ class MatchingEngine {
    */
   scoreDestination(inquiry, packageData) {
     const inquiryDest = inquiry.destination?.toLowerCase() || '';
-    const packageDest = packageData.destination?.toLowerCase() || '';
-    const packageCountry = packageData.country?.toLowerCase() || '';
-    const packageRegion = packageData.region?.toLowerCase() || '';
+    
+    // Handle both string and object destination formats
+    let packageDest = '';
+    let packageCountry = '';
+    let packageRegion = '';
+    
+    if (typeof packageData.destination === 'string') {
+      packageDest = packageData.destination.toLowerCase();
+      packageCountry = packageData.country?.toLowerCase() || '';
+      packageRegion = packageData.region?.toLowerCase() || '';
+    } else if (typeof packageData.destination === 'object') {
+      // Itinerary format
+      packageDest = (packageData.destination?.city || packageData.destination?.country || '').toLowerCase();
+      packageCountry = (packageData.destination?.country || '').toLowerCase();
+    }
 
     // Exact match
-    if (inquiryDest === packageDest) {
-      return { points: 40, reason: `Exact destination match: ${packageData.destination}` };
+    if (inquiryDest === packageDest || inquiryDest === packageCountry) {
+      return { points: 40, reason: `Exact destination match: ${packageDest || packageCountry}` };
     }
 
     // Country match
@@ -199,6 +245,11 @@ class MatchingEngine {
    * Score date match
    */
   scoreDates(inquiry, packageData) {
+    // For Itineraries that don't have validFrom/validUntil, give flexible dates score
+    if (!packageData.validFrom || !packageData.validUntil) {
+      return { points: 20, reason: 'Available year-round' };
+    }
+
     // If inquiry has no specific dates
     if (!inquiry.dates?.preferredStart) {
       // Check if package is currently valid
@@ -255,7 +306,20 @@ class MatchingEngine {
     }
 
     const inquiryBudget = inquiry.budget.amount;
-    const packagePrice = packageData.pricePerPerson.amount;
+    
+    // Handle both SupplierPackageCache and Itinerary formats
+    let packagePrice, currency;
+    if (packageData.pricePerPerson) {
+      // SupplierPackageCache format
+      packagePrice = packageData.pricePerPerson.amount;
+      currency = packageData.pricePerPerson.currency;
+    } else if (packageData.price) {
+      // Itinerary format (converted packageData)
+      packagePrice = packageData.price;
+      currency = packageData.currency || 'USD';
+    } else {
+      return { points: 10, reason: 'Price information unavailable' };
+    }
     
     // Convert currencies if needed (simplified - assume same currency for now)
     const priceDiff = Math.abs(packagePrice - inquiryBudget);
@@ -263,17 +327,17 @@ class MatchingEngine {
 
     // Within 5% of budget
     if (percentDiff <= 5) {
-      return { points: 20, reason: `Perfect budget match (${packageData.pricePerPerson.currency} ${packagePrice})` };
+      return { points: 20, reason: `Perfect budget match (${currency} ${packagePrice})` };
     }
 
     // Within 10%
     if (percentDiff <= 10) {
-      return { points: 18, reason: `Excellent budget fit (${packageData.pricePerPerson.currency} ${packagePrice})` };
+      return { points: 18, reason: `Excellent budget fit (${currency} ${packagePrice})` };
     }
 
     // Within 20%
     if (percentDiff <= 20) {
-      return { points: 15, reason: `Good budget fit (${packageData.pricePerPerson.currency} ${packagePrice})` };
+      return { points: 15, reason: `Good budget fit (${currency} ${packagePrice})` };
     }
 
     // Within 30%
@@ -314,6 +378,7 @@ class MatchingEngine {
                           (inquiry.travelers.children || 0) + 
                           (inquiry.travelers.infants || 0);
 
+    // For Itineraries that don't have minPax/maxPax, assume flexible capacity
     const minPax = packageData.minPax || 1;
     const maxPax = packageData.maxPax || 999;
 
