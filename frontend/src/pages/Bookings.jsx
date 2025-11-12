@@ -11,11 +11,13 @@ import {
   FiDollarSign,
   FiUsers,
   FiFileText,
-  FiClock
+  FiClock,
+  FiShare2
 } from 'react-icons/fi';
 import DataTable from '../components/DataTable';
 import Modal from '../components/Modal';
 import ConfirmDialog from '../components/ConfirmDialog';
+import ShareModal from '../components/ShareModal';
 import { bookingsAPI } from '../services/apiEndpoints';
 
 const Bookings = () => {
@@ -25,6 +27,7 @@ const Bookings = () => {
   const [showModal, setShowModal] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
   const [selectedBooking, setSelectedBooking] = useState(null);
   const [actionType, setActionType] = useState('');
 
@@ -112,6 +115,8 @@ const Bookings = () => {
       setShowModal(true);
     } else if (action === 'view') {
       setShowDetails(true);
+    } else if (action === 'share') {
+      setShowShareModal(true);
     } else if (action === 'confirm') {
       confirmMutation.mutate(booking._id);
     } else if (action === 'complete') {
@@ -207,6 +212,14 @@ const Bookings = () => {
             title="Edit"
           >
             <FiEdit className="w-4 h-4" />
+          </button>
+
+          <button
+            onClick={() => handleAction(row, 'share')}
+            className="text-indigo-600 hover:text-indigo-800"
+            title="Share"
+          >
+            <FiShare2 className="w-4 h-4" />
           </button>
 
           {row.status === 'pending' && (
@@ -318,6 +331,19 @@ const Bookings = () => {
         message={`Are you sure you want to ${actionType} booking ${selectedBooking?.bookingNumber}?`}
         type="danger"
       />
+
+      {/* Share Modal */}
+      {showShareModal && selectedBooking && (
+        <ShareModal
+          isOpen={showShareModal}
+          onClose={() => {
+            setShowShareModal(false);
+            setSelectedBooking(null);
+          }}
+          entity={selectedBooking}
+          entityType="booking"
+        />
+      )}
     </div>
   );
 };

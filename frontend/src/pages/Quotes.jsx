@@ -9,11 +9,13 @@ import {
   FiCheckCircle,
   FiXCircle,
   FiDollarSign,
-  FiRepeat
+  FiRepeat,
+  FiShare2
 } from 'react-icons/fi';
 import DataTable from '../components/DataTable';
 import Modal from '../components/Modal';
 import ConfirmDialog from '../components/ConfirmDialog';
+import ShareModal from '../components/ShareModal';
 import { quotesAPI } from '../services/apiEndpoints';
 
 const Quotes = () => {
@@ -23,6 +25,7 @@ const Quotes = () => {
   const [showModal, setShowModal] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
   const [selectedQuote, setSelectedQuote] = useState(null);
   const [actionType, setActionType] = useState('');
 
@@ -110,6 +113,8 @@ const Quotes = () => {
       setShowModal(true);
     } else if (action === 'preview') {
       setShowPreview(true);
+    } else if (action === 'share') {
+      setShowShareModal(true);
     } else if (action === 'approve') {
       approveMutation.mutate(quote._id);
     } else if (action === 'convert') {
@@ -189,6 +194,14 @@ const Quotes = () => {
             title="Edit"
           >
             <FiEdit className="w-4 h-4" />
+          </button>
+
+          <button
+            onClick={() => handleAction(row, 'share')}
+            className="text-indigo-600 hover:text-indigo-800"
+            title="Share"
+          >
+            <FiShare2 className="w-4 h-4" />
           </button>
 
           {row.status === 'pending' && (
@@ -299,6 +312,19 @@ const Quotes = () => {
         message={`Are you sure you want to ${actionType} quote ${selectedQuote?.quoteNumber}?`}
         type="danger"
       />
+
+      {/* Share Modal */}
+      {showShareModal && selectedQuote && (
+        <ShareModal
+          isOpen={showShareModal}
+          onClose={() => {
+            setShowShareModal(false);
+            setSelectedQuote(null);
+          }}
+          entity={selectedQuote}
+          entityType="quote"
+        />
+      )}
     </div>
   );
 };

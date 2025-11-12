@@ -23,6 +23,8 @@ const adjustmentRoutes = require('./adjustments');
 const emailAccountRoutes = require('./emailAccounts');
 const emailRoutes = require('./emailRoutes');
 const reviewQueueRoutes = require('./reviewQueueRoutes');
+const publicRoutes = require('./publicRoutes');
+const shareRoutes = require('./shareRoutes');
 
 const router = express.Router();
 
@@ -40,6 +42,7 @@ router.use(identifyTenant);
 router.use('/auth', authRoutes); // Auth routes don't need requireTenant yet
 router.use('/payments', paymentWebhookRoutes); // Webhook routes (no auth needed, before requireTenant)
 router.use('/customer', customerPortalRoutes); // Customer self-service portal (before requireTenant)
+router.use('/public', publicRoutes); // Public shareable links (no auth needed, before requireTenant)
 
 // Email webhook endpoint (public, no auth needed - before requireTenant)
 const emailController = require('../controllers/emailController');
@@ -66,6 +69,7 @@ router.use('/adjustments', adjustmentRoutes); // Booking adjustments
 router.use('/email-accounts', emailAccountRoutes); // Email account management
 router.use('/emails', emailRoutes); // AI Email automation
 router.use('/review-queue', reviewQueueRoutes); // Manual review queue
+router.use('/share', shareRoutes); // Share token management (authenticated)
 router.use('/email', emailTestRoutes); // Email test endpoints
 router.use('/test', testRoutes); // Test endpoints (development only)
 

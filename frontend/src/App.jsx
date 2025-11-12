@@ -30,6 +30,11 @@ import AuditLogs from './pages/AuditLogs'
 import NotFound from './pages/NotFound'
 import Unauthorized from './pages/Unauthorized'
 
+// Public Shared Pages (no authentication required)
+import SharedBooking from './pages/shared/SharedBooking'
+import SharedQuote from './pages/shared/SharedQuote'
+import SharedItinerary from './pages/shared/SharedItinerary'
+
 // Agent Portal Pages
 import AgentDashboard from './pages/agent/Dashboard'
 import AgentCustomers from './pages/agent/Customers'
@@ -197,6 +202,11 @@ function App() {
           </PublicRoute>
         }
       />
+
+      {/* Public Shareable Links (no authentication required) */}
+      <Route path="/share/booking/:token" element={<SharedBooking />} />
+      <Route path="/share/quote/:token" element={<SharedQuote />} />
+      <Route path="/share/itinerary/:token" element={<SharedItinerary />} />
 
       {/* Protected routes */}
       <Route
