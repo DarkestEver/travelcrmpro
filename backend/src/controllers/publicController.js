@@ -181,10 +181,131 @@ const rejectSharedQuote = asyncHandler(async (req, res) => {
   successResponse(res, 200, 'Quote rejected', { quote });
 });
 
+/**
+ * @desc    Lookup email conversation by tracking ID (Public)
+ * @route   GET /api/v1/public/tracking/:trackingId
+ * @access  Public
+ */
+const lookupByTrackingId = asyncHandler(async (req, res) => {
+  const EmailLog = require('../models/EmailLog');
+  const { trackingId } = req.params;
+
+  // Validate tracking ID format: PREFIX-HASH5-SEQUENCE6
+  const trackingIdPattern = /^[A-Z]{2,10}-[A-Z0-9]{5}-\d{6}$/;
+  if (!trackingIdPattern.test(trackingId)) {
+    throw new AppError('Invalid tracking ID format', 400);
+  }
+
+  // Find the email by tracking ID
+  const email = await EmailLog.findOne({ trackingId })
+    .select('trackingId subject from to createdAt direction status threadMetadata')
+    .lean();
+
+  if (!email) {
+    throw new AppError('No conversation found with this tracking ID', 404);
+  }
+
+  // Find all related emails in the conversation
+  let conversationEmails = [];
+  
+  if (email.threadMetadata && email.threadMetadata.threadId) {
+    // Find all emails in the same thread
+    conversationEmails = await EmailLog.find({
+      'threadMetadata.threadId': email.threadMetadata.threadId
+    })
+      .select('trackingId subject from to createdAt direction status bodyText bodyHtml')
+      .sort({ createdAt: 1 })
+      .lean();
+  } else {
+    // If no thread, just return this email
+    const fullEmail = await EmailLog.findOne({ trackingId })
+      .select('trackingId subject from to createdAt direction status bodyText bodyHtml')
+      .lean();
+    conversationEmails = [fullEmail];
+  }
+
+  // Sanitize email bodies (remove sensitive info, truncate)
+  const sanitizedEmails = conversationEmails.map(email => ({
+    trackingId: email.trackingId,
+    subject: email.subject,
+    from: email.from?.email ? {
+      name: email.from.name || 'Unknown',
+      email: email.from.email
+    } : null,
+    to: email.to?.[0]?.email ? {
+      name: email.to[0].name || 'Unknown',
+      email: email.to[0].email
+    } : null,
+    createdAt: email.createdAt,
+    direction: email.direction,
+    status: email.status,
+    // Truncate body to first 500 chars for preview
+    bodyPreview: email.bodyText 
+      ? email.bodyText.substring(0, 500) + (email.bodyText.length > 500 ? '...' : '')
+      : email.bodyHtml 
+        ? email.bodyHtml.replace(/<[^>]*>/g, '').substring(0, 500) + '...'
+        : 'No content'
+  }));
+
+  // Calculate conversation metadata
+  const conversationMeta = {
+    trackingId,
+    emailCount: sanitizedEmails.length,
+    firstEmailDate: sanitizedEmails[0].createdAt,
+    lastEmailDate: sanitizedEmails[sanitizedEmails.length - 1].createdAt,
+    status: sanitizedEmails[sanitizedEmails.length - 1].status,
+    participants: {
+      customer: sanitizedEmails.find(e => e.direction === 'inbound')?.from || 
+                sanitizedEmails.find(e => e.direction === 'outbound')?.to,
+      agent: sanitizedEmails.find(e => e.direction === 'outbound')?.from ||
+             sanitizedEmails.find(e => e.direction === 'inbound')?.to
+    }
+  };
+
+  successResponse(res, 200, 'Conversation found', {
+    conversation: conversationMeta,
+    emails: sanitizedEmails
+  });
+});
+
+/**
+ * @desc    Search for tracking ID (Public - for autocomplete)
+ * @route   GET /api/v1/public/tracking/search/:query
+ * @access  Public
+ */
+const searchTrackingIds = asyncHandler(async (req, res) => {
+  const EmailLog = require('../models/EmailLog');
+  const { query } = req.params;
+
+  // Basic validation
+  if (!query || query.length < 3) {
+    throw new AppError('Search query must be at least 3 characters', 400);
+  }
+
+  // Search for tracking IDs that start with the query
+  const emails = await EmailLog.find({
+    trackingId: { $regex: `^${query}`, $options: 'i' }
+  })
+    .select('trackingId subject createdAt')
+    .sort({ createdAt: -1 })
+    .limit(10)
+    .lean();
+
+  const results = emails.map(email => ({
+    trackingId: email.trackingId,
+    subject: email.subject,
+    date: email.createdAt
+  }));
+
+  successResponse(res, 200, 'Search results', { results });
+});
+
 module.exports = {
   viewSharedBooking,
   viewSharedQuote,
   viewSharedItinerary,
   acceptSharedQuote,
-  rejectSharedQuote
+  rejectSharedQuote,
+  lookupByTrackingId,
+  searchTrackingIds
 };

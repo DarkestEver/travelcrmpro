@@ -35,6 +35,7 @@ import Unauthorized from './pages/Unauthorized'
 import SharedBooking from './pages/shared/SharedBooking'
 import SharedQuote from './pages/shared/SharedQuote'
 import SharedItinerary from './pages/shared/SharedItinerary'
+import TrackingLookup from './pages/TrackingLookup'
 
 // Agent Portal Pages
 import AgentDashboard from './pages/agent/Dashboard'
@@ -208,6 +209,10 @@ function App() {
       <Route path="/share/booking/:token" element={<SharedBooking />} />
       <Route path="/share/quote/:token" element={<SharedQuote />} />
       <Route path="/share/itinerary/:token" element={<SharedItinerary />} />
+      
+      {/* Public Tracking Lookup (no authentication required) */}
+      <Route path="/tracking" element={<TrackingLookup />} />
+      <Route path="/tracking/:trackingId" element={<TrackingLookup />} />
 
       {/* Protected routes */}
       <Route

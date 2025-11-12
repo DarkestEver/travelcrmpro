@@ -664,16 +664,115 @@ const sendMultipleQuotes = asyncHandler(async (req, res) => {
   // Send email using your email service
   try {
     const { sendEmail } = require('../utils/email');
+    const EmailTrackingService = require('../services/emailTrackingService');
+    
     console.log('📧 Attempting to send email to:', customerEmail);
     console.log('📧 Email subject:', emailSubject);
     
-    await sendEmail({
+    // 🆕 Generate tracking ID for this quote email
+    const trackingId = await EmailTrackingService.generateTrackingId(req.user.tenantId.toString(), customerEmail);
+    
+    // Inject tracking ID into email body
+    let emailBodyWithTracking = emailBody;
+    if (trackingId) {
+      emailBodyWithTracking = EmailTrackingService.injectTrackingId(emailBody, trackingId);
+      console.log(`📋 Generated tracking ID: ${trackingId}`);
+    }
+    
+    const emailResult = await sendEmail({
       to: customerEmail,
       subject: emailSubject,
-      html: emailBody
+      html: emailBodyWithTracking
     });
     
-    console.log('✅ Email sent successfully');
+    console.log('✅ Email sent successfully:', emailResult.messageId);
+
+    // 🆕 SAVE THE SENT QUOTE EMAIL AS A NEW EMAIL LOG ENTRY
+    if (email && emailResult.messageId) {
+      try {
+        const EmailLog = require('../models/EmailLog');
+        const EmailAccount = require('../models/EmailAccount');
+        
+        // Get tenant's email account
+        const emailAccount = await EmailAccount.findOne({ 
+          tenantId: req.user.tenantId,
+          isActive: true
+        });
+
+        if (emailAccount) {
+          const sentQuoteEmail = await EmailLog.create({
+            messageId: emailResult.messageId,
+            trackingId: trackingId, // 🆕 Store tracking ID
+            emailAccountId: emailAccount._id,
+            tenantId: req.user.tenantId,
+            from: {
+              email: process.env.SMTP_FROM_EMAIL,
+              name: process.env.SMTP_FROM_NAME || 'Travel CRM'
+            },
+            to: [{
+              email: customerEmail,
+              name: customerEmail // Will be updated if customer name available
+            }],
+            cc: [],
+            bcc: [],
+            subject: emailSubject,
+            bodyHtml: emailBodyWithTracking, // Use tracking-injected body
+            bodyText: emailBodyWithTracking.replace(/<[^>]*>/g, ''),
+            snippet: emailBodyWithTracking.replace(/<[^>]*>/g, '').substring(0, 200),
+            receivedAt: new Date(),
+            processingStatus: 'completed',
+            source: 'outbound', // Mark as outbound email
+            sentBy: req.user._id,
+            inReplyTo: email.messageId,
+            references: email.references ? [...email.references, email.messageId] : [email.messageId],
+            
+            // Threading metadata - link to parent
+            threadMetadata: {
+              isReply: true,
+              isForward: false,
+              parentEmailId: email._id,
+              threadId: email.threadMetadata?.threadId || email._id,
+              messageId: emailResult.messageId,
+              inReplyTo: email.messageId,
+              references: email.references ? [...email.references, email.messageId] : [email.messageId]
+            },
+            
+            conversationParticipants: [
+              process.env.SMTP_FROM_EMAIL,
+              customerEmail
+            ],
+
+            // Link to quotes
+            quotesGenerated: quotes.map(q => ({
+              quoteId: q._id,
+              quoteNumber: q.quoteNumber,
+              status: 'sent',
+              sentAt: new Date()
+            }))
+          });
+
+          // Add this sent email to parent's replies array
+          if (!email.replies) {
+            email.replies = [];
+          }
+          email.replies.push({
+            emailId: sentQuoteEmail._id,
+            from: {
+              email: process.env.SMTP_FROM_EMAIL,
+              name: process.env.SMTP_FROM_NAME || 'Travel CRM'
+            },
+            subject: emailSubject,
+            receivedAt: new Date(),
+            snippet: `Sent ${quotes.length} quote${quotes.length > 1 ? 's' : ''}`
+          });
+
+          console.log(`🔗 Saved sent quote email as EmailLog: ${sentQuoteEmail._id}, linked to parent: ${email._id}`);
+        }
+      } catch (saveError) {
+        console.error('⚠️  Failed to save sent quote email to EmailLog:', saveError.message);
+        // Don't fail the request, just log the error
+      }
+    }
   } catch (emailError) {
     console.error('❌ Failed to send email:', emailError);
     console.error('Error details:', {

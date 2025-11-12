@@ -322,6 +322,12 @@ const EmailDetail = () => {
                 <Calendar className="w-4 h-4" />
                 {new Date(email.receivedAt).toLocaleString()}
               </span>
+              {email.trackingId && (
+                <span className="flex items-center gap-1 bg-indigo-100 text-indigo-700 px-2 py-1 rounded-full font-mono text-xs">
+                  <Clock className="w-3 h-3" />
+                  {email.trackingId}
+                </span>
+              )}
               {email.category && (
                 <span className={`px-2 py-1 rounded-full text-xs ${getCategoryColor(email.category)}`}>
                   {email.category}
@@ -988,8 +994,11 @@ const EmailDetail = () => {
               // 4. Add reply emails (threaded conversation)
               if (email.replies && email.replies.length > 0) {
                 email.replies.forEach(reply => {
+                  // Determine if this is from customer or agent/system
+                  const isCustomerReply = reply.from.email === email.from.email;
+                  
                   timeline.push({
-                    type: 'customer_reply',
+                    type: isCustomerReply ? 'customer_reply' : 'agent_reply',
                     timestamp: new Date(reply.receivedAt),
                     data: reply
                   });
@@ -1181,6 +1190,40 @@ const EmailDetail = () => {
                       );
                     }
                     
+                    // Agent/System Reply (Outbound)
+                    if (item.type === 'agent_reply') {
+                      const reply = item.data;
+                      return (
+                        <div key={`agent-reply-${reply.emailId || index}`} className="bg-green-50 border-l-4 border-green-500 p-4 rounded-r-lg ml-6">
+                          <div className="flex items-start gap-3">
+                            <div className="w-10 h-10 rounded-full bg-green-500 text-white flex items-center justify-center flex-shrink-0">
+                              <Send className="w-5 h-5" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-start justify-between gap-4 mb-2">
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-2">
+                                    <p className="font-semibold text-gray-900">{reply.from?.name || 'Support Team'}</p>
+                                    <span className="px-2 py-0.5 bg-green-100 text-green-700 text-xs rounded-full font-medium">
+                                      Sent
+                                    </span>
+                                  </div>
+                                  <p className="text-sm text-gray-600">{reply.from?.email}</p>
+                                </div>
+                                <span className="text-xs text-gray-500 whitespace-nowrap flex-shrink-0">
+                                  {item.timestamp.toLocaleString()}
+                                </span>
+                              </div>
+                              <p className="text-sm font-medium text-gray-800 mb-2">{reply.subject}</p>
+                              <div className="text-sm text-gray-700 whitespace-pre-wrap max-h-48 overflow-y-auto">
+                                {reply.snippet || 'No preview available'}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    }
+                    
                     return null;
                   })}
                   
@@ -1232,6 +1275,22 @@ const EmailDetail = () => {
                   <label className="text-sm text-gray-600">Message ID</label>
                   <p className="font-mono text-xs">{email.messageId}</p>
                 </div>
+                {email.trackingId && (
+                  <div>
+                    <label className="text-sm text-gray-600">Tracking ID</label>
+                    <div className="flex items-center gap-2">
+                      <p className="font-mono text-sm font-semibold text-indigo-600">{email.trackingId}</p>
+                      <a
+                        href={`/tracking/${email.trackingId}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs text-indigo-600 hover:text-indigo-800 underline"
+                      >
+                        Public View
+                      </a>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 

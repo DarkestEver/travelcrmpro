@@ -4,6 +4,7 @@
  */
 
 const { EmailLog } = require('../models');
+const EmailTrackingService = require('./emailTrackingService');
 
 class EmailThreadingService {
   /**
@@ -184,10 +185,25 @@ class EmailThreadingService {
           'from.email': { $in: parsedEmail.to?.map(t => t.email) || [] }
         }
       ],
-      receivedAt: { $gte: oneDayAgo }
+      receivedAt: { $gte: oneDayAgo },
+      _id: { $ne: parsedEmail._id }
     }).sort({ receivedAt: -1 });
 
-    return recentConversation || null;
+    if (recentConversation) {
+      return recentConversation;
+    }
+
+    // Strategy 5: Find by tracking ID embedded in email body (FALLBACK)
+    // This is the most reliable method when headers are missing/malformed
+    console.log('   🔍 Trying tracking ID strategy...');
+    const parentByTrackingId = await EmailTrackingService.findParentByTrackingId(parsedEmail, tenantId);
+    
+    if (parentByTrackingId) {
+      console.log(`   ✅ Found parent by tracking ID: ${parentByTrackingId._id}`);
+      return parentByTrackingId;
+    }
+
+    return null;
   }
 
   /**
@@ -219,12 +235,15 @@ class EmailThreadingService {
         snippet: replyEmail.bodyText?.substring(0, 150) || 'No content'
       });
 
-      // Update conversation participant count
+      // Update conversation participant list (use Set to avoid duplicates, then convert to Array)
       if (!parentEmail.conversationParticipants) {
-        parentEmail.conversationParticipants = new Set();
+        parentEmail.conversationParticipants = [];
       }
-      parentEmail.conversationParticipants.add(replyEmail.from.email);
-      replyEmail.to?.forEach(t => parentEmail.conversationParticipants.add(t.email));
+      
+      const participantsSet = new Set(parentEmail.conversationParticipants);
+      participantsSet.add(replyEmail.from.email);
+      replyEmail.to?.forEach(t => participantsSet.add(t.email));
+      parentEmail.conversationParticipants = Array.from(participantsSet);
 
       // Save both emails
       await Promise.all([

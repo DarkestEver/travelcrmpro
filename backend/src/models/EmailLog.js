@@ -13,6 +13,13 @@ const emailLogSchema = new mongoose.Schema({
     index: true
   },
   
+  // Tracking ID (embedded in email body for reliable tracking)
+  trackingId: {
+    type: String,
+    index: true,
+    sparse: true // Only index non-null values
+  },
+  
   // Email Account
   emailAccountId: {
     type: mongoose.Schema.Types.ObjectId,

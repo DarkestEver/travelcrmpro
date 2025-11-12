@@ -129,6 +129,32 @@ class EmailProcessingQueue {
 
       console.log(`Processing email ${emailId} from ${email.from.email}`);
 
+      // 🚫 SKIP AI PROCESSING FOR REPLIES AND FORWARDS
+      // AI should only process completely new incoming emails
+      if (email.threadMetadata) {
+        const isReply = email.threadMetadata.isReply === true;
+        const isForward = email.threadMetadata.isForward === true;
+        
+        if (isReply || isForward) {
+          console.log(`⏭️  Skipping AI processing - Email is a ${isReply ? 'REPLY' : 'FORWARD'}`);
+          console.log(`   Threading already handled. ParentEmailId: ${email.threadMetadata.parentEmailId}`);
+          
+          // Mark as completed without AI processing
+          email.processingStatus = 'completed';
+          email.category = isReply ? 'REPLY' : 'FORWARD';
+          email.categoryConfidence = 100;
+          email.skipAIProcessing = true;
+          email.skipReason = isReply ? 'Reply to existing thread' : 'Forwarded email';
+          await email.save();
+          
+          return { 
+            status: 'completed', 
+            reason: `Skipped AI - Email is a ${isReply ? 'reply' : 'forward'}`,
+            skipAI: true
+          };
+        }
+      }
+
       // Update progress
       job.progress(10);
 
@@ -382,6 +408,20 @@ class EmailProcessingQueue {
             to: email.from.email
           });
 
+          // 🆕 Generate tracking ID for this email
+          const EmailTrackingService = require('../services/emailTrackingService');
+          const trackingId = await EmailTrackingService.generateTrackingId(email.tenantId.toString(), email.from.email);
+          
+          // Inject tracking ID into email body
+          let emailBodyWithTracking = response.body;
+          let plainTextWithTracking = response.plainText;
+          
+          if (trackingId) {
+            emailBodyWithTracking = EmailTrackingService.injectTrackingId(response.body, trackingId);
+            plainTextWithTracking = EmailTrackingService.injectTrackingIdPlainText(response.plainText, trackingId);
+            console.log(`📋 Generated tracking ID: ${trackingId}`);
+          }
+
           // Send auto-reply using tenant's SMTP
           const sendResult = await transporter.sendMail({
             from: accountObj.smtp.fromName 
@@ -389,19 +429,104 @@ class EmailProcessingQueue {
               : accountObj.smtp.username,
             to: email.from.email,
             subject: response.subject,
-            html: response.body,
-            text: response.plainText,
+            html: emailBodyWithTracking,
+            text: plainTextWithTracking,
             inReplyTo: email.messageId,
             references: email.references ? [...email.references, email.messageId] : [email.messageId],
             replyTo: accountObj.smtp.replyTo || accountObj.smtp.username
           });
           
+          // Ensure we have a Message-ID (generate one if SMTP didn't return it)
+          const sentMessageId = sendResult.messageId || `<${Date.now()}.${Math.random().toString(36).substr(2, 9)}@${accountObj.smtp.host}>`;
+          
           email.responseSentAt = new Date();
-          email.responseMessageId = sendResult.messageId; // Store SMTP message ID
+          email.responseMessageId = sentMessageId; // Store SMTP message ID
           email.responseType = 'auto'; // Mark as auto-sent
           await email.save();
           
-          console.log(`✅ Auto-reply sent to ${email.from.email} via tenant SMTP. MessageId:`, sendResult.messageId);
+          console.log(`✅ Auto-reply sent to ${email.from.email} via tenant SMTP. MessageId:`, sentMessageId);
+
+          // 🆕 SAVE THE SENT AI RESPONSE AS A NEW EMAIL LOG ENTRY
+          try {
+            const EmailLog = require('../models/EmailLog');
+            const EmailThreadingService = require('./emailThreadingService');
+            
+            const sentAIEmail = await EmailLog.create({
+              messageId: sentMessageId,
+              trackingId: trackingId, // 🆕 Store tracking ID
+              emailAccountId: emailAccount._id,
+              tenantId: email.tenantId,
+              from: {
+                email: accountObj.smtp.username,
+                name: accountObj.smtp.fromName || 'Support Team'
+              },
+              to: [{
+                email: email.from.email,
+                name: email.from.name || email.from.email
+              }],
+              cc: [],
+              bcc: [],
+              subject: response.subject,
+              bodyHtml: emailBodyWithTracking, // Use tracking-injected body
+              bodyText: plainTextWithTracking, // Use tracking-injected text
+              snippet: plainTextWithTracking.substring(0, 200),
+              receivedAt: new Date(),
+              processingStatus: 'completed',
+              source: 'outbound', // Mark as outbound email
+              inReplyTo: email.messageId,
+              references: email.references ? [...email.references, email.messageId] : [email.messageId],
+              
+              // Threading metadata - link to parent
+              threadMetadata: {
+                isReply: true,
+                isForward: false,
+                parentEmailId: email._id,
+                threadId: email.threadMetadata?.threadId || email._id,
+                messageId: sentMessageId,
+                inReplyTo: email.messageId,
+                references: email.references ? [...email.references, email.messageId] : [email.messageId]
+              },
+              
+              conversationParticipants: [
+                accountObj.smtp.username,
+                email.from.email
+              ],
+
+              // Mark as AI-generated
+              generatedResponse: {
+                isAIGenerated: true,
+                generatedAt: new Date(),
+                subject: response.subject,
+                body: response.body
+              }
+            });
+
+            // Process threading (this will handle any additional threading logic)
+            await EmailThreadingService.processEmailThreading(sentAIEmail, email.tenantId.toString());
+
+            // Add this sent AI response to parent's replies array
+            if (!email.replies) {
+              email.replies = [];
+            }
+            email.replies.push({
+              emailId: sentAIEmail._id,
+              from: {
+                email: accountObj.smtp.username,
+                name: accountObj.smtp.fromName || 'Support Team'
+              },
+              subject: response.subject,
+              receivedAt: new Date(),
+              snippet: (response.plainText || response.body.replace(/<[^>]*>/g, '')).substring(0, 150)
+            });
+            
+            await email.save();
+
+            console.log(`🔗 Saved sent AI response as EmailLog: ${sentAIEmail._id}, linked to parent: ${email._id}`);
+          } catch (saveError) {
+            console.error('⚠️  Failed to save sent AI response to EmailLog:', saveError.message);
+            console.error('   AI response was sent successfully but not logged in database');
+            // Don't fail the process, just log the error
+          }
         } catch (sendError) {
           console.error('❌ Failed to send auto-reply email:', sendError.message);
           // Don't fail the entire process if email sending fails

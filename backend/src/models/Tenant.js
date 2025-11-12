@@ -198,6 +198,22 @@ const tenantSchema = new mongoose.Schema(
       email: {
         senderName: String,
         senderEmail: String,
+        // Email Tracking ID Configuration
+        trackingIdPrefix: {
+          type: String,
+          default: 'TRK',
+          uppercase: true,
+          trim: true,
+          maxlength: 10
+        },
+        enableTrackingId: {
+          type: Boolean,
+          default: true
+        },
+        trackingIdSequence: {
+          type: Number,
+          default: 0
+        },
         replyToEmail: String,
         emailSignature: {
           type: String,

@@ -13,4 +13,8 @@ router.post('/quotes/:token/reject', publicController.rejectSharedQuote);
 // Public itinerary routes
 router.get('/itineraries/:token', publicController.viewSharedItinerary);
 
+// Public tracking ID lookup routes
+router.get('/tracking/:trackingId', publicController.lookupByTrackingId);
+router.get('/tracking/search/:query', publicController.searchTrackingIds);
+
 module.exports = router;

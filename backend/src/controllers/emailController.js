@@ -82,6 +82,21 @@ class EmailController {
         emailData.emailAccountId = emailAccount._id;
       }
 
+      // 🆕 CHECK FOR DUPLICATE EMAIL (same as IMAP)
+      const existingEmail = await EmailLog.findOne({
+        messageId: emailData.messageId
+      });
+
+      if (existingEmail) {
+        console.log(`ℹ️  Email already processed: ${emailData.messageId}`);
+        return res.status(200).json({
+          success: true,
+          message: 'Email already processed',
+          emailId: existingEmail._id,
+          duplicate: true
+        });
+      }
+
       // Save to database
       const email = await EmailLog.create(emailData);
 
@@ -787,6 +802,23 @@ class EmailController {
       // Decrypt password using Mongoose getter
       const accountObj = emailAccount.toObject({ getters: true });
 
+      // 🆕 Generate tracking ID for this email
+      const EmailTrackingService = require('../services/emailTrackingService');
+      const trackingId = await EmailTrackingService.generateTrackingId(tenantId, email.from.email);
+      
+      // Inject tracking ID into email body
+      let emailBodyWithTracking = body;
+      let plainTextWithTracking = plainText || body.replace(/<[^>]*>/g, '');
+      
+      if (trackingId) {
+        emailBodyWithTracking = EmailTrackingService.injectTrackingId(body, trackingId);
+        plainTextWithTracking = EmailTrackingService.injectTrackingIdPlainText(
+          plainText || body.replace(/<[^>]*>/g, ''),
+          trackingId
+        );
+        console.log(`📋 Generated tracking ID: ${trackingId}`);
+      }
+
       // Create nodemailer transporter with tenant's SMTP settings
       const nodemailer = require('nodemailer');
       const transporter = nodemailer.createTransport({
@@ -817,21 +849,24 @@ class EmailController {
           : accountObj.smtp.username,
         to: email.from.email,
         subject: subject,
-        html: body,
-        text: plainText || body.replace(/<[^>]*>/g, ''), // Strip HTML if no plain text
+        html: emailBodyWithTracking,
+        text: plainTextWithTracking,
         inReplyTo: email.messageId,
         references: email.references ? [...email.references, email.messageId] : [email.messageId],
         replyTo: accountObj.smtp.replyTo || accountObj.smtp.username
       });
 
-      console.log('✅ Reply sent successfully via tenant SMTP. MessageId:', sendResult.messageId);
+      // Ensure we have a Message-ID (generate one if SMTP didn't return it)
+      const sentMessageId = sendResult.messageId || `<${Date.now()}.${Math.random().toString(36).substr(2, 9)}@${accountObj.smtp.host}>`;
+      
+      console.log('✅ Reply sent successfully via tenant SMTP. MessageId:', sentMessageId);
 
-      // Mark email as manually replied
+      // Mark original email as manually replied
       email.manuallyReplied = true;
       email.responseType = 'manual';
       email.responseSentAt = new Date();
       email.repliedBy = userId;
-      email.responseMessageId = sendResult.messageId; // Store SMTP message ID
+      email.responseMessageId = sentMessageId; // Store SMTP message ID
       email.processingStatus = 'completed';
       
       // Store the manual reply in generatedResponse for history
@@ -848,13 +883,85 @@ class EmailController {
 
       await email.save();
 
+      // 🆕 SAVE THE SENT REPLY AS A NEW EMAIL LOG ENTRY
+      try {
+        const sentReplyEmail = await EmailLog.create({
+          messageId: sentMessageId,
+          trackingId: trackingId, // 🆕 Store tracking ID
+          emailAccountId: emailAccount._id,
+          tenantId: tenantId,
+          from: {
+            email: accountObj.smtp.username,
+            name: accountObj.smtp.fromName || 'Support Team'
+          },
+          to: [{
+            email: email.from.email,
+            name: email.from.name || email.from.email
+          }],
+          cc: [],
+          bcc: [],
+          subject: subject,
+          bodyHtml: emailBodyWithTracking, // Use tracking-injected body
+          bodyText: plainTextWithTracking, // Use tracking-injected text
+          snippet: plainTextWithTracking.substring(0, 200),
+          receivedAt: new Date(),
+          processingStatus: 'completed',
+          source: 'outbound', // Mark as outbound email
+          sentBy: userId,
+          inReplyTo: email.messageId,
+          references: email.references ? [...email.references, email.messageId] : [email.messageId],
+          
+          // Threading metadata - link to parent
+          threadMetadata: {
+            isReply: true,
+            isForward: false,
+            parentEmailId: email._id,
+            threadId: email.threadMetadata?.threadId || email._id,
+            messageId: sentMessageId,
+            inReplyTo: email.messageId,
+            references: email.references ? [...email.references, email.messageId] : [email.messageId]
+          },
+          
+          conversationParticipants: [
+            accountObj.smtp.username,
+            email.from.email
+          ]
+        });
+
+        // Process threading (this will handle any additional threading logic)
+        await EmailThreadingService.processEmailThreading(sentReplyEmail, tenantId.toString());
+
+        // Add this sent reply to parent's replies array
+        if (!email.replies) {
+          email.replies = [];
+        }
+        email.replies.push({
+          emailId: sentReplyEmail._id,
+          from: {
+            email: accountObj.smtp.username,
+            name: accountObj.smtp.fromName || 'Support Team'
+          },
+          subject: subject,
+          receivedAt: new Date(),
+          snippet: (plainText || body.replace(/<[^>]*>/g, '')).substring(0, 150)
+        });
+        
+        await email.save();
+
+        console.log(`🔗 Saved sent reply as EmailLog: ${sentReplyEmail._id}, linked to parent: ${email._id}`);
+      } catch (saveError) {
+        console.error('⚠️  Failed to save sent reply to EmailLog:', saveError.message);
+        console.error('   Email was sent successfully but not logged in database');
+        // Don't fail the request - email was sent successfully
+      }
+
       res.json({
         success: true,
         message: 'Reply sent successfully',
         data: {
           emailId: email._id,
           responseSentAt: email.responseSentAt,
-          responseId: sendResult.messageId
+          responseId: sentMessageId
         }
       });
     } catch (error) {
@@ -866,6 +973,218 @@ class EmailController {
       });
     }
   }
+
+  /**
+   * Forward email to another recipient
+   * POST /api/v1/emails/:id/forward
+   */
+  async forwardEmail(req, res) {
+    try {
+      const { id } = req.params;
+      const { to, subject, body, plainText, includeOriginal = true } = req.body;
+      const userId = req.user?.id;
+      const tenantId = req.user?.tenantId;
+
+      // Validate input
+      if (!to || !subject) {
+        return res.status(400).json({
+          success: false,
+          message: 'Recipient (to) and subject are required'
+        });
+      }
+
+      // Get original email
+      const email = await EmailLog.findOne({ _id: id, tenantId });
+      if (!email) {
+        return res.status(404).json({
+          success: false,
+          message: 'Email not found'
+        });
+      }
+
+      // Get tenant's email account for SMTP settings
+      const EmailAccount = require('../models/EmailAccount');
+      const emailAccount = await EmailAccount.findOne({ 
+        tenantId,
+        isActive: true,
+        'smtp.enabled': true
+      }).select('+smtp.password');
+
+      if (!emailAccount) {
+        return res.status(400).json({
+          success: false,
+          message: 'No active SMTP email account configured for your tenant'
+        });
+      }
+
+      // Decrypt password
+      const accountObj = emailAccount.toObject({ getters: true });
+
+      // Build forward body
+      let forwardBody = body || '';
+      if (includeOriginal) {
+        forwardBody += `
+          <br><br>
+          <div style="border-left: 3px solid #ccc; padding-left: 15px; margin-left: 10px;">
+            <p><strong>-------- Forwarded Message --------</strong></p>
+            <p><strong>From:</strong> ${email.from.name || email.from.email}</p>
+            <p><strong>Date:</strong> ${email.receivedAt?.toLocaleString()}</p>
+            <p><strong>Subject:</strong> ${email.subject}</p>
+            <br>
+            ${email.bodyHtml || email.bodyText || 'No content'}
+          </div>
+        `;
+      }
+
+      // Generate and inject tracking ID
+      const EmailTrackingService = require('../services/emailTrackingService');
+      const recipientEmail = Array.isArray(to) ? to[0] : to;
+      const trackingId = await EmailTrackingService.generateTrackingId(tenantId, recipientEmail);
+      
+      let emailBodyWithTracking = forwardBody;
+      let plainTextWithTracking = plainText || forwardBody.replace(/<[^>]*>/g, '');
+      
+      if (trackingId) {
+        emailBodyWithTracking = EmailTrackingService.injectTrackingId(forwardBody, trackingId);
+        plainTextWithTracking = EmailTrackingService.injectTrackingIdPlainText(
+          plainText || forwardBody.replace(/<[^>]*>/g, ''),
+          trackingId
+        );
+        console.log(`📋 Generated tracking ID for forward: ${trackingId}`);
+      }
+
+      // Create nodemailer transporter
+      const nodemailer = require('nodemailer');
+      const transporter = nodemailer.createTransport({
+        host: accountObj.smtp.host,
+        port: accountObj.smtp.port,
+        secure: accountObj.smtp.secure,
+        auth: {
+          user: accountObj.smtp.username,
+          pass: accountObj.smtp.password
+        },
+        tls: {
+          rejectUnauthorized: false
+        }
+      });
+
+      // Send forward email
+      console.log('📤 Forwarding email to:', to);
+
+      const sendResult = await transporter.sendMail({
+        from: accountObj.smtp.fromName 
+          ? `"${accountObj.smtp.fromName}" <${accountObj.smtp.username}>`
+          : accountObj.smtp.username,
+        to: to,
+        subject: subject,
+        html: emailBodyWithTracking,
+        text: plainTextWithTracking,
+        replyTo: accountObj.smtp.replyTo || accountObj.smtp.username
+      });
+
+      console.log('✅ Email forwarded successfully. MessageId:', sendResult.messageId);
+
+      // Save the forwarded email as a new EmailLog entry
+      try {
+        const forwardedEmail = await EmailLog.create({
+          messageId: sendResult.messageId,
+          emailAccountId: emailAccount._id,
+          tenantId: tenantId,
+          from: {
+            email: accountObj.smtp.username,
+            name: accountObj.smtp.fromName || 'Support Team'
+          },
+          to: Array.isArray(to) ? to.map(t => ({ email: t, name: t })) : [{ email: to, name: to }],
+          cc: [],
+          bcc: [],
+          subject: subject,
+          bodyHtml: emailBodyWithTracking,
+          bodyText: plainTextWithTracking,
+          snippet: plainTextWithTracking.substring(0, 200),
+          trackingId: trackingId,
+          receivedAt: new Date(),
+          processingStatus: 'completed',
+          source: 'outbound',
+          sentBy: userId,
+          
+          // Threading metadata - mark as forward
+          threadMetadata: {
+            isReply: false,
+            isForward: true,
+            parentEmailId: email._id,
+            threadId: email.threadMetadata?.threadId || email._id,
+            messageId: sendResult.messageId
+          },
+          
+          conversationParticipants: [
+            accountObj.smtp.username,
+            ...(Array.isArray(to) ? to : [to])
+          ]
+        });
+
+        // Add to original email's replies (even though it's a forward)
+        if (!email.replies) {
+          email.replies = [];
+        }
+        email.replies.push({
+          emailId: forwardedEmail._id,
+          from: {
+            email: accountObj.smtp.username,
+            name: accountObj.smtp.fromName || 'Support Team'
+          },
+          subject: subject,
+          receivedAt: new Date(),
+          snippet: 'Forwarded to: ' + (Array.isArray(to) ? to.join(', ') : to)
+        });
+        
+        await email.save();
+
+        console.log(`🔗 Saved forwarded email as EmailLog: ${forwardedEmail._id}, linked to original: ${email._id}`);
+
+        // Process threading for the forwarded email
+        try {
+          const EmailThreadingService = require('../services/emailThreadingService');
+          await EmailThreadingService.processEmailThreading(forwardedEmail, tenantId);
+          console.log(`🧵 Processed threading for forwarded email: ${forwardedEmail._id}`);
+        } catch (threadError) {
+          console.error('⚠️  Threading failed for forwarded email:', threadError.message);
+          // Don't fail the request, threading is not critical
+        }
+
+        res.json({
+          success: true,
+          message: 'Email forwarded successfully',
+          data: {
+            originalEmailId: email._id,
+            forwardedEmailId: forwardedEmail._id,
+            forwardedTo: to,
+            trackingId: trackingId,
+            messageId: sendResult.messageId
+          }
+        });
+      } catch (saveError) {
+        console.error('⚠️  Failed to save forwarded email to EmailLog:', saveError.message);
+        // Still return success since email was sent
+        res.json({
+          success: true,
+          message: 'Email forwarded successfully (but not saved to conversation)',
+          data: {
+            originalEmailId: email._id,
+            forwardedTo: to,
+            messageId: sendResult.messageId
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Forward email error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to forward email',
+        error: error.message
+      });
+    }
+  }
+
   /**
    * Update extracted data from email
    */
