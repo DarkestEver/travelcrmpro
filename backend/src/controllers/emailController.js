@@ -763,7 +763,7 @@ class EmailController {
   async replyToEmail(req, res) {
     try {
       const { id } = req.params;
-      const { subject, body, plainText } = req.body;
+      const { subject, body, plainText, cc, bcc } = req.body;
       const userId = req.user?.id;
       const tenantId = req.user?.tenantId;
 
@@ -834,16 +834,22 @@ class EmailController {
         }
       });
 
+      // Prepare CC and BCC arrays
+      const ccEmails = Array.isArray(cc) ? cc : (cc ? [cc] : []);
+      const bccEmails = Array.isArray(bcc) ? bcc : (bcc ? [bcc] : []);
+
       // Send reply email using tenant's SMTP
       console.log('📤 Sending reply via tenant SMTP:', {
         host: accountObj.smtp.host,
         port: accountObj.smtp.port,
         secure: accountObj.smtp.secure,
         from: accountObj.smtp.username,
-        to: email.from.email
+        to: email.from.email,
+        cc: ccEmails,
+        bcc: bccEmails
       });
 
-      const sendResult = await transporter.sendMail({
+      const mailOptions = {
         from: accountObj.smtp.fromName 
           ? `"${accountObj.smtp.fromName}" <${accountObj.smtp.username}>`
           : accountObj.smtp.username,
@@ -854,7 +860,19 @@ class EmailController {
         inReplyTo: email.messageId,
         references: email.references ? [...email.references, email.messageId] : [email.messageId],
         replyTo: accountObj.smtp.replyTo || accountObj.smtp.username
-      });
+      };
+
+      // Add CC if provided
+      if (ccEmails.length > 0) {
+        mailOptions.cc = ccEmails.join(', ');
+      }
+
+      // Add BCC if provided
+      if (bccEmails.length > 0) {
+        mailOptions.bcc = bccEmails.join(', ');
+      }
+
+      const sendResult = await transporter.sendMail(mailOptions);
 
       // Ensure we have a Message-ID (generate one if SMTP didn't return it)
       const sentMessageId = sendResult.messageId || `<${Date.now()}.${Math.random().toString(36).substr(2, 9)}@${accountObj.smtp.host}>`;
@@ -885,6 +903,10 @@ class EmailController {
 
       // 🆕 SAVE THE SENT REPLY AS A NEW EMAIL LOG ENTRY
       try {
+        // Prepare CC and BCC for saving
+        const ccForLog = ccEmails.map(email => ({ email, name: email }));
+        const bccForLog = bccEmails.map(email => ({ email, name: email }));
+        
         const sentReplyEmail = await EmailLog.create({
           messageId: sentMessageId,
           trackingId: trackingId, // 🆕 Store tracking ID
@@ -898,15 +920,15 @@ class EmailController {
             email: email.from.email,
             name: email.from.name || email.from.email
           }],
-          cc: [],
-          bcc: [],
+          cc: ccForLog,
+          bcc: bccForLog,
           subject: subject,
           bodyHtml: emailBodyWithTracking, // Use tracking-injected body
           bodyText: plainTextWithTracking, // Use tracking-injected text
           snippet: plainTextWithTracking.substring(0, 200),
           receivedAt: new Date(),
           processingStatus: 'completed',
-          source: 'outbound', // Mark as outbound email
+          source: 'manual', // Mark as manual reply
           sentBy: userId,
           inReplyTo: email.messageId,
           references: email.references ? [...email.references, email.messageId] : [email.messageId],
@@ -924,7 +946,9 @@ class EmailController {
           
           conversationParticipants: [
             accountObj.smtp.username,
-            email.from.email
+            email.from.email,
+            ...ccEmails,
+            ...bccEmails
           ]
         });
 
