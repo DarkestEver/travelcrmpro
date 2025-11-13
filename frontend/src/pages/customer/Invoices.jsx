@@ -1,14 +1,16 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery } from '@tantml:parameter>
 import { getInvoices } from '../../services/customerInvoiceAPI';
 import {
   DocumentTextIcon,
   MagnifyingGlassIcon,
   FunnelIcon,
   ArrowDownTrayIcon,
+  CreditCardIcon,
 } from '@heroicons/react/24/outline';
 import { format } from 'date-fns';
+import PaymentModal from '../../components/payments/PaymentModal';
 
 export default function CustomerInvoices() {
   const [filters, setFilters] = useState({
@@ -18,7 +20,10 @@ export default function CustomerInvoices() {
     limit: 10,
   });
 
-  const { data, isLoading } = useQuery({
+  const [paymentModalOpen, setPaymentModalOpen] = useState(false);
+  const [selectedInvoice, setSelectedInvoice] = useState(null);
+
+  const { data, isLoading, refetch } = useQuery({
     queryKey: ['customerInvoices', filters],
     queryFn: () => getInvoices(filters),
   });
@@ -44,6 +49,21 @@ export default function CustomerInvoices() {
       cancelled: 'bg-gray-100 text-gray-800',
     };
     return colors[status] || 'bg-gray-100 text-gray-800';
+  };
+
+  const handlePayNow = (invoice) => {
+    setSelectedInvoice(invoice);
+    setPaymentModalOpen(true);
+  };
+
+  const handlePaymentSuccess = () => {
+    setPaymentModalOpen(false);
+    setSelectedInvoice(null);
+    refetch(); // Refresh invoice list
+  };
+
+  const canPayInvoice = (invoice) => {
+    return invoice.status !== 'paid' && invoice.status !== 'cancelled' && invoice.amountDue > 0;
   };
 
   return (
@@ -144,14 +164,23 @@ export default function CustomerInvoices() {
                         {invoice.status}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
+                      {canPayInvoice(invoice) && (
+                        <button
+                          onClick={() => handlePayNow(invoice)}
+                          className="inline-flex items-center px-3 py-1.5 bg-blue-600 text-white text-xs font-medium rounded-md hover:bg-blue-700 transition-colors mr-2"
+                        >
+                          <CreditCardIcon className="h-4 w-4 mr-1" />
+                          Pay Now
+                        </button>
+                      )}
                       <Link
                         to={`/customer/invoices/${invoice._id}`}
-                        className="text-blue-600 hover:text-blue-900 mr-4"
+                        className="text-blue-600 hover:text-blue-900"
                       >
                         View
                       </Link>
-                      <button className="text-blue-600 hover:text-blue-900">
+                      <button className="text-blue-600 hover:text-blue-900 ml-2">
                         <ArrowDownTrayIcon className="h-5 w-5 inline" />
                       </button>
                     </td>
@@ -186,6 +215,19 @@ export default function CustomerInvoices() {
             </div>
           )}
         </>
+      )}
+
+      {/* Payment Modal */}
+      {selectedInvoice && (
+        <PaymentModal
+          invoice={selectedInvoice}
+          isOpen={paymentModalOpen}
+          onClose={() => {
+            setPaymentModalOpen(false);
+            setSelectedInvoice(null);
+          }}
+          onPaymentSuccess={handlePaymentSuccess}
+        />
       )}
     </div>
   );
