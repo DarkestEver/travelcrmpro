@@ -318,13 +318,14 @@ const Itineraries = () => {
   ];
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Itineraries</h1>
-          <p className="text-gray-600 mt-1">Create and manage travel itineraries</p>
-        </div>
+    <div className="h-screen overflow-y-auto">
+      <div className="space-y-6 p-6 pb-24">
+        {/* Header */}
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Itineraries</h1>
+            <p className="text-gray-600 mt-1">Create and manage travel itineraries</p>
+          </div>
         <div className="flex gap-2">
           <button
             onClick={() => setShowFilterPanel(!showFilterPanel)}
@@ -431,6 +432,7 @@ const Itineraries = () => {
         onClose={() => setShowImportModal(false)}
         onImport={handleImport}
       />
+      </div>
     </div>
   );
 };

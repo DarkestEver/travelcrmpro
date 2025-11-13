@@ -246,13 +246,14 @@ const Quotes = () => {
   ];
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Quotes</h1>
-          <p className="text-gray-600 mt-1">Create and manage travel quotes</p>
-        </div>
+    <div className="h-screen overflow-y-auto">
+      <div className="space-y-6 p-6 pb-24">
+        {/* Header */}
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Quotes</h1>
+            <p className="text-gray-600 mt-1">Create and manage travel quotes</p>
+          </div>
         <button
           onClick={() => {
             setSelectedQuote(null);
@@ -325,6 +326,7 @@ const Quotes = () => {
           entityType="quote"
         />
       )}
+      </div>
     </div>
   );
 };

@@ -265,13 +265,14 @@ const Bookings = () => {
   ];
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Bookings</h1>
-          <p className="text-gray-600 mt-1">Manage travel bookings and reservations</p>
-        </div>
+    <div className="h-screen overflow-y-auto">
+      <div className="space-y-6 p-6 pb-24">
+        {/* Header */}
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Bookings</h1>
+            <p className="text-gray-600 mt-1">Manage travel bookings and reservations</p>
+          </div>
         <button
           onClick={() => {
             setSelectedBooking(null);
@@ -344,6 +345,7 @@ const Bookings = () => {
           entityType="booking"
         />
       )}
+      </div>
     </div>
   );
 };

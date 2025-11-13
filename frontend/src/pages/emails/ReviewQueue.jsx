@@ -230,7 +230,7 @@ const ReviewQueue = () => {
   };
 
   return (
-    <div className="p-6">
+    <div className="p-6 pb-12 min-h-screen">
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900 mb-2">Manual Review Queue</h1>

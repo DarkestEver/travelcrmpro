@@ -428,16 +428,16 @@ const EmailDetail = () => {
   }
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
+    <div className="max-w-7xl mx-auto">
       {/* Header */}
       <div className="mb-6">
         <button
-          onClick={() => navigate('/emails')}
-          className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4"
-        >
-          <ArrowLeft className="w-5 h-5" />
-          Back to Emails
-        </button>
+            onClick={() => navigate('/emails')}
+            className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4"
+          >
+            <ArrowLeft className="w-5 h-5" />
+            Back to Emails
+          </button>
 
         <div className="flex items-center justify-between">
           <div>
