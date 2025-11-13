@@ -9,7 +9,10 @@ const {
   testIMAPConnection,
   testSMTPConnection,
   setAsPrimary,
-  syncEmailAccount
+  syncEmailAccount,
+  addWatcher,
+  removeWatcher,
+  toggleWatcher
 } = require('../controllers/emailAccountController');
 const { protect, authorize } = require('../middleware/auth');
 
@@ -31,5 +34,10 @@ router.post('/:id/test-smtp', testSMTPConnection); // Test SMTP
 // Actions
 router.post('/:id/set-primary', setAsPrimary); // Set as primary
 router.post('/:id/sync', syncEmailAccount); // Manual sync (Phase 2)
+
+// Watcher Management
+router.post('/:id/watchers', addWatcher); // Add watcher
+router.delete('/:id/watchers/:email', removeWatcher); // Remove watcher
+router.patch('/:id/watchers/:email/toggle', toggleWatcher); // Toggle watcher active status
 
 module.exports = router;

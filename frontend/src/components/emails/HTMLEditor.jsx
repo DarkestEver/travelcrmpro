@@ -21,6 +21,19 @@ const HTMLEditor = ({ value, onChange, placeholder }) => {
   useEffect(() => {
     if (editorRef.current && !isUpdating.current) {
       editorRef.current.innerHTML = value || '';
+      
+      // Set cursor at the very beginning
+      setTimeout(() => {
+        if (editorRef.current) {
+          editorRef.current.focus();
+          const range = document.createRange();
+          const sel = window.getSelection();
+          range.setStart(editorRef.current, 0);
+          range.collapse(true);
+          sel.removeAllRanges();
+          sel.addRange(range);
+        }
+      }, 100);
     }
   }, [value]);
 

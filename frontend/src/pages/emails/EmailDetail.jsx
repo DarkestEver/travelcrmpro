@@ -22,7 +22,8 @@ import {
   Edit2,
   Save,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Paperclip
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import emailAPI from '../../services/emailAPI';
@@ -45,12 +46,14 @@ const EmailDetail = () => {
     body: '',
     plainText: '',
     cc: [],
-    bcc: []
+    bcc: [],
+    attachments: []
   });
   const [sendingReply, setSendingReply] = useState(false);
   const [showCcBcc, setShowCcBcc] = useState(false);
   const [ccInput, setCcInput] = useState('');
   const [bccInput, setBccInput] = useState('');
+  const [attachmentFiles, setAttachmentFiles] = useState([]);
   const editorRef = useRef(null);
   
   // Edit mode state
@@ -158,10 +161,34 @@ const EmailDetail = () => {
   };
 
   const handleOpenReplyModal = () => {
-    // Pre-fill reply data
+    // Create the original email section with proper formatting
+    const originalEmailHtml = `
+      <div style="margin-top: 40px; padding-top: 20px; border-top: 2px dashed #999;">
+        <p style="color: #666; font-size: 11px; margin-bottom: 15px; background-color: #f5f5f5; padding: 10px; border-radius: 4px;">
+          <strong>From:</strong> ${email.from?.name || email.from?.email}<br/>
+          <strong>Date:</strong> ${new Date(email.receivedAt).toLocaleString()}<br/>
+          <strong>Subject:</strong> ${email.subject}
+        </p>
+        <div style="color: #333;">
+          ${email.bodyHtml || email.bodyText || ''}
+        </div>
+      </div>
+    `;
+
+    // If there's a generated response, use it at the top with blank lines below
+    // Otherwise, just put blank lines at the top for user to start typing
+    let replyBody;
+    if (email.generatedResponse?.body) {
+      // Blank lines at top for typing + AI generated response + spacing + original email at bottom
+      replyBody = '<p><br/></p><p><br/></p><p><br/></p><p><br/></p><p><br/></p>' + email.generatedResponse.body + '<p><br/></p><p><br/></p><p><br/></p>' + originalEmailHtml;
+    } else {
+      // Just blank space at top + original email at bottom
+      replyBody = '<p><br/></p><p><br/></p><p><br/></p><p><br/></p><p><br/></p>' + originalEmailHtml;
+    }
+    
     setReplyData({
       subject: `Re: ${email.subject}`,
-      body: email.generatedResponse?.body || '',
+      body: replyBody,
       plainText: email.generatedResponse?.plainText || '',
       cc: [],
       bcc: []
@@ -174,7 +201,11 @@ const EmailDetail = () => {
 
   const handleAddCC = () => {
     if (ccInput.trim()) {
-      const emails = ccInput.split(',').map(e => e.trim()).filter(e => e);
+      // Split by comma, semicolon, or colon
+      const emails = ccInput
+        .split(/[,;:]/)
+        .map(e => e.trim())
+        .filter(e => e && e.includes('@'));
       setReplyData({
         ...replyData,
         cc: [...replyData.cc, ...emails]
@@ -185,7 +216,11 @@ const EmailDetail = () => {
 
   const handleAddBCC = () => {
     if (bccInput.trim()) {
-      const emails = bccInput.split(',').map(e => e.trim()).filter(e => e);
+      // Split by comma, semicolon, or colon
+      const emails = bccInput
+        .split(/[,;:]/)
+        .map(e => e.trim())
+        .filter(e => e && e.includes('@'));
       setReplyData({
         ...replyData,
         bcc: [...replyData.bcc, ...emails]
@@ -208,6 +243,15 @@ const EmailDetail = () => {
     });
   };
 
+  const handleAttachmentChange = (e) => {
+    const files = Array.from(e.target.files);
+    setAttachmentFiles([...attachmentFiles, ...files]);
+  };
+
+  const handleRemoveAttachment = (index) => {
+    setAttachmentFiles(attachmentFiles.filter((_, i) => i !== index));
+  };
+
   const handleSendReply = async () => {
     if (!replyData.subject || !replyData.body) {
       toast.error('Please fill in subject and body');
@@ -216,9 +260,31 @@ const EmailDetail = () => {
 
     try {
       setSendingReply(true);
-      await emailAPI.replyToEmail(id, replyData);
+      
+      // Create FormData if there are attachments
+      let dataToSend;
+      if (attachmentFiles.length > 0) {
+        const formData = new FormData();
+        formData.append('subject', replyData.subject);
+        formData.append('body', replyData.body);
+        formData.append('plainText', replyData.plainText || replyData.body.replace(/<[^>]*>/g, ''));
+        formData.append('cc', JSON.stringify(replyData.cc));
+        formData.append('bcc', JSON.stringify(replyData.bcc));
+        
+        // Add attachments
+        attachmentFiles.forEach((file) => {
+          formData.append('attachments', file);
+        });
+        
+        dataToSend = formData;
+      } else {
+        dataToSend = replyData;
+      }
+      
+      await emailAPI.replyToEmail(id, dataToSend);
       toast.success('Reply sent successfully!');
       setShowReplyModal(false);
+      setAttachmentFiles([]); // Clear attachments
       fetchEmail(); // Refresh to show manuallyReplied flag
     } catch (error) {
       console.error('Failed to send reply:', error);
@@ -1392,8 +1458,8 @@ const EmailDetail = () => {
 
       {/* Reply Modal */}
       {showReplyModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-5xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white w-full h-full overflow-y-auto">{/* Full page modal */}
             <div className="p-6 border-b border-gray-200">
               <div className="flex items-center justify-between">
                 <h2 className="text-xl font-bold text-gray-900">Reply to {email.from.email}</h2>
@@ -1477,7 +1543,7 @@ const EmailDetail = () => {
                           }
                         }}
                         className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                        placeholder="email@example.com (press Enter or click Add)"
+                        placeholder="Separate multiple emails with comma, semicolon, or colon"
                       />
                       <button
                         onClick={handleAddCC}
@@ -1523,7 +1589,7 @@ const EmailDetail = () => {
                           }
                         }}
                         className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                        placeholder="email@example.com (press Enter or click Add)"
+                        placeholder="Separate multiple emails with comma, semicolon, or colon"
                       />
                       <button
                         onClick={handleAddBCC}
@@ -1553,6 +1619,53 @@ const EmailDetail = () => {
                   </div>
                 </div>
               )}
+
+              {/* Attachments */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <Paperclip className="w-4 h-4 inline mr-1" />
+                  Attachments
+                </label>
+                <div className="flex items-center gap-2">
+                  <label className="flex-1 cursor-pointer">
+                    <div className="px-4 py-2 border-2 border-dashed border-gray-300 rounded-lg hover:border-indigo-500 text-center">
+                      <input
+                        type="file"
+                        multiple
+                        onChange={handleAttachmentChange}
+                        className="hidden"
+                      />
+                      <span className="text-sm text-gray-600">
+                        Click to select files or drag and drop
+                      </span>
+                    </div>
+                  </label>
+                </div>
+                {attachmentFiles.length > 0 && (
+                  <div className="mt-2 space-y-2">
+                    {attachmentFiles.map((file, index) => (
+                      <div
+                        key={index}
+                        className="flex items-center justify-between px-3 py-2 bg-gray-50 rounded-lg"
+                      >
+                        <div className="flex items-center gap-2">
+                          <Paperclip className="w-4 h-4 text-gray-500" />
+                          <span className="text-sm text-gray-700">{file.name}</span>
+                          <span className="text-xs text-gray-500">
+                            ({(file.size / 1024).toFixed(1)} KB)
+                          </span>
+                        </div>
+                        <button
+                          onClick={() => handleRemoveAttachment(index)}
+                          className="text-red-500 hover:text-red-700"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
 
               {/* Subject */}
               <div>

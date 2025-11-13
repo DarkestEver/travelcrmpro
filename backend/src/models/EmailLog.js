@@ -246,6 +246,30 @@ const emailLogSchema = new mongoose.Schema({
   isArchived: { type: Boolean, default: false },
   isSpam: { type: Boolean, default: false },
   
+  // Email-specific Watchers - Receive this specific email thread
+  watchers: [{
+    email: {
+      type: String,
+      required: true,
+      lowercase: true,
+      trim: true
+    },
+    name: String,
+    addedAt: {
+      type: Date,
+      default: Date.now
+    },
+    addedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
+    },
+    reason: String, // Why they're watching this specific email
+    notifyOnReply: {
+      type: Boolean,
+      default: true
+    }
+  }],
+  
   // Customer/Booking Context
   customerId: {
     type: mongoose.Schema.Types.ObjectId,

@@ -2,10 +2,11 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Mail, Plus, Trash2, TestTube, CheckCircle, XCircle, 
-  Clock, AlertCircle, Star, X, Edit
+  Clock, AlertCircle, Star, X, Edit, Eye, EyeOff, UserPlus, Users
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import emailAccountsAPI from '../../services/emailAccountsAPI';
+import AddWatcherModal from '../../components/modals/AddWatcherModal';
 
 // Provider Presets
 const PROVIDER_PRESETS = {
@@ -401,6 +402,61 @@ function EmailAccountCard({
   testingIMAP,
   testingSMTP
 }) {
+  const queryClient = useQueryClient();
+  const [showWatchers, setShowWatchers] = useState(false);
+  const [showAddWatcherModal, setShowAddWatcherModal] = useState(false);
+
+  // Add Watcher Mutation
+  const addWatcherMutation = useMutation({
+    mutationFn: (watcherData) => emailAccountsAPI.addWatcher(account._id, watcherData),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['emailAccounts']);
+      toast.success('Watcher added successfully!');
+      setShowAddWatcherModal(false);
+    },
+    onError: (error) => {
+      toast.error(error.response?.data?.message || 'Failed to add watcher');
+    }
+  });
+
+  // Remove Watcher Mutation
+  const removeWatcherMutation = useMutation({
+    mutationFn: (email) => emailAccountsAPI.removeWatcher(account._id, email),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['emailAccounts']);
+      toast.success('Watcher removed successfully!');
+    },
+    onError: (error) => {
+      toast.error(error.response?.data?.message || 'Failed to remove watcher');
+    }
+  });
+
+  // Toggle Watcher Mutation
+  const toggleWatcherMutation = useMutation({
+    mutationFn: (email) => emailAccountsAPI.toggleWatcher(account._id, email),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['emailAccounts']);
+      toast.success('Watcher status updated!');
+    },
+    onError: (error) => {
+      toast.error(error.response?.data?.message || 'Failed to update watcher');
+    }
+  });
+
+  const handleAddWatcher = async (watcherData) => {
+    await addWatcherMutation.mutateAsync(watcherData);
+  };
+
+  const handleRemoveWatcher = (email) => {
+    if (window.confirm(`Remove ${email} from watchers?`)) {
+      removeWatcherMutation.mutate(email);
+    }
+  };
+
+  const handleToggleWatcher = (email) => {
+    toggleWatcherMutation.mutate(email);
+  };
+  
   const getStatusBadge = (status) => {
     const styles = {
       success: { icon: CheckCircle, color: 'text-green-600 bg-green-100', text: 'Connected' },
@@ -530,6 +586,126 @@ function EmailAccountCard({
         </div>
       </div>
       
+      {/* Watchers Section */}
+      <div className="mt-4 border-t border-gray-200 pt-4">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <Users size={18} className="text-gray-600" />
+            <h4 className="font-medium text-gray-900">
+              Email Account Watchers
+            </h4>
+            <span className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
+              {account.watchers?.length || 0}
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowAddWatcherModal(true)}
+              className="flex items-center gap-1 px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors text-sm"
+            >
+              <UserPlus size={16} />
+              Add Watcher
+            </button>
+            <button
+              onClick={() => setShowWatchers(!showWatchers)}
+              className="p-1.5 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+            >
+              {showWatchers ? <EyeOff size={18} /> : <Eye size={18} />}
+            </button>
+          </div>
+        </div>
+        
+        {showWatchers && (
+          <div className="space-y-2">
+            {account.watchers && account.watchers.length > 0 ? (
+              account.watchers.map((watcher, index) => (
+                <div
+                  key={index}
+                  className={`flex items-center justify-between p-3 rounded-lg border ${
+                    watcher.isActive 
+                      ? 'bg-green-50 border-green-200' 
+                      : 'bg-gray-50 border-gray-200'
+                  }`}
+                >
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <p className="font-medium text-gray-900">{watcher.email}</p>
+                      {!watcher.isActive && (
+                        <span className="px-2 py-0.5 bg-gray-200 text-gray-600 rounded-full text-xs">
+                          Inactive
+                        </span>
+                      )}
+                      {watcher.role && (
+                        <span className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full text-xs">
+                          {watcher.role}
+                        </span>
+                      )}
+                    </div>
+                    {watcher.name && (
+                      <p className="text-sm text-gray-600 mt-0.5">{watcher.name}</p>
+                    )}
+                    {watcher.description && (
+                      <p className="text-xs text-gray-500 mt-1">{watcher.description}</p>
+                    )}
+                    <p className="text-xs text-gray-400 mt-1">
+                      Added {new Date(watcher.addedAt).toLocaleDateString()}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => handleToggleWatcher(watcher.email)}
+                      className={`p-2 rounded-lg transition-colors ${
+                        watcher.isActive
+                          ? 'text-green-600 hover:bg-green-100'
+                          : 'text-gray-600 hover:bg-gray-100'
+                      }`}
+                      title={watcher.isActive ? 'Deactivate' : 'Activate'}
+                    >
+                      {watcher.isActive ? <Eye size={16} /> : <EyeOff size={16} />}
+                    </button>
+                    <button
+                      onClick={() => handleRemoveWatcher(watcher.email)}
+                      className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                      title="Remove Watcher"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="text-center py-6 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+                <Users size={32} className="mx-auto text-gray-400 mb-2" />
+                <p className="text-sm text-gray-600">No watchers configured</p>
+                <p className="text-xs text-gray-500 mt-1">
+                  Watchers will receive BCC copies of all emails from this account
+                </p>
+                <button
+                  onClick={() => setShowAddWatcherModal(true)}
+                  className="mt-3 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
+                >
+                  Add First Watcher
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+        
+        {!showWatchers && account.watchers && account.watchers.length > 0 && (
+          <div className="text-sm text-gray-500">
+            Click the eye icon to view {account.watchers.length} watcher{account.watchers.length > 1 ? 's' : ''}
+          </div>
+        )}
+      </div>
+      
+      {/* Add Watcher Modal */}
+      <AddWatcherModal
+        isOpen={showAddWatcherModal}
+        onClose={() => setShowAddWatcherModal(false)}
+        onAdd={handleAddWatcher}
+        title="Add Email Account Watcher"
+      />
+      
       {/* Last Tested Info */}
       {(account.imap?.lastTestedAt || account.smtp?.lastTestedAt) && (
         <div className="mt-4 text-xs text-gray-500 text-right">
@@ -565,7 +741,15 @@ function AddEmailAccountForm({ onClose, onSubmit, isSubmitting }) {
       username: '',
       password: '',
       fromName: ''
-    }
+    },
+    watchers: [] // New: Watchers list
+  });
+  
+  // Watchers management state
+  const [watcherInput, setWatcherInput] = useState({
+    email: '',
+    name: '',
+    role: 'other'
   });
   
   const handleProviderChange = (provider) => {

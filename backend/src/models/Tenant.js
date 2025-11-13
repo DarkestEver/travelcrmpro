@@ -452,6 +452,36 @@ const tenantSchema = new mongoose.Schema(
       enum: ['active', 'inactive', 'suspended'],
       default: 'active',
     },
+    
+    // Global Watchers - Receive ALL emails from this tenant
+    globalWatchers: [{
+      email: {
+        type: String,
+        required: true,
+        lowercase: true,
+        trim: true
+      },
+      name: String,
+      role: {
+        type: String,
+        enum: ['owner', 'manager', 'supervisor', 'auditor', 'compliance', 'other'],
+        default: 'other'
+      },
+      addedAt: {
+        type: Date,
+        default: Date.now
+      },
+      addedBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
+      },
+      isActive: {
+        type: Boolean,
+        default: true
+      },
+      description: String // Why this person is watching
+    }],
+    
     // Database configuration (for future database-per-tenant approach)
     database: {
       type: {

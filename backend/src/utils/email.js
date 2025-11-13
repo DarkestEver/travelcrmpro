@@ -174,7 +174,42 @@ const sendQuoteEmail = async (quote, agent, customer) => {
     </div>
   `;
 
-  await sendEmail({
+  // Get tenant's email account for SMTP
+  const EmailAccount = require('../models/EmailAccount');
+  const emailAccount = await EmailAccount.findOne({ 
+    tenantId: agent.tenantId || quote.tenantId,
+    isActive: true,
+    'smtp.enabled': true
+  }).select('+smtp.password');
+
+  if (!emailAccount) {
+    console.error('❌ No active SMTP email account configured for tenant');
+    throw new Error('No active SMTP email account configured. Please configure an email account in settings.');
+  }
+
+  // Decrypt password using Mongoose getter
+  const accountObj = emailAccount.toObject({ getters: true });
+
+  // Create nodemailer transporter with tenant's SMTP settings
+  const nodemailer = require('nodemailer');
+  const tenantTransporter = nodemailer.createTransport({
+    host: accountObj.smtp.host,
+    port: accountObj.smtp.port,
+    secure: accountObj.smtp.secure,
+    auth: {
+      user: accountObj.smtp.username,
+      pass: accountObj.smtp.password
+    },
+    tls: {
+      rejectUnauthorized: false
+    }
+  });
+
+  // Send email using tenant's SMTP
+  const mailOptions = {
+    from: accountObj.smtp.fromName 
+      ? `"${accountObj.smtp.fromName}" <${accountObj.smtp.username}>`
+      : accountObj.smtp.username,
     to: customer.email,
     subject: `Travel Quote ${quote.quoteNumber} - ${agent.agencyName}`,
     html,
@@ -184,7 +219,34 @@ const sendQuoteEmail = async (quote, agent, customer) => {
         path: quote.pdfUrl,
       }
     ] : [],
+  };
+
+  // Add watchers to BCC (they should receive all outgoing emails)
+  const watcherService = require('../services/watcherService');
+  const watchers = await watcherService.collectAllWatchers({
+    tenantId: agent.tenantId || quote.tenantId,
+    emailAccount: accountObj,
+    entityWatchers: quote.watchers || [], // If quote has specific watchers
+    excludeEmails: [customer.email, accountObj.smtp.username]
   });
+  
+  if (watchers.length > 0) {
+    mailOptions.bcc = watchers.join(', ');
+    console.log(`👁️  Added ${watchers.length} watchers to BCC`);
+  }
+
+  console.log('📤 Sending quote email via tenant SMTP:', {
+    host: accountObj.smtp.host,
+    port: accountObj.smtp.port,
+    from: accountObj.smtp.username,
+    to: customer.email,
+    bcc: mailOptions.bcc || 'none'
+  });
+
+  const info = await tenantTransporter.sendMail(mailOptions);
+  console.log('✅ Quote email sent successfully. MessageId:', info.messageId);
+  
+  return { success: true, messageId: info.messageId };
 };
 
 // Send booking confirmation email
@@ -219,7 +281,42 @@ const sendBookingConfirmationEmail = async (booking, agent, customer) => {
     </div>
   `;
 
-  await sendEmail({
+  // Get tenant's email account for SMTP
+  const EmailAccount = require('../models/EmailAccount');
+  const emailAccount = await EmailAccount.findOne({ 
+    tenantId: agent.tenantId || booking.tenantId,
+    isActive: true,
+    'smtp.enabled': true
+  }).select('+smtp.password');
+
+  if (!emailAccount) {
+    console.error('❌ No active SMTP email account configured for tenant');
+    throw new Error('No active SMTP email account configured. Please configure an email account in settings.');
+  }
+
+  // Decrypt password using Mongoose getter
+  const accountObj = emailAccount.toObject({ getters: true });
+
+  // Create nodemailer transporter with tenant's SMTP settings
+  const nodemailer = require('nodemailer');
+  const tenantTransporter = nodemailer.createTransport({
+    host: accountObj.smtp.host,
+    port: accountObj.smtp.port,
+    secure: accountObj.smtp.secure,
+    auth: {
+      user: accountObj.smtp.username,
+      pass: accountObj.smtp.password
+    },
+    tls: {
+      rejectUnauthorized: false
+    }
+  });
+
+  // Send email using tenant's SMTP
+  const mailOptions = {
+    from: accountObj.smtp.fromName 
+      ? `"${accountObj.smtp.fromName}" <${accountObj.smtp.username}>`
+      : accountObj.smtp.username,
     to: customer.email,
     subject: `Booking Confirmation ${booking.bookingNumber}`,
     html,
@@ -229,7 +326,34 @@ const sendBookingConfirmationEmail = async (booking, agent, customer) => {
         path: booking.voucherUrl,
       }
     ] : [],
+  };
+
+  // Add watchers to BCC (they should receive all outgoing emails)
+  const watcherService = require('../services/watcherService');
+  const watchers = await watcherService.collectAllWatchers({
+    tenantId: agent.tenantId || booking.tenantId,
+    emailAccount: accountObj,
+    entityWatchers: booking.watchers || [], // If booking has specific watchers
+    excludeEmails: [customer.email, accountObj.smtp.username]
   });
+  
+  if (watchers.length > 0) {
+    mailOptions.bcc = watchers.join(', ');
+    console.log(`👁️  Added ${watchers.length} watchers to BCC`);
+  }
+
+  console.log('📤 Sending booking confirmation via tenant SMTP:', {
+    host: accountObj.smtp.host,
+    port: accountObj.smtp.port,
+    from: accountObj.smtp.username,
+    to: customer.email,
+    bcc: mailOptions.bcc || 'none'
+  });
+
+  const info = await tenantTransporter.sendMail(mailOptions);
+  console.log('✅ Booking confirmation sent successfully. MessageId:', info.messageId);
+  
+  return { success: true, messageId: info.messageId };
 };
 
 // Send agent approval email

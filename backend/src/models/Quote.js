@@ -171,6 +171,31 @@ const quoteSchema = new mongoose.Schema({
   viewedAt: Date,
   respondedAt: Date,
   rejectionReason: String,
+  
+  // Quote-specific Watchers
+  watchers: [{
+    email: {
+      type: String,
+      required: true,
+      lowercase: true,
+      trim: true
+    },
+    name: String,
+    addedAt: {
+      type: Date,
+      default: Date.now
+    },
+    addedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
+    },
+    reason: String,
+    notifyOnReply: {
+      type: Boolean,
+      default: true
+    }
+  }],
+  
   notes: [{
     text: String,
     createdBy: String,

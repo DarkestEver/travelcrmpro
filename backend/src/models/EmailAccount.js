@@ -236,6 +236,30 @@ const emailAccountSchema = new mongoose.Schema({
   
   lastFetchError: String, // Last error message if fetch failed
   
+  // Watchers - CC all outgoing emails to these addresses
+  watchers: [{
+    email: {
+      type: String,
+      required: true,
+      lowercase: true,
+      trim: true
+    },
+    name: String,
+    role: {
+      type: String,
+      enum: ['manager', 'supervisor', 'auditor', 'backup', 'other'],
+      default: 'other'
+    },
+    addedAt: {
+      type: Date,
+      default: Date.now
+    },
+    isActive: {
+      type: Boolean,
+      default: true
+    }
+  }],
+  
   // Stats
   stats: {
     emailsReceived: {

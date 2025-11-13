@@ -53,6 +53,22 @@ const emailAccountsAPI = {
   sync: async (id) => {
     const response = await api.post(`/email-accounts/${id}/sync`);
     return response.data;
+  },
+  
+  // Watcher Management
+  addWatcher: async (id, watcherData) => {
+    const response = await api.post(`/email-accounts/${id}/watchers`, watcherData);
+    return response.data;
+  },
+  
+  removeWatcher: async (id, email) => {
+    const response = await api.delete(`/email-accounts/${id}/watchers/${encodeURIComponent(email)}`);
+    return response.data;
+  },
+  
+  toggleWatcher: async (id, email) => {
+    const response = await api.patch(`/email-accounts/${id}/watchers/${encodeURIComponent(email)}/toggle`);
+    return response.data;
   }
 };
 

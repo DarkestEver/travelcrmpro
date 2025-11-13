@@ -603,3 +603,165 @@ async function testSMTPConfig(config) {
     }, 10000);
   });
 }
+
+/**
+ * @desc    Add watcher to email account
+ * @route   POST /api/v1/email-accounts/:id/watchers
+ * @access  Private (Admin, Super Admin, Operator)
+ */
+exports.addWatcher = async (req, res) => {
+  try {
+    const { email, name, role, description } = req.body;
+    
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email is required'
+      });
+    }
+    
+    const emailAccount = await EmailAccount.findOne({
+      _id: req.params.id,
+      tenantId: req.user.tenantId
+    });
+    
+    if (!emailAccount) {
+      return res.status(404).json({
+        success: false,
+        message: 'Email account not found'
+      });
+    }
+    
+    // Check if watcher already exists
+    const existingWatcher = emailAccount.watchers.find(w => w.email === email.toLowerCase());
+    if (existingWatcher) {
+      return res.status(400).json({
+        success: false,
+        message: 'This email is already a watcher'
+      });
+    }
+    
+    // Add watcher
+    emailAccount.watchers.push({
+      email: email.toLowerCase().trim(),
+      name,
+      role: role || 'other',
+      description,
+      addedAt: new Date(),
+      addedBy: req.user._id,
+      isActive: true
+    });
+    
+    await emailAccount.save();
+    
+    res.json({
+      success: true,
+      message: 'Watcher added successfully',
+      data: emailAccount.watchers
+    });
+  } catch (error) {
+    console.error('Error adding watcher:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error adding watcher',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * @desc    Remove watcher from email account
+ * @route   DELETE /api/v1/email-accounts/:id/watchers/:email
+ * @access  Private (Admin, Super Admin, Operator)
+ */
+exports.removeWatcher = async (req, res) => {
+  try {
+    const watcherEmail = decodeURIComponent(req.params.email).toLowerCase();
+    
+    const emailAccount = await EmailAccount.findOne({
+      _id: req.params.id,
+      tenantId: req.user.tenantId
+    });
+    
+    if (!emailAccount) {
+      return res.status(404).json({
+        success: false,
+        message: 'Email account not found'
+      });
+    }
+    
+    // Remove watcher
+    const initialLength = emailAccount.watchers.length;
+    emailAccount.watchers = emailAccount.watchers.filter(w => w.email !== watcherEmail);
+    
+    if (emailAccount.watchers.length === initialLength) {
+      return res.status(404).json({
+        success: false,
+        message: 'Watcher not found'
+      });
+    }
+    
+    await emailAccount.save();
+    
+    res.json({
+      success: true,
+      message: 'Watcher removed successfully',
+      data: emailAccount.watchers
+    });
+  } catch (error) {
+    console.error('Error removing watcher:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error removing watcher',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * @desc    Toggle watcher active status
+ * @route   PATCH /api/v1/email-accounts/:id/watchers/:email/toggle
+ * @access  Private (Admin, Super Admin, Operator)
+ */
+exports.toggleWatcher = async (req, res) => {
+  try {
+    const watcherEmail = decodeURIComponent(req.params.email).toLowerCase();
+    
+    const emailAccount = await EmailAccount.findOne({
+      _id: req.params.id,
+      tenantId: req.user.tenantId
+    });
+    
+    if (!emailAccount) {
+      return res.status(404).json({
+        success: false,
+        message: 'Email account not found'
+      });
+    }
+    
+    // Find and toggle watcher
+    const watcher = emailAccount.watchers.find(w => w.email === watcherEmail);
+    if (!watcher) {
+      return res.status(404).json({
+        success: false,
+        message: 'Watcher not found'
+      });
+    }
+    
+    watcher.isActive = !watcher.isActive;
+    await emailAccount.save();
+    
+    res.json({
+      success: true,
+      message: `Watcher ${watcher.isActive ? 'activated' : 'deactivated'} successfully`,
+      data: emailAccount.watchers
+    });
+  } catch (error) {
+    console.error('Error toggling watcher:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error toggling watcher',
+      error: error.message
+    });
+  }
+};

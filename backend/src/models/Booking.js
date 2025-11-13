@@ -122,6 +122,31 @@ const bookingSchema = new mongoose.Schema({
   },
   specialRequests: String,
   internalNotes: String,
+  
+  // Booking-specific Watchers
+  watchers: [{
+    email: {
+      type: String,
+      required: true,
+      lowercase: true,
+      trim: true
+    },
+    name: String,
+    addedAt: {
+      type: Date,
+      default: Date.now
+    },
+    addedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
+    },
+    reason: String,
+    notifyOnReply: {
+      type: Boolean,
+      default: true
+    }
+  }],
+  
   createdBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',

@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const emailController = require('../controllers/emailController');
 const { protect } = require('../middleware/auth');
+const upload = require('../middleware/upload');
 
 // Public webhook endpoint (no auth - secured by secret token)
 router.post('/webhook', emailController.receiveEmail);
@@ -21,7 +22,7 @@ router.post('/:id/extract', emailController.extractData);
 router.post('/:id/match', emailController.matchPackages);
 router.post('/:id/respond', emailController.generateResponse);
 router.post('/:id/retry', emailController.retryProcessing); // NEW: Retry failed processing
-router.post('/:id/reply', emailController.replyToEmail); // NEW: Manual reply from UI
+router.post('/:id/reply', upload.array('attachments', 10), emailController.replyToEmail); // NEW: Manual reply from UI with attachments
 router.post('/:id/forward', emailController.forwardEmail); // NEW: Forward email to another recipient
 router.patch('/:id/extracted-data', emailController.updateExtractedData); // NEW: Update extracted data
 

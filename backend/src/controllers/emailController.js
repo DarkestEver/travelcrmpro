@@ -763,7 +763,28 @@ class EmailController {
   async replyToEmail(req, res) {
     try {
       const { id } = req.params;
-      const { subject, body, plainText, cc, bcc } = req.body;
+      
+      // Handle both JSON and FormData (for attachments)
+      let subject, body, plainText, cc, bcc;
+      let attachments = [];
+      
+      if (req.files && req.files.length > 0) {
+        // FormData with attachments
+        subject = req.body.subject;
+        body = req.body.body;
+        plainText = req.body.plainText;
+        cc = req.body.cc ? JSON.parse(req.body.cc) : [];
+        bcc = req.body.bcc ? JSON.parse(req.body.bcc) : [];
+        attachments = req.files;
+      } else {
+        // Regular JSON
+        subject = req.body.subject;
+        body = req.body.body;
+        plainText = req.body.plainText;
+        cc = req.body.cc;
+        bcc = req.body.bcc;
+      }
+      
       const userId = req.user?.id;
       const tenantId = req.user?.tenantId;
 
@@ -835,8 +856,36 @@ class EmailController {
       });
 
       // Prepare CC and BCC arrays
-      const ccEmails = Array.isArray(cc) ? cc : (cc ? [cc] : []);
-      const bccEmails = Array.isArray(bcc) ? bcc : (bcc ? [bcc] : []);
+      let ccEmails = Array.isArray(cc) ? cc : (cc ? [cc] : []);
+      let bccEmails = Array.isArray(bcc) ? bcc : (bcc ? [bcc] : []);
+
+      // Add original CC recipients from the email we're replying to (Reply-All behavior)
+      if (email.cc && email.cc.length > 0) {
+        const originalCcEmails = email.cc.map(c => c.email).filter(e => 
+          e && 
+          e !== accountObj.smtp.username && // Don't CC ourselves
+          !ccEmails.includes(e) // Avoid duplicates
+        );
+        ccEmails = [...ccEmails, ...originalCcEmails];
+        console.log(`📋 Added ${originalCcEmails.length} original CC recipients (Reply-All)`);
+      }
+
+      // Collect all watchers from three levels using watcher service
+      const watcherService = require('../services/watcherService');
+      const watchers = await watcherService.collectAllWatchers({
+        tenantId,
+        emailAccount: accountObj,
+        entityWatchers: email.watchers || [],
+        excludeEmails: [email.from.email, accountObj.smtp.username]
+      });
+      
+      // Add watchers to BCC
+      bccEmails = watcherService.addWatchersToBCC(
+        bccEmails,
+        ccEmails,
+        watchers,
+        email.from.email
+      );
 
       // Send reply email using tenant's SMTP
       console.log('📤 Sending reply via tenant SMTP:', {
@@ -846,7 +895,8 @@ class EmailController {
         from: accountObj.smtp.username,
         to: email.from.email,
         cc: ccEmails,
-        bcc: bccEmails
+        bcc: bccEmails,
+        attachments: attachments.length
       });
 
       const mailOptions = {
@@ -870,6 +920,15 @@ class EmailController {
       // Add BCC if provided
       if (bccEmails.length > 0) {
         mailOptions.bcc = bccEmails.join(', ');
+      }
+
+      // Add attachments if provided
+      if (attachments.length > 0) {
+        mailOptions.attachments = attachments.map(file => ({
+          filename: file.originalname,
+          path: file.path,
+          contentType: file.mimetype
+        }));
       }
 
       const sendResult = await transporter.sendMail(mailOptions);
@@ -907,6 +966,14 @@ class EmailController {
         const ccForLog = ccEmails.map(email => ({ email, name: email }));
         const bccForLog = bccEmails.map(email => ({ email, name: email }));
         
+        // Prepare attachments for saving
+        const attachmentsForLog = attachments.map(file => ({
+          filename: file.originalname,
+          size: file.size,
+          contentType: file.mimetype,
+          path: file.path
+        }));
+        
         const sentReplyEmail = await EmailLog.create({
           messageId: sentMessageId,
           trackingId: trackingId, // 🆕 Store tracking ID
@@ -932,6 +999,7 @@ class EmailController {
           sentBy: userId,
           inReplyTo: email.messageId,
           references: email.references ? [...email.references, email.messageId] : [email.messageId],
+          attachments: attachmentsForLog, // 🆕 Store attachments
           
           // Threading metadata - link to parent
           threadMetadata: {
@@ -979,13 +1047,27 @@ class EmailController {
         // Don't fail the request - email was sent successfully
       }
 
+      // Cleanup temporary attachment files
+      if (attachments.length > 0) {
+        const fs = require('fs');
+        attachments.forEach(file => {
+          try {
+            fs.unlinkSync(file.path);
+            console.log(`🗑️  Cleaned up temp file: ${file.filename}`);
+          } catch (cleanupError) {
+            console.error(`⚠️  Failed to cleanup temp file ${file.filename}:`, cleanupError.message);
+          }
+        });
+      }
+
       res.json({
         success: true,
         message: 'Reply sent successfully',
         data: {
           emailId: email._id,
           responseSentAt: email.responseSentAt,
-          responseId: sentMessageId
+          responseId: sentMessageId,
+          attachmentCount: attachments.length
         }
       });
     } catch (error) {
