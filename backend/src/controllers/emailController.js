@@ -768,23 +768,55 @@ class EmailController {
       let subject, body, plainText, cc, bcc;
       let attachments = [];
       
+      console.log('📥 Backend - Received request body:', {
+        hasFiles: req.files && req.files.length > 0,
+        bodyKeys: Object.keys(req.body),
+        ccRaw: req.body.cc,
+        bccRaw: req.body.bcc
+      });
+
+      // Helper function to safely parse email arrays
+      const parseEmailArray = (value) => {
+        console.log('🔧 Parsing email array:', { value, type: typeof value, isArray: Array.isArray(value) });
+        if (!value) return [];
+        if (Array.isArray(value)) return value.filter(email => email && email.trim() !== '[]');
+        if (typeof value === 'string') {
+          // Handle empty string
+          if (value.trim() === '' || value.trim() === '[]') return [];
+          
+          // Try to parse as JSON
+          try {
+            const parsed = JSON.parse(value);
+            if (Array.isArray(parsed)) {
+              return parsed.filter(email => email && email.trim() !== '[]');
+            }
+            return [];
+          } catch (e) {
+            // If not JSON, treat as comma-separated emails
+            return value.split(',').map(e => e.trim()).filter(e => e && e !== '[]');
+          }
+        }
+        return [];
+      };
+
       if (req.files && req.files.length > 0) {
         // FormData with attachments
         subject = req.body.subject;
         body = req.body.body;
         plainText = req.body.plainText;
-        cc = req.body.cc ? JSON.parse(req.body.cc) : [];
-        bcc = req.body.bcc ? JSON.parse(req.body.bcc) : [];
+        cc = parseEmailArray(req.body.cc);
+        bcc = parseEmailArray(req.body.bcc);
         attachments = req.files;
       } else {
         // Regular JSON
         subject = req.body.subject;
         body = req.body.body;
         plainText = req.body.plainText;
-        cc = req.body.cc;
-        bcc = req.body.bcc;
+        cc = parseEmailArray(req.body.cc);
+        bcc = parseEmailArray(req.body.bcc);
       }
       
+      console.log('✅ Backend - Parsed CC/BCC:', { cc, bcc });
       const userId = req.user?.id;
       const tenantId = req.user?.tenantId;
 
@@ -823,21 +855,33 @@ class EmailController {
       // Decrypt password using Mongoose getter
       const accountObj = emailAccount.toObject({ getters: true });
 
-      // 🆕 Generate tracking ID for this email
+      // 🆕 Check if email body already contains a tracking ID (from previous emails in thread)
       const EmailTrackingService = require('../services/emailTrackingService');
-      const trackingId = await EmailTrackingService.generateTrackingId(tenantId, email.from.email);
+      let trackingId = null;
       
-      // Inject tracking ID into email body
+      // Extract existing tracking ID from body if present
+      const existingTrackingIdMatch = body.match(/[A-Z]{3}-[A-Z0-9]{5}-\d{6}/);
+      
+      if (existingTrackingIdMatch) {
+        trackingId = existingTrackingIdMatch[0];
+        console.log(`♻️  Reusing existing tracking ID from thread: ${trackingId}`);
+      } else {
+        // Generate new tracking ID only if none exists
+        trackingId = await EmailTrackingService.generateTrackingId(tenantId, email.from.email);
+        console.log(`📋 Generated new tracking ID: ${trackingId}`);
+      }
+      
+      // Inject tracking ID into email body (if not already present)
       let emailBodyWithTracking = body;
       let plainTextWithTracking = plainText || body.replace(/<[^>]*>/g, '');
       
-      if (trackingId) {
+      if (trackingId && !existingTrackingIdMatch) {
+        // Only inject if tracking ID doesn't already exist in body
         emailBodyWithTracking = EmailTrackingService.injectTrackingId(body, trackingId);
         plainTextWithTracking = EmailTrackingService.injectTrackingIdPlainText(
           plainText || body.replace(/<[^>]*>/g, ''),
           trackingId
         );
-        console.log(`📋 Generated tracking ID: ${trackingId}`);
       }
 
       // Create nodemailer transporter with tenant's SMTP settings
@@ -855,9 +899,9 @@ class EmailController {
         }
       });
 
-      // Prepare CC and BCC arrays
-      let ccEmails = Array.isArray(cc) ? cc : (cc ? [cc] : []);
-      let bccEmails = Array.isArray(bcc) ? bcc : (bcc ? [bcc] : []);
+      // Prepare CC and BCC arrays (already parsed and validated)
+      let ccEmails = [...cc];
+      let bccEmails = [...bcc];
 
       // Add original CC recipients from the email we're replying to (Reply-All behavior)
       if (email.cc && email.cc.length > 0) {
@@ -1401,6 +1445,434 @@ class EmailController {
       res.status(500).json({
         success: false,
         message: 'Failed to rebuild thread',
+        error: error.message
+      });
+    }
+  }
+
+  /**
+   * Search emails by sender email address
+   * GET /api/v1/emails/search-by-email?email=customer@example.com
+   */
+  async searchByEmail(req, res) {
+    try {
+      const { email } = req.query;
+      
+      if (!email) {
+        return res.status(400).json({
+          success: false,
+          message: 'Email address is required'
+        });
+      }
+
+      // Search for emails from this sender in the same tenant
+      const emails = await EmailLog.find({
+        'from.email': { $regex: new RegExp(`^${email}$`, 'i') },
+        tenantId: req.user.tenantId
+      })
+      .select('subject category processingStatus receivedDate extractedData from to')
+      .sort({ receivedDate: -1 })
+      .limit(50);
+
+      res.json({
+        success: true,
+        data: emails,
+        count: emails.length
+      });
+    } catch (error) {
+      console.error('Search by email error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to search emails',
+        error: error.message
+      });
+    }
+  }
+
+  /**
+   * Update email category and optionally link to parent query
+   * PATCH /api/v1/emails/:id/category
+   * Body: { category, parentQueryId?, isDuplicate? }
+   */
+  async updateEmailCategory(req, res) {
+    try {
+      const { id } = req.params;
+      const { category, parentQueryId, isDuplicate } = req.body;
+
+      // Validate category
+      const validCategories = ['CUSTOMER', 'SUPPLIER', 'AGENT', 'FINANCE', 'OTHER'];
+      if (!category || !validCategories.includes(category)) {
+        return res.status(400).json({
+          success: false,
+          message: `Invalid category. Must be one of: ${validCategories.join(', ')}`
+        });
+      }
+
+      // Find the email
+      const email = await EmailLog.findOne({
+        _id: id,
+        tenantId: req.user.tenantId
+      });
+
+      if (!email) {
+        return res.status(404).json({
+          success: false,
+          message: 'Email not found'
+        });
+      }
+
+      // Update category
+      email.category = category;
+
+      // If linking to parent query
+      if (parentQueryId) {
+        // Validate parent exists and belongs to same tenant
+        const parentEmail = await EmailLog.findOne({
+          _id: parentQueryId,
+          tenantId: req.user.tenantId
+        });
+
+        if (!parentEmail) {
+          return res.status(404).json({
+            success: false,
+            message: 'Parent query not found'
+          });
+        }
+
+        // Set parent relationship
+        email.parentQueryId = parentQueryId;
+        email.isDuplicate = isDuplicate || false;
+
+        // Update parent's childQueries array if not already present
+        if (!parentEmail.childQueries) {
+          parentEmail.childQueries = [];
+        }
+        if (!parentEmail.childQueries.includes(email._id)) {
+          parentEmail.childQueries.push(email._id);
+          await parentEmail.save();
+        }
+
+        // Update thread information
+        if (parentEmail.threadId) {
+          email.threadId = parentEmail.threadId;
+        }
+
+        // Add conversation entry to parent (for audit trail)
+        if (!parentEmail.conversationHistory) {
+          parentEmail.conversationHistory = [];
+        }
+        parentEmail.conversationHistory.push({
+          timestamp: new Date(),
+          action: 'LINKED_DUPLICATE',
+          actor: req.user.email,
+          details: {
+            linkedEmailId: email._id,
+            linkedEmailSubject: email.subject,
+            linkedEmailDate: email.receivedDate
+          }
+        });
+        await parentEmail.save();
+      }
+
+      // Add to email's own conversation history
+      if (!email.conversationHistory) {
+        email.conversationHistory = [];
+      }
+      email.conversationHistory.push({
+        timestamp: new Date(),
+        action: parentQueryId ? 'RECATEGORIZED_AND_LINKED' : 'RECATEGORIZED',
+        actor: req.user.email,
+        details: {
+          oldCategory: email.category,
+          newCategory: category,
+          parentQueryId: parentQueryId || null
+        }
+      });
+
+      await email.save();
+
+      res.json({
+        success: true,
+        message: parentQueryId 
+          ? 'Email re-categorized and linked to existing query'
+          : 'Email re-categorized successfully',
+        data: email
+      });
+    } catch (error) {
+      console.error('Update email category error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to update email category',
+        error: error.message
+      });
+    }
+  }
+
+  /**
+   * Re-categorize email with optional duplicate linking
+   * PATCH /api/v1/emails/:id/recategorize
+   * Body: { category, parentQueryId?, isDuplicate? }
+   */
+  async recategorizeEmail(req, res) {
+    try {
+      const { id } = req.params;
+      const { category, parentQueryId, isDuplicate } = req.body;
+
+      // Validate category
+      const validCategories = ['CUSTOMER', 'SUPPLIER', 'AGENT', 'FINANCE', 'OTHER'];
+      if (!category || !validCategories.includes(category)) {
+        return res.status(400).json({
+          success: false,
+          message: `Invalid category. Must be one of: ${validCategories.join(', ')}`
+        });
+      }
+
+      // Find the email
+      const email = await EmailLog.findOne({
+        _id: id,
+        tenantId: req.user.tenantId
+      });
+
+      if (!email) {
+        return res.status(404).json({
+          success: false,
+          message: 'Email not found'
+        });
+      }
+
+      const oldCategory = email.category;
+
+      // Update category
+      email.category = category;
+
+      // If linking to parent query
+      if (parentQueryId) {
+        // Validate parent exists and belongs to same tenant
+        const parentEmail = await EmailLog.findOne({
+          _id: parentQueryId,
+          tenantId: req.user.tenantId
+        });
+
+        if (!parentEmail) {
+          return res.status(404).json({
+            success: false,
+            message: 'Parent query not found'
+          });
+        }
+
+        // Link as child query
+        email.parentQueryId = parentQueryId;
+        email.isDuplicate = isDuplicate || true;
+
+        // Add this email to parent's childQueries if not already there
+        if (!parentEmail.childQueries) {
+          parentEmail.childQueries = [];
+        }
+        if (!parentEmail.childQueries.includes(email._id)) {
+          parentEmail.childQueries.push(email._id);
+        }
+
+        // Update parent's conversation history
+        if (!parentEmail.conversationHistory) {
+          parentEmail.conversationHistory = [];
+        }
+        parentEmail.conversationHistory.push({
+          timestamp: new Date(),
+          action: 'LINKED_DUPLICATE',
+          actor: req.user?.email || 'SYSTEM',
+          details: {
+            linkedEmailId: email._id,
+            linkedEmailSubject: email.subject,
+            linkedEmailFrom: email.from.email,
+            linkedEmailDate: email.receivedAt
+          }
+        });
+        await parentEmail.save();
+      }
+
+      // Add to email's own conversation history
+      if (!email.conversationHistory) {
+        email.conversationHistory = [];
+      }
+      email.conversationHistory.push({
+        timestamp: new Date(),
+        action: parentQueryId ? 'RECATEGORIZED_AND_LINKED' : 'RECATEGORIZED',
+        actor: req.user?.email || 'SYSTEM',
+        details: {
+          oldCategory,
+          newCategory: category,
+          parentQueryId: parentQueryId || null
+        }
+      });
+
+      await email.save();
+
+      res.json({
+        success: true,
+        message: parentQueryId 
+          ? 'Email re-categorized and linked to existing query'
+          : 'Email re-categorized successfully',
+        data: email
+      });
+    } catch (error) {
+      console.error('Recategorize email error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to re-categorize email',
+        error: error.message
+      });
+    }
+  }
+
+  /**
+   * Search existing queries for duplicate detection
+   * GET /api/v1/emails/search-queries?q=searchTerm
+   */
+  async searchQueries(req, res) {
+    try {
+      const { q } = req.query;
+
+      if (!q || q.trim().length < 2) {
+        return res.json({
+          success: true,
+          data: []
+        });
+      }
+
+      const searchTerm = q.trim();
+
+      // Search in customer emails (from email, subject, extracted customer name)
+      const queries = await EmailLog.find({
+        tenantId: req.user.tenantId,
+        category: 'CUSTOMER',
+        $or: [
+          { 'from.email': { $regex: searchTerm, $options: 'i' } },
+          { 'from.name': { $regex: searchTerm, $options: 'i' } },
+          { subject: { $regex: searchTerm, $options: 'i' } },
+          { 'extractedData.customer.name': { $regex: searchTerm, $options: 'i' } },
+          { 'extractedData.customer.email': { $regex: searchTerm, $options: 'i' } }
+        ]
+      })
+      .select('_id from subject receivedAt extractedData.customer category childQueries')
+      .sort({ receivedAt: -1 })
+      .limit(20)
+      .lean();
+
+      res.json({
+        success: true,
+        data: queries
+      });
+    } catch (error) {
+      console.error('Search queries error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to search queries',
+        error: error.message
+      });
+    }
+  }
+
+  /**
+   * Link email to parent query as child
+   * POST /api/v1/emails/:id/link-query
+   * Body: { parentQueryId }
+   */
+  async linkToQuery(req, res) {
+    try {
+      const { id } = req.params;
+      const { parentQueryId } = req.body;
+
+      if (!parentQueryId) {
+        return res.status(400).json({
+          success: false,
+          message: 'Parent query ID is required'
+        });
+      }
+
+      // Find the email
+      const email = await EmailLog.findOne({
+        _id: id,
+        tenantId: req.user.tenantId
+      });
+
+      if (!email) {
+        return res.status(404).json({
+          success: false,
+          message: 'Email not found'
+        });
+      }
+
+      // Find parent email
+      const parentEmail = await EmailLog.findOne({
+        _id: parentQueryId,
+        tenantId: req.user.tenantId
+      });
+
+      if (!parentEmail) {
+        return res.status(404).json({
+          success: false,
+          message: 'Parent query not found'
+        });
+      }
+
+      // Link as child query
+      email.parentQueryId = parentQueryId;
+      email.isDuplicate = true;
+
+      // Add this email to parent's childQueries if not already there
+      if (!parentEmail.childQueries) {
+        parentEmail.childQueries = [];
+      }
+      if (!parentEmail.childQueries.includes(email._id)) {
+        parentEmail.childQueries.push(email._id);
+      }
+
+      // Update parent's conversation history
+      if (!parentEmail.conversationHistory) {
+        parentEmail.conversationHistory = [];
+      }
+      parentEmail.conversationHistory.push({
+        timestamp: new Date(),
+        action: 'LINKED_DUPLICATE',
+        actor: req.user?.email || 'SYSTEM',
+        details: {
+          linkedEmailId: email._id,
+          linkedEmailSubject: email.subject,
+          linkedEmailFrom: email.from.email,
+          linkedEmailDate: email.receivedAt
+        }
+      });
+
+      // Update email's conversation history
+      if (!email.conversationHistory) {
+        email.conversationHistory = [];
+      }
+      email.conversationHistory.push({
+        timestamp: new Date(),
+        action: 'LINKED_DUPLICATE',
+        actor: req.user?.email || 'SYSTEM',
+        details: {
+          parentQueryId,
+          parentSubject: parentEmail.subject
+        }
+      });
+
+      await parentEmail.save();
+      await email.save();
+
+      res.json({
+        success: true,
+        message: 'Email linked to parent query successfully',
+        data: {
+          email,
+          parentEmail
+        }
+      });
+    } catch (error) {
+      console.error('Link to query error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to link email to query',
         error: error.message
       });
     }

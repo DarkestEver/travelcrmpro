@@ -368,6 +368,50 @@ const emailLogSchema = new mongoose.Schema({
     references: [String]
   },
   
+  // Duplicate Query Management
+  parentQueryId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'EmailLog',
+    index: true
+  },
+  childQueries: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'EmailLog'
+  }],
+  isDuplicate: {
+    type: Boolean,
+    default: false,
+    index: true
+  },
+  
+  // Conversation History (audit trail)
+  conversationHistory: [{
+    timestamp: {
+      type: Date,
+      default: Date.now
+    },
+    action: {
+      type: String,
+      enum: [
+        'CREATED',
+        'CATEGORIZED',
+        'RECATEGORIZED',
+        'LINKED_DUPLICATE',
+        'RECATEGORIZED_AND_LINKED',
+        'EXTRACTED_DATA',
+        'MATCHED_PACKAGES',
+        'RESPONSE_GENERATED',
+        'QUOTE_CREATED',
+        'REPLIED',
+        'FORWARDED',
+        'MARKED_FOR_REVIEW',
+        'REVIEWED'
+      ]
+    },
+    actor: String, // User email or 'SYSTEM'
+    details: mongoose.Schema.Types.Mixed // Additional context for the action
+  }],
+  
   // Conversation tracking
   replies: [{
     emailId: {

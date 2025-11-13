@@ -68,6 +68,40 @@ const emailAPI = {
   sendTestEmail: async (emailData) => {
     const response = await api.post('/emails/webhook', emailData);
     return response.data;
+  },
+  
+  // Search emails by sender email address
+  searchByEmail: async (emailAddress) => {
+    const response = await api.get('/emails/search-by-email', { 
+      params: { email: emailAddress } 
+    });
+    return response.data;
+  },
+  
+  // Re-categorize email
+  recategorize: async (id, data) => {
+    const response = await api.patch(`/emails/${id}/recategorize`, data);
+    return response.data;
+  },
+  
+  // Search existing queries for duplicate detection
+  searchQueries: async (query) => {
+    const response = await api.get('/emails/search-queries', {
+      params: { q: query }
+    });
+    return response.data;
+  },
+  
+  // Link email to parent query
+  linkToQuery: async (id, parentQueryId) => {
+    const response = await api.post(`/emails/${id}/link-query`, { parentQueryId });
+    return response.data;
+  },
+  
+  // Update email category (re-categorize)
+  updateEmailCategory: async (id, data) => {
+    const response = await api.patch(`/emails/${id}/category`, data);
+    return response.data;
   }
 };
 

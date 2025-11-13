@@ -19,14 +19,23 @@ class MatchingEngine {
         packageType: extractedData.packageType
       };
 
+      console.log(`🔍 Matching packages for criteria:`, {
+        destination: criteria.destination || 'ANY',
+        dates: criteria.dates?.preferredStart || 'FLEXIBLE',
+        travelers: criteria.travelers?.adults || 'ANY',
+        budget: criteria.budget?.max || 'ANY'
+      });
+
       // Get all active packages for tenant from SupplierPackageCache
       let packages = await SupplierPackageCache.searchPackages(tenantId, criteria);
+      console.log(`📦 Found ${packages.length} supplier packages`);
 
       // ALSO get published itineraries and convert them to package format
       const itineraries = await Itinerary.find({
         tenantId,
         status: 'published'
       }).lean();
+      console.log(`📦 Found ${itineraries.length} published itineraries`);
 
       // Convert itineraries to package format
       const itineraryPackages = itineraries.map(it => ({
@@ -85,11 +94,46 @@ class MatchingEngine {
         };
       });
 
-      // Sort by score (highest first)
-      scoredPackages.sort((a, b) => b.score - a.score);
+      // Filter packages based on quality criteria
+      const MIN_TOTAL_SCORE = 30; // Minimum total score (out of 100)
+      const MIN_DESTINATION_SCORE = 20; // Minimum destination score (out of 40)
+      
+      const qualityMatches = scoredPackages.filter(match => {
+        // Must meet minimum total score
+        if (match.score < MIN_TOTAL_SCORE) {
+          console.log(`⚠️  Filtered out: ${match.package.title || match.package.packageName} - Score too low (${match.score})`);
+          return false;
+        }
+        
+        // Must have reasonable destination match
+        if (match.breakdown.destination < MIN_DESTINATION_SCORE) {
+          console.log(`⚠️  Filtered out: ${match.package.title || match.package.packageName} - Destination mismatch (${match.breakdown.destination}/40)`);
+          return false;
+        }
+        
+        return true;
+      });
 
-      // Take top 5 matches
-      const topMatches = scoredPackages.slice(0, 5);
+      console.log(`✅ Filtered matches: ${scoredPackages.length} → ${qualityMatches.length} (removed ${scoredPackages.length - qualityMatches.length} low-quality matches)`);
+
+      // Sort by score (highest first)
+      qualityMatches.sort((a, b) => b.score - a.score);
+
+      // Log top scoring packages for debugging
+      if (qualityMatches.length > 0) {
+        console.log(`🎯 Top 3 quality matches:`);
+        qualityMatches.slice(0, 3).forEach((match, index) => {
+          console.log(`  ${index + 1}. ${match.package.title || match.package.packageName} - Score: ${match.score}/100`);
+          console.log(`     Destination: ${JSON.stringify(match.package.destination)}`);
+          console.log(`     Breakdown:`, match.breakdown);
+          console.log(`     Reasons:`, match.matchReasons);
+        });
+      } else {
+        console.log(`❌ No packages met quality criteria (min score: ${MIN_TOTAL_SCORE}, min destination: ${MIN_DESTINATION_SCORE})`);
+      }
+
+      // Take top 5 matches from quality-filtered results
+      const topMatches = qualityMatches.slice(0, 5);
 
       // Log the matching operation (only if emailId provided)
       if (emailId) {
@@ -100,8 +144,13 @@ class MatchingEngine {
             status: 'completed',
             result: {
               totalPackages: packages.length,
+              qualifiedMatches: qualityMatches.length,
               topMatches: topMatches.length,
-              criteria
+              criteria,
+              filters: {
+                minTotalScore: MIN_TOTAL_SCORE,
+                minDestinationScore: MIN_DESTINATION_SCORE
+              }
             },
             confidence: topMatches.length > 0 ? topMatches[0].score : 0,
             startedAt: new Date(startTime),
@@ -207,53 +256,91 @@ class MatchingEngine {
    * Score destination match
    */
   scoreDestination(inquiry, packageData) {
-    const inquiryDest = inquiry.destination?.toLowerCase() || '';
+    if (!inquiry.destination) {
+      return { points: 15, reason: 'No specific destination requested' };
+    }
+
+    const inquiryDest = inquiry.destination.toLowerCase().trim();
     
     // Handle both string and object destination formats
     let packageDest = '';
     let packageCountry = '';
     let packageRegion = '';
+    let packageName = '';
     
     if (typeof packageData.destination === 'string') {
       packageDest = packageData.destination.toLowerCase();
       packageCountry = packageData.country?.toLowerCase() || '';
       packageRegion = packageData.region?.toLowerCase() || '';
+      packageName = packageData.packageName?.toLowerCase() || packageData.title?.toLowerCase() || '';
     } else if (typeof packageData.destination === 'object') {
       // Itinerary format
       packageDest = (packageData.destination?.city || packageData.destination?.country || '').toLowerCase();
       packageCountry = (packageData.destination?.country || '').toLowerCase();
+      packageName = packageData.title?.toLowerCase() || '';
     }
 
-    // Exact match
+    // Exact match on destination
     if (inquiryDest === packageDest || inquiryDest === packageCountry) {
       return { points: 40, reason: `Exact destination match: ${packageDest || packageCountry}` };
     }
 
     // Country match
-    if (inquiryDest === packageCountry) {
-      return { points: 35, reason: `Country match: ${packageData.country}` };
+    if (packageCountry && inquiryDest === packageCountry) {
+      return { points: 35, reason: `Country match: ${packageCountry}` };
+    }
+
+    // Check if inquiry destination is contained in package destination (e.g., "paris" in "Paris, France")
+    if (packageDest.includes(inquiryDest) || inquiryDest.includes(packageDest)) {
+      return { points: 38, reason: `Destination contains match: ${packageDest}` };
+    }
+
+    // Check if inquiry destination is in package country
+    if (packageCountry.includes(inquiryDest) || inquiryDest.includes(packageCountry)) {
+      return { points: 36, reason: `Country contains match: ${packageCountry}` };
     }
 
     // Region match
-    if (inquiryDest === packageRegion) {
-      return { points: 30, reason: `Region match: ${packageData.region}` };
+    if (packageRegion && (inquiryDest === packageRegion || packageRegion.includes(inquiryDest))) {
+      return { points: 30, reason: `Region match: ${packageRegion}` };
     }
 
-    // Partial match (one word in common)
-    const inquiryWords = inquiryDest.split(' ');
-    const packageWords = packageDest.split(' ');
-    const commonWords = inquiryWords.filter(word => 
-      word.length > 3 && packageWords.some(pw => pw.includes(word) || word.includes(pw))
-    );
+    // Check package name for destination
+    if (packageName.includes(inquiryDest) || inquiryDest.includes(packageName.split(' ')[0])) {
+      return { points: 32, reason: `Destination in package name` };
+    }
 
-    if (commonWords.length > 0) {
-      return { points: 25, reason: `Partial destination match` };
+    // Word-by-word match (flexible matching for multi-word destinations)
+    const inquiryWords = inquiryDest.split(/[\s,]+/).filter(w => w.length > 2);
+    const packageWords = packageDest.split(/[\s,]+/).filter(w => w.length > 2);
+    
+    let matchedWords = 0;
+    for (const iWord of inquiryWords) {
+      for (const pWord of packageWords) {
+        if (iWord === pWord || iWord.includes(pWord) || pWord.includes(iWord)) {
+          matchedWords++;
+          break;
+        }
+      }
+    }
+
+    if (matchedWords > 0) {
+      const matchPercent = matchedWords / inquiryWords.length;
+      const points = Math.round(25 + (matchPercent * 10)); // 25-35 points
+      return { points, reason: `Partial destination match (${matchedWords}/${inquiryWords.length} words)` };
     }
 
     // Check if inquiry destination is in package highlights or description
     const highlights = packageData.highlights?.join(' ').toLowerCase() || '';
     if (highlights.includes(inquiryDest)) {
       return { points: 20, reason: `Destination mentioned in highlights` };
+    }
+
+    // Check in inclusions/activities
+    const inclusions = packageData.inclusionDetails?.join(' ').toLowerCase() || '';
+    const activities = packageData.activities?.join(' ').toLowerCase() || '';
+    if (inclusions.includes(inquiryDest) || activities.includes(inquiryDest)) {
+      return { points: 18, reason: `Destination in package details` };
     }
 
     return { points: 0, reason: 'No destination match' };

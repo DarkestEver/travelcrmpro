@@ -219,8 +219,25 @@ supplierPackageCacheSchema.statics.searchPackages = function(tenantId, criteria)
     verified: true
   };
   
+  // More flexible destination matching - WITHOUT $text to avoid query planner issues
   if (criteria.destination) {
-    query.$text = { $search: criteria.destination };
+    const destination = criteria.destination.toLowerCase().trim();
+    
+    // Use $or with regex matching only (remove $text to avoid MongoDB query planner conflict)
+    query.$or = [
+      // Case-insensitive regex match on destination
+      { destination: { $regex: destination, $options: 'i' } },
+      // Case-insensitive regex match on country
+      { country: { $regex: destination, $options: 'i' } },
+      // Case-insensitive regex match on region
+      { region: { $regex: destination, $options: 'i' } },
+      // Case-insensitive regex match on package name (might contain destination)
+      { packageName: { $regex: destination, $options: 'i' } },
+      // Check highlights array for destination
+      { highlights: { $regex: destination, $options: 'i' } },
+      // Check tags array for destination
+      { tags: { $regex: destination, $options: 'i' } }
+    ];
   }
   
   if (criteria.minBudget || criteria.maxBudget) {

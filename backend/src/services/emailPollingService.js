@@ -183,6 +183,15 @@ class EmailPollingService {
                     const toAddresses = parsed.to?.value || [];
                     const ccAddresses = parsed.cc?.value || [];
 
+                    // Skip emails sent by us (our own sent emails)
+                    const senderEmail = fromAddress?.address?.toLowerCase();
+                    const accountEmail = account.imap.username.toLowerCase();
+                    
+                    if (senderEmail === accountEmail) {
+                      logger.info(`⏭️  Skipping our own sent email: ${parsed.messageId} from ${senderEmail}`);
+                      return;
+                    }
+
                     // Save to database
                     const emailLog = await EmailLog.create({
                       messageId: parsed.messageId || `${Date.now()}-${Math.random()}`,

@@ -30,6 +30,7 @@ import emailAPI from '../../services/emailAPI';
 import QuotesTab from '../../components/emails/QuotesTab';
 import HTMLEditor from '../../components/emails/HTMLEditor';
 import CustomizePackageModal from '../../components/modals/CustomizePackageModal';
+import RecategorizeModal from '../../components/emails/RecategorizeModal';
 
 const EmailDetail = () => {
   const { id } = useParams();
@@ -66,10 +67,23 @@ const EmailDetail = () => {
   // Customize package modal state
   const [showCustomizeModal, setShowCustomizeModal] = useState(false);
   const [packageToCustomize, setPackageToCustomize] = useState(null);
+  
+  // Re-categorize modal state
+  const [showRecategorizeModal, setShowRecategorizeModal] = useState(false);
 
   useEffect(() => {
     fetchEmail();
   }, [id]);
+
+  // Debug: Log replyData changes
+  useEffect(() => {
+    console.log('🔄 replyData state changed:', {
+      cc: replyData.cc,
+      bcc: replyData.bcc,
+      ccLength: replyData.cc?.length,
+      bccLength: replyData.bcc?.length
+    });
+  }, [replyData.cc, replyData.bcc]);
 
   const fetchEmail = async () => {
     try {
@@ -103,17 +117,8 @@ const EmailDetail = () => {
   };
 
   const handleCategorize = async () => {
-    try {
-      setProcessing(true);
-      const response = await emailAPI.categorizeEmail(id);
-      toast.success(`Categorized as ${response.data.category}`);
-      fetchEmail();
-    } catch (error) {
-      console.error('Failed to categorize:', error);
-      toast.error('Failed to categorize email');
-    } finally {
-      setProcessing(false);
-    }
+    // Open re-categorize modal
+    setShowRecategorizeModal(true);
   };
 
   const handleExtract = async () => {
@@ -196,41 +201,64 @@ const EmailDetail = () => {
       body: replyBody,
       plainText: email.generatedResponse?.plainText || '',
       cc: [],
-      bcc: []
+      bcc: [],
+      attachments: []
     });
     setShowCcBcc(false);
     setCcInput('');
     setBccInput('');
+    setAttachmentFiles([]);
     setShowReplyModal(true);
+    
+    console.log('🔓 Reply modal opened with initial data:', {
+      subject: `Re: ${email.subject}`,
+      cc: [],
+      bcc: [],
+      attachments: []
+    });
   };
 
   const handleAddCC = () => {
+    console.log('🔵 handleAddCC called, ccInput:', ccInput);
     if (ccInput.trim()) {
       // Split by comma, semicolon, or colon
       const emails = ccInput
         .split(/[,;:]/)
         .map(e => e.trim())
         .filter(e => e && e.includes('@'));
+      console.log('🔵 Parsed emails:', emails);
+      console.log('🔵 Current replyData.cc:', replyData.cc);
+      const newCC = [...replyData.cc, ...emails];
+      console.log('🔵 New CC array:', newCC);
       setReplyData({
         ...replyData,
-        cc: [...replyData.cc, ...emails]
+        cc: newCC
       });
       setCcInput('');
+    } else {
+      console.log('🔴 ccInput is empty or whitespace');
     }
   };
 
   const handleAddBCC = () => {
+    console.log('🔵 handleAddBCC called, bccInput:', bccInput);
     if (bccInput.trim()) {
       // Split by comma, semicolon, or colon
       const emails = bccInput
         .split(/[,;:]/)
         .map(e => e.trim())
         .filter(e => e && e.includes('@'));
+      console.log('🔵 Parsed emails:', emails);
+      console.log('🔵 Current replyData.bcc:', replyData.bcc);
+      const newBCC = [...replyData.bcc, ...emails];
+      console.log('🔵 New BCC array:', newBCC);
       setReplyData({
         ...replyData,
-        bcc: [...replyData.bcc, ...emails]
+        bcc: newBCC
       });
       setBccInput('');
+    } else {
+      console.log('🔴 bccInput is empty or whitespace');
     }
   };
 
@@ -266,6 +294,13 @@ const EmailDetail = () => {
     try {
       setSendingReply(true);
       
+      console.log('📤 Frontend - Sending reply with data:', {
+        subject: replyData.subject,
+        cc: replyData.cc,
+        bcc: replyData.bcc,
+        hasAttachments: attachmentFiles.length > 0
+      });
+      
       // Create FormData if there are attachments
       let dataToSend;
       if (attachmentFiles.length > 0) {
@@ -276,6 +311,11 @@ const EmailDetail = () => {
         formData.append('cc', JSON.stringify(replyData.cc));
         formData.append('bcc', JSON.stringify(replyData.bcc));
         
+        console.log('📦 FormData CC/BCC:', {
+          cc: JSON.stringify(replyData.cc),
+          bcc: JSON.stringify(replyData.bcc)
+        });
+        
         // Add attachments
         attachmentFiles.forEach((file) => {
           formData.append('attachments', file);
@@ -283,6 +323,7 @@ const EmailDetail = () => {
         
         dataToSend = formData;
       } else {
+        console.log('📨 JSON payload:', replyData);
         dataToSend = replyData;
       }
       
@@ -1526,13 +1567,29 @@ const EmailDetail = () => {
               </div>
 
               {/* CC/BCC Toggle Button */}
-              <div>
+              <div className="flex items-center gap-3">
                 <button
                   onClick={() => setShowCcBcc(!showCcBcc)}
                   className="text-sm text-indigo-600 hover:text-indigo-800 font-medium flex items-center gap-1"
                 >
                   {showCcBcc ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                   {showCcBcc ? 'Hide' : 'Add'} CC/BCC
+                </button>
+                {/* Debug button */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    console.log('🐛 Debug State:', {
+                      replyData,
+                      cc: replyData.cc,
+                      bcc: replyData.bcc,
+                      ccLength: replyData.cc?.length,
+                      bccLength: replyData.bcc?.length
+                    });
+                  }}
+                  className="px-2 py-1 text-xs bg-gray-200 hover:bg-gray-300 rounded"
+                >
+                  Debug
                 </button>
               </div>
 
@@ -1750,8 +1807,17 @@ const EmailDetail = () => {
         packageData={packageToCustomize}
         title="Customize Package for Quote"
       />
+
+      {/* Re-categorize Modal */}
+      <RecategorizeModal
+        isOpen={showRecategorizeModal}
+        onClose={() => setShowRecategorizeModal(false)}
+        email={email}
+        onSuccess={fetchEmail}
+      />
     </div>
   );
 };
 
 export default EmailDetail;
+

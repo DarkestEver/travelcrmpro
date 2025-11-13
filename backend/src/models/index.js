@@ -8,4 +8,7 @@ module.exports = {
   Quote: require('./Quote'),
   Booking: require('./Booking'),
   AuditLog: require('./AuditLog'),
+  EmailLog: require('./EmailLog'),
+  EmailAccount: require('./EmailAccount'),
+  SupplierPackageCache: require('./SupplierPackageCache'),
 };

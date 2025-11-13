@@ -33,4 +33,11 @@ router.post('/:id/convert-to-quote', emailController.convertEmailToQuote);
 router.get('/:id/thread', emailController.getEmailThread);
 router.post('/:id/rebuild-thread', emailController.rebuildEmailThread);
 
+// Re-categorize and duplicate detection (NEW)
+router.get('/search-by-email', emailController.searchByEmail);
+router.patch('/:id/category', emailController.updateEmailCategory);
+router.patch('/:id/recategorize', emailController.recategorizeEmail); // Manual re-categorization with duplicate linking
+router.get('/search-queries', emailController.searchQueries); // Search existing queries for duplicate detection
+router.post('/:id/link-query', emailController.linkToQuery); // Link email as child query to parent
+
 module.exports = router;

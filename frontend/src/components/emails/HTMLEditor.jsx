@@ -202,7 +202,7 @@ const HTMLEditor = ({ value, onChange, placeholder }) => {
         data-placeholder={placeholder}
       />
 
-      <style jsx>{`
+      <style>{`
         [contentEditable=true]:empty:before {
           content: attr(data-placeholder);
           color: #9ca3af;

@@ -152,13 +152,19 @@ class EmailThreadingService {
       
       const parent = await EmailLog.findOne({
         tenantId,
-        $or: [
-          { subject: cleanedSubject },
-          { subject: new RegExp(`^(re:|fwd:|fw:)\\s*${this.escapeRegex(cleanedSubject)}`, 'i') }
-        ],
-        $or: [
-          { 'from.email': parsedEmail.from.email },
-          { 'to.email': parsedEmail.from.email }
+        $and: [
+          {
+            $or: [
+              { subject: cleanedSubject },
+              { subject: new RegExp(`^(re:|fwd:|fw:)\\s*${this.escapeRegex(cleanedSubject)}`, 'i') }
+            ]
+          },
+          {
+            $or: [
+              { 'from.email': parsedEmail.from.email },
+              { 'to.email': parsedEmail.from.email }
+            ]
+          }
         ],
         receivedAt: { $gte: thirtyDaysAgo },
         _id: { $ne: parsedEmail._id } // Exclude self
