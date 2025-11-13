@@ -13,6 +13,9 @@ const {
   createQuoteFromEmail,
   sendMultipleQuotes,
 } = require('../controllers/quoteController');
+const shareService = require('../services/shareService');
+const { asyncHandler } = require('../middleware/errorHandler');
+const { successResponse } = require('../utils/response');
 const { protect, restrictTo, loadAgent } = require('../middleware/auth');
 const { auditLogger } = require('../middleware/auditLogger');
 
@@ -35,6 +38,31 @@ router.post('/', restrictTo('super_admin', 'operator', 'agent'), loadAgent, audi
 router.get('/:id', getQuote);
 router.put('/:id', auditLogger('update', 'quote'), updateQuote);
 router.delete('/:id', auditLogger('delete', 'quote'), deleteQuote);
+
+// Share quote
+router.post('/:id/share', asyncHandler(async (req, res) => {
+  const { expiresInDays = 30, password, singleUse = false } = req.body;
+  
+  const shareToken = await shareService.generateShareToken({
+    entityType: 'Quote',
+    entityId: req.params.id,
+    tenantId: req.user.tenantId,
+    createdBy: req.user._id,
+    expiresInDays,
+    password,
+    singleUse,
+    allowedActions: ['view', 'accept', 'reject'],
+    requireEmail: true
+  });
+
+  // Don't send shareUrl - let frontend construct it with correct domain
+  successResponse(res, 200, 'Shareable link generated successfully', {
+    token: shareToken.token,
+    expiresAt: shareToken.expiresAt,
+    hasPassword: !!password,
+    singleUse: singleUse
+  });
+}));
 
 // Quote actions
 router.post('/:id/send', auditLogger('update', 'quote'), sendQuote);

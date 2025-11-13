@@ -837,6 +837,38 @@ class EmailController {
         });
       }
 
+      // 🚫 Prevent replies to system emails (spam, undelivered, autoreply)
+      if (email.emailType && email.emailType !== 'customer') {
+        return res.status(400).json({
+          success: false,
+          message: `Cannot reply to ${email.emailType} emails. Only customer emails can be replied to.`
+        });
+      }
+
+      // Additional checks for system-like subjects
+      const emailSubject = email.subject?.toLowerCase() || '';
+      const fromEmail = email.from?.email?.toLowerCase() || '';
+      const systemIndicators = [
+        'mail delivery',
+        'undelivered mail',
+        'returned mail',
+        'delivery failure',
+        'mailer-daemon',
+        'postmaster',
+        'noreply'
+      ];
+      
+      const isSystemEmail = systemIndicators.some(indicator => 
+        emailSubject.includes(indicator) || fromEmail.includes(indicator)
+      );
+
+      if (isSystemEmail) {
+        return res.status(400).json({
+          success: false,
+          message: 'Cannot reply to system or automated emails (delivery failures, mailer-daemon, noreply addresses)'
+        });
+      }
+
       // Get tenant's email account for SMTP settings
       const EmailAccount = require('../models/EmailAccount');
       const emailAccount = await EmailAccount.findOne({ 

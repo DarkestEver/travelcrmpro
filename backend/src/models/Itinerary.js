@@ -542,6 +542,19 @@ const itinerarySchema = new mongoose.Schema({
     views: {
       type: Number,
       default: 0
+    },
+    singleUse: {
+      type: Boolean,
+      default: false
+    },
+    firstAccessedAt: Date,
+    accessCount: {
+      type: Number,
+      default: 0
+    },
+    isActive: {
+      type: Boolean,
+      default: true
     }
   },
   
@@ -718,7 +731,7 @@ itinerarySchema.methods.clone = function() {
 };
 
 // Generate shareable link
-itinerarySchema.methods.generateShareableLink = function(expiryDays = 30, password = null) {
+itinerarySchema.methods.generateShareableLink = function(expiryDays = 30, password = null, singleUse = false) {
   const crypto = require('crypto');
   const token = crypto.randomBytes(32).toString('hex');
   const expiresAt = new Date();
@@ -728,7 +741,11 @@ itinerarySchema.methods.generateShareableLink = function(expiryDays = 30, passwo
     token,
     expiresAt,
     password: password ? crypto.createHash('sha256').update(password).digest('hex') : null,
-    views: 0
+    views: 0,
+    singleUse: singleUse,
+    accessCount: 0,
+    isActive: true,
+    firstAccessedAt: null
   };
   
   return token;

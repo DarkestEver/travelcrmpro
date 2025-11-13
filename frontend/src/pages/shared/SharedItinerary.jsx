@@ -33,6 +33,9 @@ export default function SharedItinerary() {
       if (err.response?.status === 401 && err.response?.data?.message?.includes('password')) {
         setNeedsPassword(true);
         setError('This itinerary requires a password to view.');
+      } else if (err.response?.status === 403 && err.response?.data?.message?.includes('already been used')) {
+        // Handle single-use link already accessed
+        setError('link_already_used');
       } else {
         setError(err.response?.data?.message || 'Failed to load itinerary');
       }
@@ -113,6 +116,24 @@ export default function SharedItinerary() {
   }
 
   if (error || !itinerary) {
+    // Special UI for already-used single-use links
+    if (error === 'link_already_used') {
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-gray-50">
+          <div className="text-center max-w-md mx-auto px-4">
+            <div className="text-yellow-600 text-6xl mb-4">⚠️</div>
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">Link Already Used</h1>
+            <p className="text-gray-600 mb-4">
+              This share link was configured for single-use only and has already been accessed.
+            </p>
+            <p className="text-sm text-gray-500">
+              Please contact the sender if you need access to this itinerary again.
+            </p>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">

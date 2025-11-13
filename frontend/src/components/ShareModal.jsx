@@ -8,6 +8,7 @@ import api from '../services/api';
 const ShareModal = ({ isOpen, onClose, entity, entityType }) => {
   const [password, setPassword] = useState('');
   const [usePassword, setUsePassword] = useState(false);
+  const [singleUse, setSingleUse] = useState(false); // Add single-use state
   const [expiresInDays, setExpiresInDays] = useState(30);
   const [shareUrl, setShareUrl] = useState('');
   const [copied, setCopied] = useState(false);
@@ -17,17 +18,29 @@ const ShareModal = ({ isOpen, onClose, entity, entityType }) => {
   // Generate share token mutation
   const generateMutation = useMutation({
     mutationFn: async (data) => {
-      const response = await api.post('/share/generate', data);
-      return response;
+      console.log('Generating share link with options:', data);
+      // Use entity-specific endpoints
+      const response = await api.post(`/${entityType}s/${entity._id}/share`, {
+        password: data.password,
+        expiresInDays: data.expiresInDays,
+        singleUse: data.singleUse,
+      });
+      console.log('Share link full response:', response);
+      console.log('Share link response:', response);
+      // Axios interceptor already extracts response.data, so we get { success, message, data }
+      // We need to extract the nested 'data' property
+      return response.data; // This is the actual share data: { shareUrl, token, expiresAt, hasPassword }
     },
     onSuccess: (data) => {
-      const url = data.data.shareUrl || 
-        `${window.location.origin}/share/${entityType}/${data.data.token}`;
+      console.log('Share link success data:', data);
+      // Always construct URL from frontend to get correct domain
+      const url = `${window.location.origin}/share/${entityType}/${data.token}`;
       setShareUrl(url);
       toast.success('Share link generated successfully!');
       loadExistingTokens();
     },
     onError: (error) => {
+      console.error('Share link error:', error);
       toast.error(error.response?.data?.message || 'Failed to generate share link');
     },
   });
@@ -60,18 +73,10 @@ const ShareModal = ({ isOpen, onClose, entity, entityType }) => {
   });
 
   const handleGenerate = () => {
-    // Capitalize first letter for backend (Booking, Quote, Itinerary)
-    const capitalizedType = entityType.charAt(0).toUpperCase() + entityType.slice(1);
-    
     generateMutation.mutate({
-      entityType: capitalizedType,
-      entityId: entity._id,
       expiresInDays: parseInt(expiresInDays),
       password: usePassword ? password : undefined,
-      allowedActions: entityType === 'quote' 
-        ? ['view', 'accept', 'reject'] 
-        : ['view', 'download'],
-      requireEmail: entityType === 'quote',
+      singleUse: singleUse, // Include single-use flag
     });
   };
 
@@ -173,6 +178,26 @@ const ShareModal = ({ isOpen, onClose, entity, entityType }) => {
                 </p>
               </div>
             )}
+
+            {/* Single-Use Link Option */}
+            <div>
+              <label className="flex items-center space-x-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={singleUse}
+                  onChange={(e) => setSingleUse(e.target.checked)}
+                  className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                />
+                <span className="text-sm font-medium text-gray-700">
+                  🔒 Single-use link (expires after first access)
+                </span>
+              </label>
+              {singleUse && (
+                <p className="text-xs text-amber-600 mt-1 ml-6">
+                  ⚠️ Warning: This link will become invalid after being accessed once. The recipient won't be able to view it again.
+                </p>
+              )}
+            </div>
 
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
               <p className="text-sm text-blue-800">

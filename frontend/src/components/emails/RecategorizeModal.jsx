@@ -125,7 +125,7 @@ export default function RecategorizeModal({ isOpen, onClose, email, onSuccess })
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
             <h3 className="font-semibold text-gray-900 mb-2">Current Email</h3>
             <div className="space-y-1 text-sm">
-              <p><span className="font-medium">From:</span> {email?.from}</p>
+              <p><span className="font-medium">From:</span> {typeof email?.from === 'object' ? (email?.from?.name ? `${email.from.name} <${email.from.email}>` : email?.from?.email) : email?.from}</p>
               <p><span className="font-medium">Subject:</span> {email?.subject}</p>
               <p><span className="font-medium">Current Category:</span> 
                 <span className="ml-2 px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full text-xs">
@@ -217,7 +217,7 @@ export default function RecategorizeModal({ isOpen, onClose, email, onSuccess })
                           <div className="flex-1">
                             <h4 className="font-semibold text-gray-900 mb-1">{query.subject}</h4>
                             <div className="space-y-1 text-sm text-gray-600">
-                              <p>From: {query.from}</p>
+                              <p>From: {typeof query.from === 'object' ? (query.from?.name ? `${query.from.name} <${query.from.email}>` : query.from?.email) : query.from}</p>
                               <p>Date: {new Date(query.receivedAt).toLocaleDateString()}</p>
                               {query.extractedData?.destination && (
                                 <p>Destination: {query.extractedData.destination}</p>

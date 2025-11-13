@@ -31,6 +31,37 @@ import QuotesTab from '../../components/emails/QuotesTab';
 import HTMLEditor from '../../components/emails/HTMLEditor';
 import CustomizePackageModal from '../../components/modals/CustomizePackageModal';
 import RecategorizeModal from '../../components/emails/RecategorizeModal';
+import AssignmentDropdown from '../../components/assignments/AssignmentDropdown';
+import AssignmentList from '../../components/assignments/AssignmentList';
+import ExpenseForm from '../../components/expenses/ExpenseForm';
+import ExpenseList from '../../components/expenses/ExpenseList';
+
+// Helper function to check if email is a system email (spam, undelivered, autoreply)
+const isSystemEmail = (email) => {
+  if (!email) return false;
+  
+  // Check emailType field
+  if (email.emailType && email.emailType !== 'customer') {
+    return true;
+  }
+  
+  // Check subject and from email for system indicators
+  const subject = email.subject?.toLowerCase() || '';
+  const fromEmail = email.from?.email?.toLowerCase() || '';
+  const systemIndicators = [
+    'mail delivery',
+    'undelivered mail',
+    'returned mail',
+    'delivery failure',
+    'mailer-daemon',
+    'postmaster',
+    'noreply'
+  ];
+  
+  return systemIndicators.some(indicator => 
+    subject.includes(indicator) || fromEmail.includes(indicator)
+  );
+};
 
 const EmailDetail = () => {
   const { id } = useParams();
@@ -39,7 +70,7 @@ const EmailDetail = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [processing, setProcessing] = useState(false);
-  const [activeTab, setActiveTab] = useState('content');
+  const [activeTab, setActiveTab] = useState('overview');
   
   // Reply modal state
   const [showReplyModal, setShowReplyModal] = useState(false);
@@ -218,45 +249,59 @@ const EmailDetail = () => {
     });
   };
 
-  const handleAddCC = () => {
-    console.log('🔵 handleAddCC called, ccInput:', ccInput);
+  const handleAddCC = (autoAdd = false) => {
+    console.log('🔵 handleAddCC called, ccInput:', ccInput, 'autoAdd:', autoAdd);
     if (ccInput.trim()) {
-      // Split by comma, semicolon, or colon
+      // Split by comma, semicolon, colon, or space
       const emails = ccInput
-        .split(/[,;:]/)
+        .split(/[,;:\s]/)
         .map(e => e.trim())
         .filter(e => e && e.includes('@'));
-      console.log('🔵 Parsed emails:', emails);
-      console.log('🔵 Current replyData.cc:', replyData.cc);
-      const newCC = [...replyData.cc, ...emails];
-      console.log('🔵 New CC array:', newCC);
-      setReplyData({
-        ...replyData,
-        cc: newCC
-      });
-      setCcInput('');
+      
+      if (emails.length > 0) {
+        console.log('🔵 Parsed emails:', emails);
+        console.log('🔵 Current replyData.cc:', replyData.cc);
+        
+        // Use functional setState to ensure we have latest state
+        setReplyData(prev => {
+          const newCC = [...prev.cc, ...emails];
+          console.log('🔵 New CC array:', newCC);
+          return {
+            ...prev,
+            cc: newCC
+          };
+        });
+        setCcInput('');
+      }
     } else {
       console.log('🔴 ccInput is empty or whitespace');
     }
   };
 
-  const handleAddBCC = () => {
-    console.log('🔵 handleAddBCC called, bccInput:', bccInput);
+  const handleAddBCC = (autoAdd = false) => {
+    console.log('🔵 handleAddBCC called, bccInput:', bccInput, 'autoAdd:', autoAdd);
     if (bccInput.trim()) {
-      // Split by comma, semicolon, or colon
+      // Split by comma, semicolon, colon, or space
       const emails = bccInput
-        .split(/[,;:]/)
+        .split(/[,;:\s]/)
         .map(e => e.trim())
         .filter(e => e && e.includes('@'));
-      console.log('🔵 Parsed emails:', emails);
-      console.log('🔵 Current replyData.bcc:', replyData.bcc);
-      const newBCC = [...replyData.bcc, ...emails];
-      console.log('🔵 New BCC array:', newBCC);
-      setReplyData({
-        ...replyData,
-        bcc: newBCC
-      });
-      setBccInput('');
+      
+      if (emails.length > 0) {
+        console.log('🔵 Parsed emails:', emails);
+        console.log('🔵 Current replyData.bcc:', replyData.bcc);
+        
+        // Use functional setState to ensure we have latest state
+        setReplyData(prev => {
+          const newBCC = [...prev.bcc, ...emails];
+          console.log('🔵 New BCC array:', newBCC);
+          return {
+            ...prev,
+            bcc: newBCC
+          };
+        });
+        setBccInput('');
+      }
     } else {
       console.log('🔴 bccInput is empty or whitespace');
     }
@@ -555,8 +600,8 @@ const EmailDetail = () => {
               </button>
             )}
 
-            {/* Reply Button - Always available for CUSTOMER emails */}
-            {email.category === 'CUSTOMER' && (
+            {/* Reply Button - Only for CUSTOMER emails, NOT for system/spam/undelivered */}
+            {email.category === 'CUSTOMER' && !isSystemEmail(email) && (
               <button
                 onClick={handleOpenReplyModal}
                 disabled={processing}
@@ -571,6 +616,14 @@ const EmailDetail = () => {
                 {email.manuallyReplied ? 'Reply Again' : 'Reply'}
               </button>
             )}
+            
+            {/* Show warning if trying to view system email */}
+            {isSystemEmail(email) && (
+              <div className="flex items-center gap-2 px-4 py-2 bg-yellow-100 text-yellow-800 rounded-lg">
+                <AlertCircle className="w-4 h-4" />
+                <span className="text-sm">System email - Replies disabled</span>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -578,7 +631,7 @@ const EmailDetail = () => {
       {/* Tabs */}
       <div className="mb-6 border-b border-gray-200">
         <nav className="flex gap-4">
-          {['content', 'extracted', 'matches', 'quotes', 'conversation', 'technical'].map((tab) => (
+          {['overview', 'matches', 'quotes', 'assignments', 'expenses', 'conversation'].map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -588,367 +641,574 @@ const EmailDetail = () => {
                   : 'border-transparent text-gray-600 hover:text-gray-900'
               }`}
             >
-              {tab.charAt(0).toUpperCase() + tab.slice(1)}
+              {tab === 'overview' ? 'Email Details' : tab.charAt(0).toUpperCase() + tab.slice(1)}
             </button>
           ))}
         </nav>
       </div>
 
       {/* Tab Content */}
-      <div className="bg-white rounded-lg shadow p-6">
-        {activeTab === 'content' && (
-          <div>
-            <div className="mb-6">
-              <h3 className="text-lg font-semibold mb-2">Email Content</h3>
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <p className="whitespace-pre-wrap">{email.bodyText}</p>
-              </div>
-            </div>
-
-            {email.attachments?.length > 0 && (
-              <div>
-                <h3 className="text-lg font-semibold mb-2">Attachments</h3>
-                <div className="space-y-2">
-                  {email.attachments.map((att, idx) => (
-                    <div key={idx} className="flex items-center gap-2 p-2 bg-gray-50 rounded">
-                      <FileText className="w-5 h-5 text-gray-600" />
-                      <span className="flex-1">{att.filename}</span>
-                      <span className="text-sm text-gray-500">{(att.size / 1024).toFixed(2)} KB</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {activeTab === 'extracted' && (
-          <div>
-            {!email.extractedData ? (
-              <div className="text-center py-12">
-                <FileText className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-600">No extracted data yet</p>
-                <button
-                  onClick={handleExtract}
-                  disabled={!email.category || processing}
-                  className="mt-4 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
-                >
-                  Extract Now
-                </button>
-              </div>
-            ) : email.category === 'CUSTOMER' ? (
-              <div className="space-y-6">
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-lg font-semibold">Customer Inquiry Details</h3>
-                  {!isEditing ? (
-                    <button
-                      onClick={handleStartEdit}
-                      className="flex items-center gap-2 px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm"
-                    >
-                      <Edit2 className="w-4 h-4" />
-                      Edit
-                    </button>
-                  ) : (
-                    <div className="flex gap-2">
-                      <button
-                        onClick={handleCancelEdit}
-                        disabled={saving}
-                        className="flex items-center gap-2 px-3 py-1 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 text-sm"
-                      >
-                        <X className="w-4 h-4" />
-                        Cancel
-                      </button>
-                      <button
-                        onClick={handleSaveEdit}
-                        disabled={saving}
-                        className="flex items-center gap-2 px-3 py-1 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm disabled:opacity-50"
-                      >
-                        <Save className="w-4 h-4" />
-                        {saving ? 'Saving...' : 'Save'}
-                      </button>
-                    </div>
+      <div className="space-y-6">
+        {activeTab === 'overview' && (
+          <>
+            {/* Main Content Section */}
+            <div className="bg-white rounded-lg shadow">
+              {/* Email Content Card */}
+              <div className="p-6 border-b border-gray-200">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                    <Mail className="w-6 h-6 text-blue-600" />
+                    Email Content
+                  </h2>
+                  {email.attachments?.length > 0 && (
+                    <span className="flex items-center gap-1 text-sm text-gray-600 bg-gray-100 px-3 py-1 rounded-full">
+                      <Paperclip className="w-4 h-4" />
+                      {email.attachments.length} attachment{email.attachments.length > 1 ? 's' : ''}
+                    </span>
                   )}
                 </div>
                 
-                <div>
-                  {/* Destination */}
-                  <div className="mb-4">
-                    <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1">
-                      <MapPin className="w-4 h-4" />
-                      Destination
-                    </label>
-                    {isEditing ? (
-                      <div className="space-y-2">
-                        <input
-                          type="text"
-                          value={editedData.destination || ''}
-                          onChange={(e) => handleEditChange('destination', e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          placeholder="Enter primary destination"
-                        />
-                        <input
-                          type="text"
-                          value={editedData.additionalDestinations?.join(', ') || ''}
-                          onChange={(e) => handleEditChange('additionalDestinations', e.target.value.split(',').map(d => d.trim()).filter(d => d))}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                          placeholder="Additional destinations (comma-separated)"
-                        />
-                        <p className="text-xs text-gray-500">Additional destinations help find multi-city packages</p>
-                      </div>
+                <div className="prose max-w-none">
+                  <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
+                    <p className="whitespace-pre-wrap text-gray-800 leading-relaxed">
+                      {email.bodyText}
+                    </p>
+                  </div>
+                </div>
+
+                {email.attachments?.length > 0 && (
+                  <div className="mt-6">
+                    <h4 className="text-sm font-semibold text-gray-700 mb-3">Attachments</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {email.attachments.map((att, idx) => (
+                        <div key={idx} className="flex items-center gap-3 p-3 bg-blue-50 border border-blue-100 rounded-lg hover:bg-blue-100 transition-colors">
+                          <div className="flex-shrink-0 w-10 h-10 bg-blue-600 text-white rounded-lg flex items-center justify-center">
+                            <FileText className="w-5 h-5" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium text-gray-900 truncate">{att.filename}</p>
+                            <p className="text-sm text-gray-600">{(att.size / 1024).toFixed(2)} KB</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Extracted Data Section */}
+              {email.extractedData && email.category === 'CUSTOMER' && (
+                <div className="p-6 border-b border-gray-200 bg-gradient-to-br from-blue-50 to-indigo-50">
+                  <div className="flex items-center justify-between mb-6">
+                    <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                      <TrendingUp className="w-6 h-6 text-indigo-600" />
+                      Customer Requirements
+                    </h2>
+                    {!isEditing ? (
+                      <button
+                        onClick={handleStartEdit}
+                        className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm transition-colors shadow-sm"
+                      >
+                        <Edit2 className="w-4 h-4" />
+                        Edit Details
+                      </button>
                     ) : (
-                      <>
-                        <p className="text-gray-900">{email.extractedData.destination || 'Not specified'}</p>
-                        {email.extractedData.additionalDestinations?.length > 0 && (
-                          <p className="text-sm text-gray-600 mt-1">
-                            Also interested in: {email.extractedData.additionalDestinations.join(', ')}
-                          </p>
-                        )}
-                      </>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={handleCancelEdit}
+                          disabled={saving}
+                          className="flex items-center gap-2 px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 text-sm transition-colors"
+                        >
+                          <X className="w-4 h-4" />
+                          Cancel
+                        </button>
+                        <button
+                          onClick={handleSaveEdit}
+                          disabled={saving}
+                          className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm disabled:opacity-50 transition-colors shadow-sm"
+                        >
+                          <Save className="w-4 h-4" />
+                          {saving ? 'Saving...' : 'Save Changes'}
+                        </button>
+                      </div>
                     )}
                   </div>
 
-                  {/* Dates */}
-                  {email.extractedData.dates && (
-                    <div className="mb-4">
-                      <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1">
-                        <Calendar className="w-4 h-4" />
-                        Travel Dates
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    {/* Destination Card */}
+                    <div className="bg-white rounded-xl p-5 shadow-sm border border-indigo-100">
+                      <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-3">
+                        <MapPin className="w-5 h-5 text-indigo-600" />
+                        Destination
                       </label>
                       {isEditing ? (
-                        <div className="space-y-2">
-                          <div className="grid grid-cols-2 gap-2">
-                            <div>
-                              <label className="text-xs text-gray-600">Start Date</label>
-                              <input
-                                type="date"
-                                value={editedData.dates?.preferredStart || ''}
-                                onChange={(e) => handleNestedChange('dates', 'preferredStart', e.target.value)}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                              />
-                            </div>
-                            <div>
-                              <label className="text-xs text-gray-600">End Date</label>
-                              <input
-                                type="date"
-                                value={editedData.dates?.preferredEnd || ''}
-                                onChange={(e) => handleNestedChange('dates', 'preferredEnd', e.target.value)}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                              />
-                            </div>
-                          </div>
-                          <div>
-                            <label className="text-xs text-gray-600">Or Duration (days)</label>
-                            <input
-                              type="number"
-                              min="1"
-                              value={editedData.dates?.duration || ''}
-                              onChange={(e) => handleNestedChange('dates', 'duration', parseInt(e.target.value) || '')}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                              placeholder="Number of days"
-                            />
-                          </div>
+                        <div className="space-y-3">
+                          <input
+                            type="text"
+                            value={editedData.destination || ''}
+                            onChange={(e) => handleEditChange('destination', e.target.value)}
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            placeholder="Enter primary destination"
+                          />
+                          <input
+                            type="text"
+                            value={editedData.additionalDestinations?.join(', ') || ''}
+                            onChange={(e) => handleEditChange('additionalDestinations', e.target.value.split(',').map(d => d.trim()).filter(d => d))}
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                            placeholder="Additional destinations (comma-separated)"
+                          />
+                          <p className="text-xs text-gray-500">Additional destinations help find multi-city packages</p>
                         </div>
                       ) : (
-                        <div className="text-gray-900">
-                          {email.extractedData.dates.preferredStart && email.extractedData.dates.preferredEnd ? (
-                            <p>{email.extractedData.dates.preferredStart} to {email.extractedData.dates.preferredEnd}</p>
-                          ) : email.extractedData.dates.duration ? (
-                            <p>{email.extractedData.dates.duration} days</p>
-                          ) : (
-                            <p>Flexible</p>
+                        <>
+                          <p className="text-lg font-semibold text-gray-900">{email.extractedData.destination || 'Not specified'}</p>
+                          {email.extractedData.additionalDestinations?.length > 0 && (
+                            <div className="mt-3">
+                              <p className="text-xs text-gray-500 mb-2">Also interested in:</p>
+                              <div className="flex flex-wrap gap-2">
+                                {email.extractedData.additionalDestinations.map((dest, idx) => (
+                                  <span key={idx} className="px-2 py-1 bg-indigo-100 text-indigo-700 rounded text-sm">
+                                    {dest}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
                           )}
-                        </div>
+                        </>
                       )}
                     </div>
-                  )}
 
-                  {/* Travelers */}
-                  {email.extractedData.travelers && (
-                    <div className="mb-4">
-                      <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1">
-                        <Users className="w-4 h-4" />
-                        Travelers
-                      </label>
-                      {isEditing ? (
-                        <div className="grid grid-cols-3 gap-2">
-                          <div>
-                            <label className="text-xs text-gray-600">Adults</label>
-                            <input
-                              type="number"
-                              min="0"
-                              value={editedData.travelers?.adults || 0}
-                              onChange={(e) => handleNestedChange('travelers', 'adults', parseInt(e.target.value) || 0)}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                            />
+                    {/* Travel Dates Card */}
+                    {email.extractedData.dates && (
+                      <div className="bg-white rounded-xl p-5 shadow-sm border border-indigo-100">
+                        <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-3">
+                          <Calendar className="w-5 h-5 text-indigo-600" />
+                          Travel Dates
+                        </label>
+                        {isEditing ? (
+                          <div className="space-y-3">
+                            <div className="grid grid-cols-2 gap-3">
+                              <div>
+                                <label className="text-xs text-gray-600 block mb-1">Start Date</label>
+                                <input
+                                  type="date"
+                                  value={editedData.dates?.preferredStart || ''}
+                                  onChange={(e) => handleNestedChange('dates', 'preferredStart', e.target.value)}
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
+                                />
+                              </div>
+                              <div>
+                                <label className="text-xs text-gray-600 block mb-1">End Date</label>
+                                <input
+                                  type="date"
+                                  value={editedData.dates?.preferredEnd || ''}
+                                  onChange={(e) => handleNestedChange('dates', 'preferredEnd', e.target.value)}
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
+                                />
+                              </div>
+                            </div>
+                            <div>
+                              <label className="text-xs text-gray-600 block mb-1">Or Duration (days)</label>
+                              <input
+                                type="number"
+                                min="1"
+                                value={editedData.dates?.duration || ''}
+                                onChange={(e) => handleNestedChange('dates', 'duration', parseInt(e.target.value) || '')}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                placeholder="Number of days"
+                              />
+                            </div>
                           </div>
-                          <div>
-                            <label className="text-xs text-gray-600">Children</label>
-                            <input
-                              type="number"
-                              min="0"
-                              value={editedData.travelers?.children || 0}
-                              onChange={(e) => handleNestedChange('travelers', 'children', parseInt(e.target.value) || 0)}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                            />
+                        ) : (
+                          <div className="text-gray-900">
+                            {email.extractedData.dates.preferredStart && email.extractedData.dates.preferredEnd ? (
+                              <div>
+                                <p className="text-lg font-semibold">{email.extractedData.dates.preferredStart}</p>
+                                <p className="text-sm text-gray-600">to</p>
+                                <p className="text-lg font-semibold">{email.extractedData.dates.preferredEnd}</p>
+                              </div>
+                            ) : email.extractedData.dates.duration ? (
+                              <p className="text-lg font-semibold">{email.extractedData.dates.duration} days</p>
+                            ) : (
+                              <p className="text-lg font-semibold">Flexible</p>
+                            )}
                           </div>
-                          <div>
-                            <label className="text-xs text-gray-600">Infants</label>
-                            <input
-                              type="number"
-                              min="0"
-                              value={editedData.travelers?.infants || 0}
-                              onChange={(e) => handleNestedChange('travelers', 'infants', parseInt(e.target.value) || 0)}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                            />
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="text-gray-900">
-                          <p>
-                            {email.extractedData.travelers.adults || 0} Adults
-                            {email.extractedData.travelers.children > 0 && `, ${email.extractedData.travelers.children} Children`}
-                            {email.extractedData.travelers.infants > 0 && `, ${email.extractedData.travelers.infants} Infants`}
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  )}
+                        )}
+                      </div>
+                    )}
 
-                  {/* Budget */}
-                  {email.extractedData.budget && (
-                    <div className="mb-4">
-                      <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1">
-                        <DollarSign className="w-4 h-4" />
-                        Budget
-                      </label>
-                      {isEditing ? (
-                        <div className="grid grid-cols-2 gap-2">
-                          <div>
-                            <label className="text-xs text-gray-600">Amount</label>
-                            <input
-                              type="number"
-                              min="0"
-                              value={editedData.budget?.amount || ''}
-                              onChange={(e) => handleNestedChange('budget', 'amount', parseFloat(e.target.value) || 0)}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                              placeholder="0"
-                            />
+                    {/* Travelers Card */}
+                    {email.extractedData.travelers && (
+                      <div className="bg-white rounded-xl p-5 shadow-sm border border-indigo-100">
+                        <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-3">
+                          <Users className="w-5 h-5 text-indigo-600" />
+                          Travelers
+                        </label>
+                        {isEditing ? (
+                          <div className="grid grid-cols-3 gap-3">
+                            <div>
+                              <label className="text-xs text-gray-600 block mb-1">Adults</label>
+                              <input
+                                type="number"
+                                min="0"
+                                value={editedData.travelers?.adults || 0}
+                                onChange={(e) => handleNestedChange('travelers', 'adults', parseInt(e.target.value) || 0)}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                              />
+                            </div>
+                            <div>
+                              <label className="text-xs text-gray-600 block mb-1">Children</label>
+                              <input
+                                type="number"
+                                min="0"
+                                value={editedData.travelers?.children || 0}
+                                onChange={(e) => handleNestedChange('travelers', 'children', parseInt(e.target.value) || 0)}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                              />
+                            </div>
+                            <div>
+                              <label className="text-xs text-gray-600 block mb-1">Infants</label>
+                              <input
+                                type="number"
+                                min="0"
+                                value={editedData.travelers?.infants || 0}
+                                onChange={(e) => handleNestedChange('travelers', 'infants', parseInt(e.target.value) || 0)}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                              />
+                            </div>
                           </div>
-                          <div>
-                            <label className="text-xs text-gray-600">Currency</label>
+                        ) : (
+                          <div className="space-y-2">
+                            <div className="flex items-center justify-between">
+                              <span className="text-gray-600">Adults</span>
+                              <span className="text-lg font-semibold text-gray-900">{email.extractedData.travelers.adults || 0}</span>
+                            </div>
+                            {email.extractedData.travelers.children > 0 && (
+                              <div className="flex items-center justify-between">
+                                <span className="text-gray-600">Children</span>
+                                <span className="text-lg font-semibold text-gray-900">{email.extractedData.travelers.children}</span>
+                              </div>
+                            )}
+                            {email.extractedData.travelers.infants > 0 && (
+                              <div className="flex items-center justify-between">
+                                <span className="text-gray-600">Infants</span>
+                                <span className="text-lg font-semibold text-gray-900">{email.extractedData.travelers.infants}</span>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Budget Card */}
+                    {email.extractedData.budget && (
+                      <div className="bg-white rounded-xl p-5 shadow-sm border border-indigo-100">
+                        <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-3">
+                          <DollarSign className="w-5 h-5 text-indigo-600" />
+                          Budget
+                        </label>
+                        {isEditing ? (
+                          <div className="grid grid-cols-2 gap-3">
+                            <div>
+                              <label className="text-xs text-gray-600 block mb-1">Amount</label>
+                              <input
+                                type="number"
+                                min="0"
+                                value={editedData.budget?.amount || ''}
+                                onChange={(e) => handleNestedChange('budget', 'amount', parseFloat(e.target.value) || 0)}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                placeholder="0"
+                              />
+                            </div>
+                            <div>
+                              <label className="text-xs text-gray-600 block mb-1">Currency</label>
+                              <select
+                                value={editedData.budget?.currency || 'USD'}
+                                onChange={(e) => handleNestedChange('budget', 'currency', e.target.value)}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                              >
+                                <option value="USD">USD</option>
+                                <option value="EUR">EUR</option>
+                                <option value="GBP">GBP</option>
+                                <option value="INR">INR</option>
+                                <option value="AUD">AUD</option>
+                              </select>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="text-gray-900">
+                            {email.extractedData.budget.amount ? (
+                              <>
+                                <p className="text-2xl font-bold text-green-600">
+                                  {email.extractedData.budget.currency} {email.extractedData.budget.amount.toLocaleString()}
+                                </p>
+                                <div className="flex gap-2 mt-2">
+                                  {email.extractedData.budget.perPerson && (
+                                    <span className="px-2 py-1 bg-green-100 text-green-700 rounded text-xs">Per person</span>
+                                  )}
+                                  {email.extractedData.budget.flexible && (
+                                    <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs">Flexible</span>
+                                  )}
+                                </div>
+                              </>
+                            ) : (
+                              <p className="text-gray-500">Not specified</p>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Package Type & Activities - Full Width */}
+                    <div className="lg:col-span-2 bg-white rounded-xl p-5 shadow-sm border border-indigo-100">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {/* Package Type */}
+                        <div>
+                          <label className="text-sm font-semibold text-gray-700 mb-3 block">
+                            <Tag className="w-4 h-4 inline mr-1" />
+                            Package Type
+                          </label>
+                          {isEditing ? (
                             <select
-                              value={editedData.budget?.currency || 'USD'}
-                              onChange={(e) => handleNestedChange('budget', 'currency', e.target.value)}
+                              value={editedData.packageType || ''}
+                              onChange={(e) => handleEditChange('packageType', e.target.value)}
                               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                             >
-                              <option value="USD">USD</option>
-                              <option value="EUR">EUR</option>
-                              <option value="GBP">GBP</option>
-                              <option value="INR">INR</option>
-                              <option value="AUD">AUD</option>
+                              <option value="">Select package type</option>
+                              <option value="Honeymoon">Honeymoon</option>
+                              <option value="Family">Family</option>
+                              <option value="Adventure">Adventure</option>
+                              <option value="Luxury">Luxury</option>
+                              <option value="Budget">Budget</option>
+                              <option value="Group">Group</option>
+                              <option value="Solo">Solo</option>
+                              <option value="Business">Business</option>
+                              <option value="Pilgrimage">Pilgrimage</option>
+                              <option value="Beach">Beach</option>
+                              <option value="Cultural">Cultural</option>
+                              <option value="Wildlife">Wildlife</option>
                             </select>
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="text-gray-900">
-                          {email.extractedData.budget.amount ? (
-                            <p>
-                              {email.extractedData.budget.currency} {email.extractedData.budget.amount.toLocaleString()}
-                              {email.extractedData.budget.perPerson && ' per person'}
-                              {email.extractedData.budget.flexible && ' (Flexible)'}
-                            </p>
                           ) : (
-                            <p>Not specified</p>
+                            <span className="inline-block px-4 py-2 bg-purple-100 text-purple-800 rounded-lg font-semibold">
+                              {email.extractedData.packageType || 'Not specified'}
+                            </span>
                           )}
                         </div>
-                      )}
+
+                        {/* Activities */}
+                        <div>
+                          <label className="text-sm font-semibold text-gray-700 mb-3 block">
+                            <Plane className="w-4 h-4 inline mr-1" />
+                            Activities
+                          </label>
+                          {isEditing ? (
+                            <div className="space-y-2">
+                              <input
+                                type="text"
+                                value={editedData.activities?.join(', ') || ''}
+                                onChange={(e) => handleEditChange('activities', e.target.value.split(',').map(a => a.trim()).filter(a => a))}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                placeholder="Enter activities (comma-separated)"
+                              />
+                              <p className="text-xs text-gray-500">Separate multiple activities with commas</p>
+                            </div>
+                          ) : (
+                            <div className="flex flex-wrap gap-2">
+                              {email.extractedData.activities?.length > 0 ? (
+                                email.extractedData.activities.map((activity, idx) => (
+                                  <span key={idx} className="px-3 py-1 bg-blue-100 text-blue-800 rounded-lg text-sm font-medium">
+                                    {activity}
+                                  </span>
+                                ))
+                              ) : (
+                                <span className="text-gray-500 text-sm">No activities specified</span>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </div>
                     </div>
-                  )}
-
-                  {/* Package Type */}
-                  <div className="mb-4">
-                    <label className="text-sm font-medium text-gray-700 mb-1 block">Package Type</label>
-                    {isEditing ? (
-                      <select
-                        value={editedData.packageType || ''}
-                        onChange={(e) => handleEditChange('packageType', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                      >
-                        <option value="">Select package type</option>
-                        <option value="Honeymoon">Honeymoon</option>
-                        <option value="Family">Family</option>
-                        <option value="Adventure">Adventure</option>
-                        <option value="Luxury">Luxury</option>
-                        <option value="Budget">Budget</option>
-                        <option value="Group">Group</option>
-                        <option value="Solo">Solo</option>
-                        <option value="Business">Business</option>
-                        <option value="Pilgrimage">Pilgrimage</option>
-                        <option value="Beach">Beach</option>
-                        <option value="Cultural">Cultural</option>
-                        <option value="Wildlife">Wildlife</option>
-                      </select>
-                    ) : (
-                      <span className="inline-block px-3 py-1 bg-purple-100 text-purple-800 rounded-full text-sm">
-                        {email.extractedData.packageType || 'Not specified'}
-                      </span>
-                    )}
                   </div>
 
-                  {/* Activities */}
-                  <div className="mb-4">
-                    <label className="text-sm font-medium text-gray-700 mb-1 block">Activities</label>
-                    {isEditing ? (
-                      <div className="space-y-2">
-                        <input
-                          type="text"
-                          value={editedData.activities?.join(', ') || ''}
-                          onChange={(e) => handleEditChange('activities', e.target.value.split(',').map(a => a.trim()).filter(a => a))}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                          placeholder="Enter activities separated by commas (e.g., Sightseeing, Shopping, Beach)"
-                        />
-                        <p className="text-xs text-gray-500">Separate multiple activities with commas</p>
-                      </div>
-                    ) : (
-                      <div className="flex flex-wrap gap-2">
-                        {email.extractedData.activities?.length > 0 ? (
-                          email.extractedData.activities.map((activity, idx) => (
-                            <span key={idx} className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-sm">
-                              {activity}
-                            </span>
-                          ))
-                        ) : (
-                          <span className="text-gray-500 text-sm">No activities specified</span>
-                        )}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Missing Info */}
+                  {/* Missing Info Alert */}
                   {getMissingInfo().length > 0 && (
-                    <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                      <h4 className="font-medium text-yellow-800 mb-2 flex items-center gap-2">
-                        <AlertCircle className="w-5 h-5" />
-                        Missing Information
-                      </h4>
-                      <ul className="list-disc list-inside text-sm text-yellow-700">
-                        {getMissingInfo().map((info, idx) => (
-                          <li key={idx}>{info}</li>
-                        ))}
-                      </ul>
+                    <div className="mt-6 p-4 bg-yellow-50 border-l-4 border-yellow-400 rounded-r-lg">
+                      <div className="flex items-start">
+                        <AlertCircle className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+                        <div className="ml-3">
+                          <h4 className="font-semibold text-yellow-800 mb-2">Missing Information</h4>
+                          <ul className="list-disc list-inside space-y-1">
+                            {getMissingInfo().map((info, idx) => (
+                              <li key={idx} className="text-sm text-yellow-700 capitalize">{info}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      </div>
                     </div>
                   )}
                 </div>
+              )}
+
+              {/* No extracted data - show option to extract */}
+              {!email.extractedData && email.category && (
+                <div className="p-6 border-b border-gray-200">
+                  <div className="text-center py-8">
+                    <FileText className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-600 mb-4">No data extracted from this email yet</p>
+                    <button
+                      onClick={handleExtract}
+                      disabled={processing}
+                      className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 mx-auto shadow-md"
+                    >
+                      <TrendingUp className="w-5 h-5" />
+                      {processing ? 'Extracting...' : 'Extract Data Now'}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Supplier Data (if not customer email) */}
+              {email.extractedData && email.category !== 'CUSTOMER' && (
+                <div className="p-6 border-b border-gray-200">
+                  <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                    <Package className="w-5 h-5 text-green-600" />
+                    Supplier Package Data
+                  </h3>
+                  <pre className="bg-gray-50 p-4 rounded-lg overflow-auto text-sm border border-gray-200">
+                    {JSON.stringify(email.extractedData, null, 2)}
+                  </pre>
+                </div>
+              )}
+
+              {/* Technical Details Section - Collapsible */}
+              <div className="p-6 bg-gray-50">
+                <details className="group">
+                  <summary className="flex items-center justify-between cursor-pointer list-none">
+                    <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                      <Clock className="w-5 h-5 text-gray-600" />
+                      Technical Information
+                    </h3>
+                    <span className="transition group-open:rotate-180">
+                      <ChevronDown className="w-5 h-5 text-gray-600" />
+                    </span>
+                  </summary>
+                  
+                  <div className="mt-6 space-y-6">
+                    {/* Processing Info */}
+                    <div className="bg-white rounded-lg p-5 shadow-sm border border-gray-200">
+                      <h4 className="font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                        <TrendingUp className="w-4 h-4" />
+                        Processing Status
+                      </h4>
+                      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div>
+                          <label className="text-xs text-gray-500 block mb-1">Status</label>
+                          <p className="font-medium text-gray-900">{email.processingStatus}</p>
+                        </div>
+                        <div>
+                          <label className="text-xs text-gray-500 block mb-1">Received</label>
+                          <p className="font-medium text-gray-900 text-sm">{new Date(email.receivedAt).toLocaleString()}</p>
+                        </div>
+                        {email.processedAt && (
+                          <div>
+                            <label className="text-xs text-gray-500 block mb-1">Processed</label>
+                            <p className="font-medium text-gray-900 text-sm">{new Date(email.processedAt).toLocaleString()}</p>
+                          </div>
+                        )}
+                        {email.trackingId && (
+                          <div>
+                            <label className="text-xs text-gray-500 block mb-1">Tracking ID</label>
+                            <div className="flex items-center gap-2">
+                              <p className="font-mono text-xs font-semibold text-indigo-600">{email.trackingId}</p>
+                              <a
+                                href={`/tracking/${email.trackingId}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-xs text-indigo-600 hover:text-indigo-800 underline"
+                              >
+                                View
+                              </a>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Email Metadata */}
+                    <div className="bg-white rounded-lg p-5 shadow-sm border border-gray-200">
+                      <h4 className="font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                        <Mail className="w-4 h-4" />
+                        Email Metadata
+                      </h4>
+                      <div className="space-y-3">
+                        <div>
+                          <label className="text-xs text-gray-500 block mb-1">Message ID</label>
+                          <p className="font-mono text-xs text-gray-700 bg-gray-50 p-2 rounded border border-gray-200 break-all">
+                            {email.messageId}
+                          </p>
+                        </div>
+                        {email.language && (
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <label className="text-xs text-gray-500 block mb-1">Language</label>
+                              <p className="font-medium text-gray-900">{email.language}</p>
+                            </div>
+                            {email.sentiment && (
+                              <div>
+                                <label className="text-xs text-gray-500 block mb-1">Sentiment</label>
+                                <p className="font-medium text-gray-900 capitalize">{email.sentiment}</p>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* AI Metrics */}
+                    {(email.openaiCost || email.tokensUsed) && (
+                      <div className="bg-white rounded-lg p-5 shadow-sm border border-gray-200">
+                        <h4 className="font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                          <TrendingUp className="w-4 h-4" />
+                          AI Processing Metrics
+                        </h4>
+                        <div className="grid grid-cols-2 gap-4">
+                          {email.openaiCost && (
+                            <div>
+                              <label className="text-xs text-gray-500 block mb-1">OpenAI Cost</label>
+                              <p className="text-lg font-bold text-green-600">${email.openaiCost.toFixed(4)}</p>
+                            </div>
+                          )}
+                          {email.tokensUsed && (
+                            <div>
+                              <label className="text-xs text-gray-500 block mb-1">Tokens Used</label>
+                              <p className="text-lg font-bold text-blue-600">{email.tokensUsed.toLocaleString()}</p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Tags */}
+                    {email.tags?.length > 0 && (
+                      <div className="bg-white rounded-lg p-5 shadow-sm border border-gray-200">
+                        <h4 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                          <Tag className="w-4 h-4" />
+                          Tags
+                        </h4>
+                        <div className="flex flex-wrap gap-2">
+                          {email.tags.map((tag, idx) => (
+                            <span key={idx} className="px-3 py-1 bg-gray-100 text-gray-800 rounded-full text-sm">
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </details>
               </div>
-            ) : (
-              <div>
-                <h3 className="text-lg font-semibold mb-4">Supplier Package Data</h3>
-                <pre className="bg-gray-50 p-4 rounded-lg overflow-auto text-sm">
-                  {JSON.stringify(email.extractedData, null, 2)}
-                </pre>
-              </div>
-            )}
-          </div>
+            </div>
+          </>
         )}
 
         {activeTab === 'matches' && (
@@ -1120,6 +1380,56 @@ const EmailDetail = () => {
         {/* Quotes Tab */}
         {activeTab === 'quotes' && (
           <QuotesTab email={email} onRefresh={fetchEmail} />
+        )}
+
+        {/* Assignments Tab */}
+        {activeTab === 'assignments' && email && (
+          <div className="bg-white rounded-lg shadow p-6">
+            <div className="flex justify-between items-center mb-6">
+              <div>
+                <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                  <Package className="w-6 h-6 text-blue-600" />
+                  Task Assignments
+                </h2>
+                <p className="text-sm text-gray-600 mt-1">
+                  Assign tasks to team members and track progress
+                </p>
+              </div>
+              <AssignmentDropdown
+                entityType="EmailLog"
+                entityId={email._id}
+              />
+            </div>
+            <AssignmentList
+              entityType="EmailLog"
+              entityId={email._id}
+            />
+          </div>
+        )}
+
+        {/* Expenses Tab */}
+        {activeTab === 'expenses' && email && (
+          <div className="bg-white rounded-lg shadow p-6">
+            <div className="flex justify-between items-center mb-6">
+              <div>
+                <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                  <DollarSign className="w-6 h-6 text-green-600" />
+                  Expenses
+                </h2>
+                <p className="text-sm text-gray-600 mt-1">
+                  Track expenses related to this inquiry
+                </p>
+              </div>
+              <ExpenseForm
+                entityType="EmailLog"
+                entityId={email._id}
+              />
+            </div>
+            <ExpenseList
+              entityType="EmailLog"
+              entityId={email._id}
+            />
+          </div>
         )}
 
         {activeTab === 'conversation' && (
@@ -1421,93 +1731,6 @@ const EmailDetail = () => {
             })()}
           </div>
         )}
-
-        {activeTab === 'technical' && (
-          <div className="space-y-4">
-            <div>
-              <h3 className="text-lg font-semibold mb-2">Processing Information</h3>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm text-gray-600">Status</label>
-                  <p className="font-medium">{email.processingStatus}</p>
-                </div>
-                <div>
-                  <label className="text-sm text-gray-600">Received</label>
-                  <p className="font-medium">{new Date(email.receivedAt).toLocaleString()}</p>
-                </div>
-                {email.processedAt && (
-                  <div>
-                    <label className="text-sm text-gray-600">Processed</label>
-                    <p className="font-medium">{new Date(email.processedAt).toLocaleString()}</p>
-                  </div>
-                )}
-                <div>
-                  <label className="text-sm text-gray-600">Message ID</label>
-                  <p className="font-mono text-xs">{email.messageId}</p>
-                </div>
-                {email.trackingId && (
-                  <div>
-                    <label className="text-sm text-gray-600">Tracking ID</label>
-                    <div className="flex items-center gap-2">
-                      <p className="font-mono text-sm font-semibold text-indigo-600">{email.trackingId}</p>
-                      <a
-                        href={`/tracking/${email.trackingId}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-xs text-indigo-600 hover:text-indigo-800 underline"
-                      >
-                        Public View
-                      </a>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div>
-              <h3 className="text-lg font-semibold mb-2">AI Metrics</h3>
-              <div className="grid grid-cols-2 gap-4">
-                {email.openaiCost && (
-                  <div>
-                    <label className="text-sm text-gray-600">OpenAI Cost</label>
-                    <p className="font-medium">${email.openaiCost.toFixed(4)}</p>
-                  </div>
-                )}
-                {email.tokensUsed && (
-                  <div>
-                    <label className="text-sm text-gray-600">Tokens Used</label>
-                    <p className="font-medium">{email.tokensUsed.toLocaleString()}</p>
-                  </div>
-                )}
-                {email.sentiment && (
-                  <div>
-                    <label className="text-sm text-gray-600">Sentiment</label>
-                    <p className="font-medium capitalize">{email.sentiment}</p>
-                  </div>
-                )}
-                {email.language && (
-                  <div>
-                    <label className="text-sm text-gray-600">Language</label>
-                    <p className="font-medium">{email.language}</p>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {email.tags?.length > 0 && (
-              <div>
-                <h3 className="text-lg font-semibold mb-2">Tags</h3>
-                <div className="flex flex-wrap gap-2">
-                  {email.tags.map((tag, idx) => (
-                    <span key={idx} className="px-2 py-1 bg-gray-100 text-gray-800 rounded text-sm">
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        )}
       </div>
 
       {/* Reply Modal */}
@@ -1605,18 +1828,45 @@ const EmailDetail = () => {
                       <input
                         type="text"
                         value={ccInput}
-                        onChange={(e) => setCcInput(e.target.value)}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          console.log('⌨️  CC Input changed:', value);
+                          
+                          // Auto-add on comma, semicolon, or space
+                          if (value.endsWith(',') || value.endsWith(';') || value.endsWith(' ')) {
+                            const email = value.slice(0, -1).trim();
+                            if (email && email.includes('@')) {
+                              setCcInput(email);
+                              setTimeout(() => handleAddCC(true), 0);
+                              return;
+                            }
+                          }
+                          
+                          setCcInput(value);
+                        }}
+                        onBlur={() => {
+                          console.log('👋 CC Input blur, auto-adding if valid');
+                          // Auto-add on blur (clicking away)
+                          if (ccInput.trim() && ccInput.includes('@')) {
+                            handleAddCC(true);
+                          }
+                        }}
                         onKeyPress={(e) => {
+                          console.log('🔑 Key pressed in CC:', e.key);
                           if (e.key === 'Enter') {
                             e.preventDefault();
+                            console.log('↩️  Enter pressed, calling handleAddCC');
                             handleAddCC();
                           }
                         }}
                         className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                        placeholder="Separate multiple emails with comma, semicolon, or colon"
+                        placeholder="Type email and press comma, space, or Tab"
                       />
                       <button
-                        onClick={handleAddCC}
+                        onClick={() => {
+                          console.log('🖱️  Add CC button clicked');
+                          handleAddCC();
+                        }}
                         className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
                       >
                         Add
@@ -1651,18 +1901,45 @@ const EmailDetail = () => {
                       <input
                         type="text"
                         value={bccInput}
-                        onChange={(e) => setBccInput(e.target.value)}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          console.log('⌨️  BCC Input changed:', value);
+                          
+                          // Auto-add on comma, semicolon, or space
+                          if (value.endsWith(',') || value.endsWith(';') || value.endsWith(' ')) {
+                            const email = value.slice(0, -1).trim();
+                            if (email && email.includes('@')) {
+                              setBccInput(email);
+                              setTimeout(() => handleAddBCC(true), 0);
+                              return;
+                            }
+                          }
+                          
+                          setBccInput(value);
+                        }}
+                        onBlur={() => {
+                          console.log('👋 BCC Input blur, auto-adding if valid');
+                          // Auto-add on blur (clicking away)
+                          if (bccInput.trim() && bccInput.includes('@')) {
+                            handleAddBCC(true);
+                          }
+                        }}
                         onKeyPress={(e) => {
+                          console.log('🔑 Key pressed in BCC:', e.key);
                           if (e.key === 'Enter') {
                             e.preventDefault();
+                            console.log('↩️  Enter pressed, calling handleAddBCC');
                             handleAddBCC();
                           }
                         }}
                         className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                        placeholder="Separate multiple emails with comma, semicolon, or colon"
+                        placeholder="Type email and press comma, space, or Tab"
                       />
                       <button
-                        onClick={handleAddBCC}
+                        onClick={() => {
+                          console.log('🖱️  Add BCC button clicked');
+                          handleAddBCC();
+                        }}
                         className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
                       >
                         Add

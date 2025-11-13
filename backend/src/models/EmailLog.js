@@ -82,6 +82,12 @@ const emailLogSchema = new mongoose.Schema({
     default: 'webhook',
     index: true
   }, // Track where email came from
+  emailType: {
+    type: String,
+    enum: ['customer', 'system', 'spam', 'undelivered', 'autoreply'],
+    default: 'customer',
+    index: true
+  }, // Type of email - prevents replies to system/spam emails
   headers: mongoose.Schema.Types.Mixed,
   inReplyTo: String, // Message-ID of parent email
   references: [String], // Thread message IDs

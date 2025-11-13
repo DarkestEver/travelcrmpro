@@ -1,11 +1,12 @@
 const AuditLog = require('../models/AuditLog');
 
 // Create audit log entry
-const createAuditLog = async (userId, userRole, action, resourceType, resourceId, details, req) => {
+const createAuditLog = async (userId, userRole, tenantId, action, resourceType, resourceId, details, req) => {
   try {
     await AuditLog.create({
       userId,
       userRole,
+      tenantId,
       action,
       resourceType,
       resourceId,
@@ -42,6 +43,7 @@ const auditLogger = (action, resourceType) => {
           createAuditLog(
             req.user._id,
             req.user.role,
+            req.user.tenantId,
             action,
             resourceType,
             resourceId,

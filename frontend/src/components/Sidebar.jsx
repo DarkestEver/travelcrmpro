@@ -36,6 +36,33 @@ const Sidebar = () => {
       roles: ['super_admin', 'operator'],
     },
     {
+      name: 'Emails & Queries',
+      icon: FiMail,
+      roles: ['super_admin', 'operator'],
+      submenu: [
+        {
+          name: 'Dashboard',
+          path: '/emails',
+          icon: FiInbox,
+        },
+        {
+          name: 'Processing History',
+          path: '/emails/history',
+          icon: FiClock,
+        },
+        {
+          name: 'Review Queue',
+          path: '/emails/review-queue',
+          icon: FiFileText,
+        },
+        {
+          name: 'Analytics',
+          path: '/emails/analytics',
+          icon: FiTrendingUp,
+        },
+      ],
+    },
+    {
       name: 'Agents',
       path: '/agents',
       icon: FiUserCheck,
@@ -70,33 +97,6 @@ const Sidebar = () => {
       path: '/bookings',
       icon: FiCalendar,
       roles: ['super_admin', 'operator', 'agent'],
-    },
-    {
-      name: 'Emails',
-      icon: FiMail,
-      roles: ['super_admin', 'operator'],
-      submenu: [
-        {
-          name: 'Dashboard',
-          path: '/emails',
-          icon: FiInbox,
-        },
-        {
-          name: 'Processing History',
-          path: '/emails/history',
-          icon: FiClock,
-        },
-        {
-          name: 'Review Queue',
-          path: '/emails/review-queue',
-          icon: FiFileText,
-        },
-        {
-          name: 'Analytics',
-          path: '/emails/analytics',
-          icon: FiTrendingUp,
-        },
-      ],
     },
     {
       name: 'Analytics',
@@ -182,7 +182,7 @@ const Sidebar = () => {
               <div>
                 <button
                   onClick={() => {
-                    if (item.name === 'Emails') {
+                    if (item.name === 'Emails & Queries') {
                       setEmailsOpen(!emailsOpen)
                     } else if (item.name === 'Settings') {
                       setSettingsOpen(!settingsOpen)
@@ -194,14 +194,14 @@ const Sidebar = () => {
                     <item.icon className="text-xl" />
                     <span className="font-medium">{item.name}</span>
                   </div>
-                  {(item.name === 'Emails' ? emailsOpen : settingsOpen) ? (
+                  {(item.name === 'Emails & Queries' ? emailsOpen : settingsOpen) ? (
                     <FiChevronDown className="text-lg" />
                   ) : (
                     <FiChevronRight className="text-lg" />
                   )}
                 </button>
                 
-                {((item.name === 'Emails' && emailsOpen) || (item.name === 'Settings' && settingsOpen)) && (
+                {((item.name === 'Emails & Queries' && emailsOpen) || (item.name === 'Settings' && settingsOpen)) && (
                   <div className="ml-4 space-y-1">
                     {item.submenu.map((subItem) => (
                       <NavLink

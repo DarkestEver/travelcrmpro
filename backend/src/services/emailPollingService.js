@@ -168,27 +168,67 @@ class EmailPollingService {
                   try {
                     const parsed = await simpleParser(emailBuffer);
                     
-                    // Check if email already exists (by messageId)
-                    const existingEmail = await EmailLog.findOne({
-                      messageId: parsed.messageId
-                    });
-
-                    if (existingEmail) {
-                      logger.info(`ℹ️  Email already processed: ${parsed.messageId}`);
-                      return;
-                    }
-
-                    // Extract email addresses
+                    // Extract email addresses FIRST
                     const fromAddress = parsed.from?.value?.[0];
                     const toAddresses = parsed.to?.value || [];
                     const ccAddresses = parsed.cc?.value || [];
-
-                    // Skip emails sent by us (our own sent emails)
                     const senderEmail = fromAddress?.address?.toLowerCase();
                     const accountEmail = account.imap.username.toLowerCase();
                     
+                    // Skip emails sent by us (our own sent emails) - CHECK THIS FIRST
                     if (senderEmail === accountEmail) {
                       logger.info(`⏭️  Skipping our own sent email: ${parsed.messageId} from ${senderEmail}`);
+                      return;
+                    }
+                    
+                    // Skip system emails: spam, undelivered, mail delivery failures
+                    const subject = parsed.subject?.toLowerCase() || '';
+                    const systemEmailPatterns = [
+                      'mail delivery',
+                      'delivery status notification',
+                      'undelivered mail returned to sender',
+                      'returned mail',
+                      'failure notice',
+                      'delivery failure',
+                      'mail system error',
+                      'postmaster',
+                      'mailer-daemon',
+                      'auto-reply',
+                      'automatic reply',
+                      'out of office',
+                      'vacation reply'
+                    ];
+                    
+                    const isSystemEmail = 
+                      systemEmailPatterns.some(pattern => subject.includes(pattern)) ||
+                      senderEmail?.includes('mailer-daemon') ||
+                      senderEmail?.includes('postmaster') ||
+                      senderEmail === 'noreply@' ||
+                      senderEmail?.startsWith('noreply');
+                    
+                    if (isSystemEmail) {
+                      logger.info(`🚫 Skipping system/automated email: "${parsed.subject}" from ${senderEmail}`);
+                      return;
+                    }
+                    
+                    // Check if email already exists (by messageId, subject, and date)
+                    const existingEmail = await EmailLog.findOne({
+                      $or: [
+                        { messageId: parsed.messageId },
+                        {
+                          // Also check by subject + from + date (in case messageId differs)
+                          subject: parsed.subject,
+                          'from.email': senderEmail,
+                          receivedAt: {
+                            $gte: new Date(parsed.date.getTime() - 5000), // Within 5 seconds
+                            $lte: new Date(parsed.date.getTime() + 5000)
+                          }
+                        }
+                      ]
+                    });
+
+                    if (existingEmail) {
+                      logger.info(`ℹ️  Email already processed: ${parsed.messageId || parsed.subject}`);
                       return;
                     }
 
@@ -215,6 +255,7 @@ class EmailPollingService {
                       receivedAt: parsed.date || new Date(),
                       processingStatus: 'pending',
                       source: 'imap', // Track source as IMAP (vs webhook)
+                      emailType: 'customer', // Normal customer email (system emails already filtered above)
                       inReplyTo: parsed.inReplyTo || null,
                       references: parsed.references || []
                     });

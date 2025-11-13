@@ -306,7 +306,12 @@ const getTemplates = asyncHandler(async (req, res) => {
 // @route   POST /api/v1/itineraries/:id/share
 // @access  Private
 const generateShareLink = asyncHandler(async (req, res) => {
-  const { expiryDays = 30, password } = req.body;
+  const { expiresInDays = 30, expiryDays, password, singleUse = false } = req.body;
+  
+  // Support both expiresInDays (new) and expiryDays (legacy)
+  const days = expiresInDays || expiryDays || 30;
+  
+  console.log('Generate share link request:', { expiresInDays, expiryDays, days, password: !!password, singleUse });
   
   const itinerary = await Itinerary.findById(req.params.id);
 
@@ -322,18 +327,25 @@ const generateShareLink = asyncHandler(async (req, res) => {
     throw new AppError('You do not have permission to share this itinerary', 403);
   }
 
-  // Generate shareable link
-  const token = itinerary.generateShareableLink(expiryDays, password);
+  // Generate shareable link with singleUse option
+  const token = itinerary.generateShareableLink(days, password, singleUse);
+  console.log('Generated token:', token);
+  console.log('Shareable link object:', itinerary.shareableLink);
+  
   await itinerary.save();
+  console.log('Itinerary saved successfully');
 
-  const shareUrl = `${req.protocol}://${req.get('host')}/share/itinerary/${token}`;
-
-  successResponse(res, 200, 'Shareable link generated successfully', { 
-    shareUrl,
+  // Don't send shareUrl with backend domain - let frontend construct it
+  const responseData = { 
     token,
     expiresAt: itinerary.shareableLink.expiresAt,
-    hasPassword: !!password
-  });
+    hasPassword: !!password,
+    singleUse: singleUse
+  };
+  
+  console.log('Sending response data:', responseData);
+
+  successResponse(res, 200, 'Shareable link generated successfully', responseData);
 });
 
 // @desc    Get itinerary by share token

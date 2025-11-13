@@ -18,6 +18,10 @@ import DataTable from '../components/DataTable';
 import Modal from '../components/Modal';
 import ConfirmDialog from '../components/ConfirmDialog';
 import ShareModal from '../components/ShareModal';
+import AssignmentDropdown from '../components/assignments/AssignmentDropdown';
+import AssignmentList from '../components/assignments/AssignmentList';
+import ExpenseForm from '../components/expenses/ExpenseForm';
+import ExpenseList from '../components/expenses/ExpenseList';
 import { bookingsAPI } from '../services/apiEndpoints';
 
 const Bookings = () => {
@@ -265,7 +269,7 @@ const Bookings = () => {
   ];
 
   return (
-    <div className="h-screen overflow-y-auto">
+    <div className="overflow-y-auto">
       <div className="space-y-6 p-6 pb-24">
         {/* Header */}
         <div className="flex justify-between items-center">
@@ -599,130 +603,190 @@ const BookingFormModal = ({ isOpen, onClose, booking, onSubmit, isLoading }) => 
 
 // Booking Details Modal Component
 const BookingDetailsModal = ({ isOpen, onClose, booking }) => {
+  const [activeTab, setActiveTab] = useState('details');
+  
   return (
     <Modal
       isOpen={isOpen}
       onClose={onClose}
       title={`Booking ${booking?.bookingNumber}`}
-      size="lg"
+      size="xl"
     >
+      {/* Tab Navigation */}
+      <div className="border-b border-gray-200 mb-6">
+        <nav className="flex gap-4">
+          {['details', 'assignments', 'expenses'].map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={`px-4 py-2 border-b-2 font-medium transition-colors capitalize ${
+                activeTab === tab
+                  ? 'border-blue-600 text-blue-600'
+                  : 'border-transparent text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              {tab}
+            </button>
+          ))}
+        </nav>
+      </div>
+
       <div className="space-y-6 max-h-[70vh] overflow-y-auto">
-        {/* Overview */}
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="text-sm text-gray-500">Customer</label>
-            <div className="font-medium">{booking?.customer?.name}</div>
-            <div className="text-sm text-gray-600">{booking?.customer?.email}</div>
-          </div>
-          <div>
-            <label className="text-sm text-gray-500">Agent</label>
-            <div className="font-medium">{booking?.agent?.name || 'N/A'}</div>
-          </div>
-        </div>
+        {/* Details Tab */}
+        {activeTab === 'details' && (
+          <>
+            {/* Overview */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm text-gray-500">Customer</label>
+                <div className="font-medium">{booking?.customer?.name}</div>
+                <div className="text-sm text-gray-600">{booking?.customer?.email}</div>
+              </div>
+              <div>
+                <label className="text-sm text-gray-500">Agent</label>
+                <div className="font-medium">{booking?.agent?.name || 'N/A'}</div>
+              </div>
+            </div>
 
-        <div className="grid grid-cols-3 gap-4">
-          <div>
-            <label className="text-sm text-gray-500">Destination</label>
-            <div className="font-medium">{booking?.destination}</div>
-          </div>
-          <div>
-            <label className="text-sm text-gray-500">Travelers</label>
-            <div className="font-medium">{booking?.numberOfTravelers} person(s)</div>
-          </div>
-          <div>
-            <label className="text-sm text-gray-500">Duration</label>
-            <div className="font-medium">
-              {booking?.startDate?.split('T')[0]} to {booking?.endDate?.split('T')[0]}
-            </div>
-          </div>
-        </div>
-
-        {/* Payment Timeline */}
-        <div className="border-t pt-4">
-          <h3 className="font-medium text-gray-900 mb-3 flex items-center gap-2">
-            <FiDollarSign className="w-5 h-5" />
-            Payment Details
-          </h3>
-          <div className="bg-gray-50 p-4 rounded-lg space-y-2">
-            <div className="flex justify-between">
-              <span>Total Amount:</span>
-              <span className="font-bold">${booking?.totalAmount?.toFixed(2)}</span>
-            </div>
-            <div className="flex justify-between">
-              <span>Paid Amount:</span>
-              <span className="font-medium text-green-600">${booking?.paidAmount?.toFixed(2)}</span>
-            </div>
-            <div className="flex justify-between border-t pt-2">
-              <span>Balance:</span>
-              <span className="font-bold text-red-600">
-                ${((booking?.totalAmount || 0) - (booking?.paidAmount || 0)).toFixed(2)}
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span>Payment Status:</span>
-              <span className={`badge ${
-                booking?.paymentStatus === 'paid' ? 'badge-success' :
-                booking?.paymentStatus === 'partial' ? 'badge-warning' : 'badge-danger'
-              }`}>
-                {booking?.paymentStatus}
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* Travelers */}
-        <div className="border-t pt-4">
-          <h3 className="font-medium text-gray-900 mb-3 flex items-center gap-2">
-            <FiUsers className="w-5 h-5" />
-            Travelers
-          </h3>
-          <div className="space-y-3">
-            {booking?.travelers?.map((traveler, index) => (
-              <div key={index} className="p-3 bg-gray-50 rounded-lg">
-                <div className="font-medium">{traveler.name}</div>
-                <div className="text-sm text-gray-600 grid grid-cols-2 gap-2 mt-1">
-                  <div>Email: {traveler.email}</div>
-                  <div>Phone: {traveler.phone || 'N/A'}</div>
-                  {traveler.passportNumber && (
-                    <div>Passport: {traveler.passportNumber}</div>
-                  )}
+            <div className="grid grid-cols-3 gap-4">
+              <div>
+                <label className="text-sm text-gray-500">Destination</label>
+                <div className="font-medium">{booking?.destination}</div>
+              </div>
+              <div>
+                <label className="text-sm text-gray-500">Travelers</label>
+                <div className="font-medium">{booking?.numberOfTravelers} person(s)</div>
+              </div>
+              <div>
+                <label className="text-sm text-gray-500">Duration</label>
+                <div className="font-medium">
+                  {booking?.startDate?.split('T')[0]} to {booking?.endDate?.split('T')[0]}
                 </div>
               </div>
-            ))}
-          </div>
-        </div>
+            </div>
 
-        {/* Timeline/History */}
-        {booking?.statusHistory && booking.statusHistory.length > 0 && (
-          <div className="border-t pt-4">
-            <h3 className="font-medium text-gray-900 mb-3 flex items-center gap-2">
-              <FiClock className="w-5 h-5" />
-              Status History
-            </h3>
-            <div className="space-y-2">
-              {booking.statusHistory.map((history, index) => (
-                <div key={index} className="flex items-center gap-3 text-sm">
-                  <div className="w-2 h-2 rounded-full bg-blue-500"></div>
-                  <div className="flex-1">
-                    <span className="font-medium">{history.status}</span>
-                    {history.notes && <span className="text-gray-600"> - {history.notes}</span>}
-                  </div>
-                  <span className="text-gray-500">
-                    {new Date(history.timestamp).toLocaleDateString()}
+            {/* Payment Timeline */}
+            <div className="border-t pt-4">
+              <h3 className="font-medium text-gray-900 mb-3 flex items-center gap-2">
+                <FiDollarSign className="w-5 h-5" />
+                Payment Details
+              </h3>
+              <div className="bg-gray-50 p-4 rounded-lg space-y-2">
+                <div className="flex justify-between">
+                  <span>Total Amount:</span>
+                  <span className="font-bold">${booking?.totalAmount?.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Paid Amount:</span>
+                  <span className="font-medium text-green-600">${booking?.paidAmount?.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between border-t pt-2">
+                  <span>Balance:</span>
+                  <span className="font-bold text-red-600">
+                    ${((booking?.totalAmount || 0) - (booking?.paidAmount || 0)).toFixed(2)}
                   </span>
                 </div>
-              ))}
+                <div className="flex justify-between">
+                  <span>Payment Status:</span>
+                  <span className={`badge ${
+                    booking?.paymentStatus === 'paid' ? 'badge-success' :
+                    booking?.paymentStatus === 'partial' ? 'badge-warning' : 'badge-danger'
+                  }`}>
+                    {booking?.paymentStatus}
+                  </span>
+                </div>
+              </div>
             </div>
+
+            {/* Travelers */}
+            <div className="border-t pt-4">
+              <h3 className="font-medium text-gray-900 mb-3 flex items-center gap-2">
+                <FiUsers className="w-5 h-5" />
+                Travelers
+              </h3>
+              <div className="space-y-3">
+                {booking?.travelers?.map((traveler, index) => (
+                  <div key={index} className="p-3 bg-gray-50 rounded-lg">
+                    <div className="font-medium">{traveler.name}</div>
+                    <div className="text-sm text-gray-600 grid grid-cols-2 gap-2 mt-1">
+                      <div>Email: {traveler.email}</div>
+                      <div>Phone: {traveler.phone || 'N/A'}</div>
+                      {traveler.passportNumber && (
+                        <div>Passport: {traveler.passportNumber}</div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Timeline/History */}
+            {booking?.statusHistory && booking.statusHistory.length > 0 && (
+              <div className="border-t pt-4">
+                <h3 className="font-medium text-gray-900 mb-3 flex items-center gap-2">
+                  <FiClock className="w-5 h-5" />
+                  Status History
+                </h3>
+                <div className="space-y-2">
+                  {booking.statusHistory.map((history, index) => (
+                    <div key={index} className="flex items-center gap-3 text-sm">
+                      <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+                      <div className="flex-1">
+                        <span className="font-medium">{history.status}</span>
+                        {history.notes && <span className="text-gray-600"> - {history.notes}</span>}
+                      </div>
+                      <span className="text-gray-500">
+                        {new Date(history.timestamp).toLocaleDateString()}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {booking?.notes && (
+              <div className="border-t pt-4">
+                <h3 className="font-medium text-gray-900 mb-2 flex items-center gap-2">
+                  <FiFileText className="w-5 h-5" />
+                  Notes
+                </h3>
+                <p className="text-gray-700">{booking.notes}</p>
+              </div>
+            )}
+          </>
+        )}
+
+        {/* Assignments Tab */}
+        {activeTab === 'assignments' && booking && (
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <h3 className="text-lg font-semibold text-gray-900">Task Assignments</h3>
+              <AssignmentDropdown
+                entityType="Booking"
+                entityId={booking._id}
+              />
+            </div>
+            <AssignmentList
+              entityType="Booking"
+              entityId={booking._id}
+            />
           </div>
         )}
 
-        {booking?.notes && (
-          <div className="border-t pt-4">
-            <h3 className="font-medium text-gray-900 mb-2 flex items-center gap-2">
-              <FiFileText className="w-5 h-5" />
-              Notes
-            </h3>
-            <p className="text-gray-700">{booking.notes}</p>
+        {/* Expenses Tab */}
+        {activeTab === 'expenses' && booking && (
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <h3 className="text-lg font-semibold text-gray-900">Expenses</h3>
+              <ExpenseForm
+                entityType="Booking"
+                entityId={booking._id}
+              />
+            </div>
+            <ExpenseList
+              entityType="Booking"
+              entityId={booking._id}
+            />
           </div>
         )}
 

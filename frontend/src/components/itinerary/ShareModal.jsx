@@ -9,27 +9,35 @@ const ShareModal = ({ isOpen, onClose, itineraryId }) => {
   const [shareLink, setShareLink] = useState(null);
   const [copied, setCopied] = useState(false);
   const [formData, setFormData] = useState({
-    expiryDays: 30,
-    password: ''
+    expiresInDays: 30,
+    password: '',
+    singleUse: false
   });
 
   const generateLinkMutation = useMutation({
-    mutationFn: (options) => {
+    mutationFn: async (options) => {
       console.log('Generating share link with options:', options);
-      return itinerariesAPI.generateShareLink(itineraryId, options);
+      const result = await itinerariesAPI.generateShareLink(itineraryId, options);
+      console.log('Share link raw result:', result);
+      return result;
     },
     onSuccess: (data) => {
       console.log('Share link response data:', data);
+      console.log('Share link response type:', typeof data);
+      console.log('Share link response keys:', data ? Object.keys(data) : 'no keys');
       
       // Handle case where data might be undefined or null
       if (!data) {
-        toast.error('No data received from server');
+        toast.error('No data received from server. Please restart the backend server.');
         return;
       }
       
+      // Construct URL from frontend to get correct domain
+      const shareUrl = `${window.location.origin}/share/itinerary/${data.token}`;
+      
       // Transform backend response to match expected format
       const linkData = {
-        url: data.shareUrl,
+        url: shareUrl,
         token: data.token,
         expiresAt: data.expiresAt,
         isPasswordProtected: data.hasPassword,
@@ -78,8 +86,8 @@ const ShareModal = ({ isOpen, onClose, itineraryId }) => {
                 Link Expiry (Days)
               </label>
               <select
-                value={formData.expiryDays}
-                onChange={(e) => setFormData({ ...formData, expiryDays: parseInt(e.target.value) })}
+                value={formData.expiresInDays}
+                onChange={(e) => setFormData({ ...formData, expiresInDays: parseInt(e.target.value) })}
                 className="input"
               >
                 <option value="1">1 Day</option>
@@ -101,6 +109,25 @@ const ShareModal = ({ isOpen, onClose, itineraryId }) => {
                 className="input"
                 placeholder="Leave empty for no password"
               />
+            </div>
+
+            <div>
+              <label className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  checked={formData.singleUse}
+                  onChange={(e) => setFormData({ ...formData, singleUse: e.target.checked })}
+                  className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                />
+                <span className="text-sm text-gray-700">
+                  🔒 Single-use link (expires after first access)
+                </span>
+              </label>
+              {formData.singleUse && (
+                <p className="text-xs text-amber-600 mt-1 ml-6">
+                  ⚠️ Warning: This link will become invalid after being accessed once
+                </p>
+              )}
             </div>
 
             <button

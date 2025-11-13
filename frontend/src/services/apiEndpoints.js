@@ -111,11 +111,11 @@ export const itinerariesAPI = {
   deleteComponent: (id, dayId, componentId) => 
     api.delete(`/itineraries/${id}/days/${dayId}/components/${componentId}`).then(res => res.data.data),
   reorderComponents: (id, dayId, componentIds) => 
-    api.put(`/itineraries/${id}/days/${dayId}/reorder`, { componentIds }).then(res => res.data.data),
+    api.put(`/itineraries/${id}/days/${dayId}/reorder`, { componentIds }).then(res => res.data),
   // PHASE 1: Sharing & Analytics
-  generateShareLink: (id, options) => api.post(`/itineraries/${id}/share`, options).then(res => res.data.data),
+  generateShareLink: (id, options) => api.post(`/itineraries/${id}/share`, options).then(res => res.data),
   getSharedItinerary: (token, password) => 
-    api.get(`/itineraries/share/${token}`, { params: { password } }).then(res => res.data.data),
+    api.get(`/itineraries/share/${token}`, { params: { password } }).then(res => res.data),
   getStats: (id) => api.get(`/itineraries/${id}/stats`).then(res => res.data.data),
   clone: (id) => api.post(`/itineraries/${id}/clone`).then(res => res.data.data),
   import: (itineraryData) => api.post('/itineraries/import', { itineraryData }).then(res => res.data.data),
@@ -141,6 +141,8 @@ export const quotesAPI = {
   duplicate: (id) => api.post(`/quotes/${id}/duplicate`),
   getRevisions: (id) => api.get(`/quotes/${id}/revisions`),
   exportPDF: (id) => api.get(`/quotes/${id}/export`, { responseType: 'blob' }),
+  // Convert quote to booking
+  convert: (id, data = {}) => api.post('/bookings', { quoteId: id, ...data }),
 }
 
 // Bookings API
@@ -211,6 +213,33 @@ export const uploadAPI = {
   deleteImage: (filePath) => api.delete(`/upload/image`, { data: { filePath } })
 }
 
+// Assignments API
+export const assignmentsAPI = {
+  getMyAssignments: (params) => api.get('/assignments/my-assignments', { params }),
+  getForEntity: (entityType, entityId) => api.get(`/assignments/entity/${entityType}/${entityId}`),
+  getOne: (id) => api.get(`/assignments/${id}`),
+  create: (data) => api.post('/assignments', data),
+  update: (id, data) => api.patch(`/assignments/${id}`, data),
+  updateStatus: (id, status, notes) => api.patch(`/assignments/${id}/status`, { status, notes }),
+  reassign: (id, toUserId, reason) => api.patch(`/assignments/${id}/reassign`, { toUserId, reason }),
+  delete: (id) => api.delete(`/assignments/${id}`)
+}
+
+// Expenses API
+export const expensesAPI = {
+  getAll: (params) => api.get('/expenses', { params }),
+  getForEntity: (entityType, entityId) => api.get(`/expenses/${entityType}/${entityId}`),
+  getOne: (id) => api.get(`/expenses/${id}`),
+  getSummary: (params) => api.get('/expenses/summary', { params }),
+  create: (data) => api.post('/expenses', data),
+  update: (id, data) => api.patch(`/expenses/${id}`, data),
+  markAsPaid: (id, amount, paymentMethod, transactionId, notes) => 
+    api.post(`/expenses/${id}/mark-paid`, { amount, paymentMethod, transactionId, notes }),
+  approve: (id, notes) => api.post(`/expenses/${id}/approve`, { notes }),
+  reject: (id, reason) => api.post(`/expenses/${id}/reject`, { reason }),
+  delete: (id) => api.delete(`/expenses/${id}`)
+}
+
 export default {
   auth: authAPI,
   agents: agentsAPI,
@@ -222,4 +251,6 @@ export default {
   auditLogs: auditLogsAPI,
   analytics: analyticsAPI,
   upload: uploadAPI,
+  assignments: assignmentsAPI,
+  expenses: expensesAPI,
 }

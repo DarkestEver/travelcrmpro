@@ -82,26 +82,96 @@ const viewSharedItinerary = asyncHandler(async (req, res) => {
   const { token } = req.params;
   const { password } = req.query;
 
-  const shareToken = await shareService.getTokenWithEntity(token, password);
+  // Try ShareToken first (new system)
+  try {
+    const shareToken = await shareService.getTokenWithEntity(token, password);
 
-  if (shareToken.entityType !== 'Itinerary') {
-    throw new AppError('Invalid share link for itinerary', 400);
-  }
-
-  const itinerary = await Itinerary.findById(shareToken.entityId).lean();
-
-  if (!itinerary) {
-    throw new AppError('Itinerary not found', 404);
-  }
-
-  successResponse(res, 200, 'Itinerary retrieved successfully', {
-    itinerary,
-    tenant: shareToken.tenantId,
-    shareMetadata: {
-      allowedActions: shareToken.metadata.allowedActions,
-      customMessage: shareToken.metadata.customMessage
+    if (shareToken.entityType !== 'Itinerary') {
+      throw new AppError('Invalid share link for itinerary', 400);
     }
-  });
+
+    const itinerary = await Itinerary.findById(shareToken.entityId).lean();
+
+    if (!itinerary) {
+      throw new AppError('Itinerary not found', 404);
+    }
+
+    return successResponse(res, 200, 'Itinerary retrieved successfully', {
+      itinerary,
+      tenant: shareToken.tenantId,
+      shareMetadata: {
+        allowedActions: shareToken.metadata.allowedActions,
+        customMessage: shareToken.metadata.customMessage
+      }
+    });
+  } catch (shareTokenError) {
+    // If ShareToken not found, try embedded shareableLink (old system)
+    if (shareTokenError.statusCode !== 404) {
+      throw shareTokenError; // Re-throw if it's not a "not found" error
+    }
+
+    // Fallback to old embedded shareableLink system
+    const itinerary = await Itinerary.findOne({ 'shareableLink.token': token })
+      .populate('createdBy', 'name email')
+      .populate('days.components.supplierId', 'companyName');
+
+    if (!itinerary) {
+      throw new AppError('Share link not found', 404);
+    }
+
+    // Check if link expired
+    if (itinerary.shareableLink.expiresAt < new Date()) {
+      throw new AppError('Share link has expired', 403);
+    }
+
+    // Check for single-use link already accessed
+    if (itinerary.shareableLink.singleUse && itinerary.shareableLink.accessCount > 0) {
+      throw new AppError('This share link has already been used', 403);
+    }
+
+    // Check password if required
+    if (itinerary.shareableLink.password) {
+      if (!password) {
+        return res.status(401).json({
+          success: false,
+          message: 'Password required to access this itinerary'
+        });
+      }
+      
+      const crypto = require('crypto');
+      const hashedPassword = crypto.createHash('sha256').update(password).digest('hex');
+      
+      if (hashedPassword !== itinerary.shareableLink.password) {
+        throw new AppError('Incorrect password', 401);
+      }
+    }
+
+    // Track first access for single-use links
+    if (itinerary.shareableLink.singleUse && !itinerary.shareableLink.firstAccessedAt) {
+      itinerary.shareableLink.firstAccessedAt = new Date();
+    }
+
+    // Increment view count and access count
+    itinerary.shareableLink.views = (itinerary.shareableLink.views || 0) + 1;
+    itinerary.shareableLink.accessCount = (itinerary.shareableLink.accessCount || 0) + 1;
+    itinerary.viewCount = (itinerary.viewCount || 0) + 1;
+    itinerary.lastViewedAt = new Date();
+
+    // Deactivate single-use link after first access
+    if (itinerary.shareableLink.singleUse) {
+      itinerary.shareableLink.isActive = false;
+    }
+
+    await itinerary.save();
+
+    return successResponse(res, 200, 'Itinerary retrieved successfully', {
+      itinerary,
+      shareMetadata: {
+        allowedActions: ['view', 'download'],
+        customMessage: null
+      }
+    });
+  }
 });
 
 /**

@@ -16,6 +16,10 @@ import DataTable from '../components/DataTable';
 import Modal from '../components/Modal';
 import ConfirmDialog from '../components/ConfirmDialog';
 import ShareModal from '../components/ShareModal';
+import AssignmentDropdown from '../components/assignments/AssignmentDropdown';
+import AssignmentList from '../components/assignments/AssignmentList';
+import ExpenseForm from '../components/expenses/ExpenseForm';
+import ExpenseList from '../components/expenses/ExpenseList';
 import { quotesAPI } from '../services/apiEndpoints';
 
 const Quotes = () => {
@@ -246,7 +250,7 @@ const Quotes = () => {
   ];
 
   return (
-    <div className="h-screen overflow-y-auto">
+    <div className="overflow-y-auto">
       <div className="space-y-6 p-6 pb-24">
         {/* Header */}
         <div className="flex justify-between items-center">
@@ -567,6 +571,8 @@ const QuoteFormModal = ({ isOpen, onClose, quote, onSubmit, isLoading }) => {
 
 // Quote Preview Modal Component
 const QuotePreviewModal = ({ isOpen, onClose, quote }) => {
+  const [activeTab, setActiveTab] = useState('details');
+  
   const subtotal = quote?.items?.reduce((sum, item) => sum + (item.amount || 0), 0) || 0;
   const discountAmount = (subtotal * (quote?.discount || 0)) / 100;
   const total = subtotal - discountAmount;
@@ -576,77 +582,135 @@ const QuotePreviewModal = ({ isOpen, onClose, quote }) => {
       isOpen={isOpen}
       onClose={onClose}
       title={`Quote ${quote?.quoteNumber}`}
-      size="md"
+      size="xl"
     >
-      <div className="space-y-4">
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="text-sm text-gray-500">Customer</label>
-            <div className="font-medium">{quote?.customer?.name}</div>
-          </div>
-          <div>
-            <label className="text-sm text-gray-500">Destination</label>
-            <div className="font-medium">{quote?.destination}</div>
-          </div>
-        </div>
+      {/* Tab Navigation */}
+      <div className="border-b border-gray-200 mb-6">
+        <nav className="flex gap-4">
+          {['details', 'assignments', 'expenses'].map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={`px-4 py-2 border-b-2 font-medium transition-colors capitalize ${
+                activeTab === tab
+                  ? 'border-blue-600 text-blue-600'
+                  : 'border-transparent text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              {tab}
+            </button>
+          ))}
+        </nav>
+      </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="text-sm text-gray-500">Travelers</label>
-            <div className="font-medium">{quote?.numberOfTravelers} person(s)</div>
-          </div>
-          <div>
-            <label className="text-sm text-gray-500">Duration</label>
-            <div className="font-medium">
-              {quote?.startDate?.split('T')[0]} to {quote?.endDate?.split('T')[0]}
-            </div>
-          </div>
-        </div>
-
-        <div className="border-t pt-4">
-          <h3 className="font-medium text-gray-900 mb-3">Pricing Breakdown</h3>
-          <div className="space-y-2">
-            {quote?.items?.map((item, index) => (
-              <div key={index} className="flex justify-between text-sm">
-                <div>
-                  <span className="badge badge-info text-xs mr-2">{item.type}</span>
-                  <span>{item.description}</span>
-                </div>
-                <span className="font-medium">${item.amount.toFixed(2)}</span>
+      <div className="space-y-4 max-h-[70vh] overflow-y-auto">
+        {/* Details Tab */}
+        {activeTab === 'details' && (
+          <>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm text-gray-500">Customer</label>
+                <div className="font-medium">{quote?.customer?.name}</div>
               </div>
-            ))}
-          </div>
-
-          <div className="mt-4 p-4 bg-gray-50 rounded-lg space-y-2">
-            <div className="flex justify-between text-sm">
-              <span>Subtotal:</span>
-              <span className="font-medium">${subtotal.toFixed(2)}</span>
+              <div>
+                <label className="text-sm text-gray-500">Destination</label>
+                <div className="font-medium">{quote?.destination}</div>
+              </div>
             </div>
-            {quote?.discount > 0 && (
-              <div className="flex justify-between text-sm text-green-600">
-                <span>Discount ({quote.discount}%):</span>
-                <span className="font-medium">-${discountAmount.toFixed(2)}</span>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm text-gray-500">Travelers</label>
+                <div className="font-medium">{quote?.numberOfTravelers} person(s)</div>
+              </div>
+              <div>
+                <label className="text-sm text-gray-500">Duration</label>
+                <div className="font-medium">
+                  {quote?.startDate?.split('T')[0]} to {quote?.endDate?.split('T')[0]}
+                </div>
+              </div>
+            </div>
+
+            <div className="border-t pt-4">
+              <h3 className="font-medium text-gray-900 mb-3">Pricing Breakdown</h3>
+              <div className="space-y-2">
+                {quote?.items?.map((item, index) => (
+                  <div key={index} className="flex justify-between text-sm">
+                    <div>
+                      <span className="badge badge-info text-xs mr-2">{item.type}</span>
+                      <span>{item.description}</span>
+                    </div>
+                    <span className="font-medium">${item.amount.toFixed(2)}</span>
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-4 p-4 bg-gray-50 rounded-lg space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span>Subtotal:</span>
+                  <span className="font-medium">${subtotal.toFixed(2)}</span>
+                </div>
+                {quote?.discount > 0 && (
+                  <div className="flex justify-between text-sm text-green-600">
+                    <span>Discount ({quote.discount}%):</span>
+                    <span className="font-medium">-${discountAmount.toFixed(2)}</span>
+                  </div>
+                )}
+                <div className="flex justify-between text-lg font-bold border-t pt-2">
+                  <span>Total:</span>
+                  <span>${total.toFixed(2)}</span>
+                </div>
+              </div>
+            </div>
+
+            {quote?.notes && (
+              <div className="border-t pt-4">
+                <label className="text-sm text-gray-500">Notes</label>
+                <p className="text-gray-700 mt-1">{quote.notes}</p>
               </div>
             )}
-            <div className="flex justify-between text-lg font-bold border-t pt-2">
-              <span>Total:</span>
-              <span>${total.toFixed(2)}</span>
-            </div>
-          </div>
-        </div>
+          </>
+        )}
 
-        {quote?.notes && (
-          <div className="border-t pt-4">
-            <label className="text-sm text-gray-500">Notes</label>
-            <p className="text-gray-700 mt-1">{quote.notes}</p>
+        {/* Assignments Tab */}
+        {activeTab === 'assignments' && quote && (
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <h3 className="text-lg font-semibold text-gray-900">Task Assignments</h3>
+              <AssignmentDropdown
+                entityType="Quote"
+                entityId={quote._id}
+              />
+            </div>
+            <AssignmentList
+              entityType="Quote"
+              entityId={quote._id}
+            />
           </div>
         )}
 
-        <div className="flex justify-end pt-4 border-t">
-          <button onClick={onClose} className="btn-secondary">
-            Close
-          </button>
-        </div>
+        {/* Expenses Tab */}
+        {activeTab === 'expenses' && quote && (
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <h3 className="text-lg font-semibold text-gray-900">Expenses</h3>
+              <ExpenseForm
+                entityType="Quote"
+                entityId={quote._id}
+              />
+            </div>
+            <ExpenseList
+              entityType="Quote"
+              entityId={quote._id}
+            />
+          </div>
+        )}
+      </div>
+
+      <div className="flex justify-end pt-4 border-t mt-6">
+        <button onClick={onClose} className="btn-secondary">
+          Close
+        </button>
       </div>
     </Modal>
   );

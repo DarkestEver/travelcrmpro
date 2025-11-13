@@ -16,7 +16,8 @@ class ShareService {
       password,
       allowedActions = ['view'],
       requireEmail = false,
-      customMessage
+      customMessage,
+      singleUse = false // Add singleUse parameter
     } = data;
 
     // Hash password if provided
@@ -35,6 +36,7 @@ class ShareService {
       createdBy,
       expiresAt,
       password: hashedPassword,
+      singleUse, // Set single-use flag
       metadata: {
         allowedActions,
         requireEmail,
@@ -56,6 +58,11 @@ class ShareService {
       throw new AppError('Share link not found', 404);
     }
 
+    // Check if single-use link has already been accessed
+    if (shareToken.singleUse && shareToken.accessCount > 0) {
+      throw new AppError('This link has already been used and is no longer valid. Please request a new link if needed.', 403);
+    }
+
     if (!shareToken.isValid()) {
       throw new AppError('Share link has expired or is no longer active', 403);
     }
@@ -72,8 +79,22 @@ class ShareService {
       }
     }
 
-    // Record view
-    await shareToken.recordView();
+    // Track access
+    shareToken.accessCount += 1;
+    shareToken.lastViewedAt = new Date();
+    
+    // Record first access timestamp
+    if (!shareToken.firstAccessedAt) {
+      shareToken.firstAccessedAt = new Date();
+    }
+
+    // Auto-deactivate if single-use link
+    if (shareToken.singleUse) {
+      shareToken.isActive = false;
+      console.log(`Single-use link ${shareToken.token} auto-deactivated after first access`);
+    }
+
+    await shareToken.save();
 
     return shareToken;
   }

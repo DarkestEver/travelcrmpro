@@ -25,6 +25,8 @@ const emailRoutes = require('./emailRoutes');
 const reviewQueueRoutes = require('./reviewQueueRoutes');
 const publicRoutes = require('./publicRoutes');
 const shareRoutes = require('./shareRoutes');
+const assignmentRoutes = require('./assignmentRoutes');
+const expenseRoutes = require('./expenseRoutes');
 
 const router = express.Router();
 
@@ -70,6 +72,8 @@ router.use('/email-accounts', emailAccountRoutes); // Email account management
 router.use('/emails', emailRoutes); // AI Email automation
 router.use('/review-queue', reviewQueueRoutes); // Manual review queue
 router.use('/share', shareRoutes); // Share token management (authenticated)
+router.use('/assignments', assignmentRoutes); // Query assignment system
+router.use('/expenses', expenseRoutes); // Expense tracking
 router.use('/email', emailTestRoutes); // Email test endpoints
 router.use('/test', testRoutes); // Test endpoints (development only)
 

@@ -34,6 +34,9 @@ export default function SharedBooking() {
       if (err.response?.status === 401 && err.response?.data?.message?.includes('password')) {
         setNeedsPassword(true);
         setError('This booking requires a password to view.');
+      } else if (err.response?.status === 403 && err.response?.data?.message?.includes('already been used')) {
+        // Handle single-use link already accessed
+        setError('link_already_used');
       } else {
         setError(err.response?.data?.message || 'Failed to load booking');
       }
@@ -104,6 +107,37 @@ export default function SharedBooking() {
   }
 
   if (error || !booking) {
+    // Special handling for single-use link already accessed
+    if (error === 'link_already_used') {
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+          <div className="text-center max-w-md bg-white rounded-lg shadow-lg p-8">
+            <div className="text-red-500 mb-4">
+              <svg className="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+            </div>
+            <h1 className="text-2xl font-bold text-gray-900 mb-3">
+              Link Already Used
+            </h1>
+            <p className="text-gray-600 mb-4 leading-relaxed">
+              This one-time access link has already been used and is no longer valid for security reasons.
+            </p>
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+              <p className="text-sm text-blue-800">
+                <strong>Need access again?</strong><br />
+                Please contact the sender to request a new link.
+              </p>
+            </div>
+            <div className="text-xs text-gray-500">
+              This security measure helps protect sensitive booking information.
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // Default error handling
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">

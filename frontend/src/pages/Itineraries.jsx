@@ -318,7 +318,7 @@ const Itineraries = () => {
   ];
 
   return (
-    <div className="h-screen overflow-y-auto">
+    <div className="overflow-y-auto">
       <div className="space-y-6 p-6 pb-24">
         {/* Header */}
         <div className="flex justify-between items-center">

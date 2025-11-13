@@ -43,6 +43,19 @@ const shareTokenSchema = new mongoose.Schema({
   lastViewedAt: {
     type: Date
   },
+  // Single-use link configuration
+  singleUse: {
+    type: Boolean,
+    default: false, // Set to true for magic links that expire after one access
+    index: true
+  },
+  firstAccessedAt: {
+    type: Date // Timestamp of first access
+  },
+  accessCount: {
+    type: Number,
+    default: 0 // Total number of times link was accessed
+  },
   createdBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
