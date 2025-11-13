@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const emailController = require('../controllers/emailController');
+const emailDashboardController = require('../controllers/emailDashboardController');
 const { protect } = require('../middleware/auth');
 const upload = require('../middleware/upload');
 
@@ -9,6 +10,11 @@ router.post('/webhook', emailController.receiveEmail);
 
 // Protected routes (require authentication)
 router.use(protect);
+
+// Email Dashboard & Analytics (NEW)
+router.get('/dashboard-stats', emailDashboardController.getDashboardStats);
+router.get('/analytics', emailDashboardController.getAnalytics);
+router.get('/review-queue', emailDashboardController.getReviewQueue);
 
 // Email CRUD
 router.get('/', emailController.getEmails);
