@@ -122,6 +122,7 @@ exports.getBookingVoucher = asyncHandler(async (req, res) => {
     tenantId,
   })
     .populate('itineraryId')
+    .populate('customerId')
     .populate('agentId', 'agencyName contactPerson email phone address logo')
     .lean();
 
@@ -133,10 +134,20 @@ exports.getBookingVoucher = asyncHandler(async (req, res) => {
     throw new AppError('Voucher only available for confirmed bookings', 400);
   }
 
-  // Return voucher data (frontend will generate PDF)
-  successResponse(res, 200, 'Booking voucher retrieved', {
-    voucher: booking,
-  });
+  // Generate PDF voucher
+  const { generateVoucherPDF } = require('../../utils/pdfGenerator');
+  const pdfBuffer = await generateVoucherPDF(booking, booking.customerId);
+
+  // Set response headers for PDF download
+  res.setHeader('Content-Type', 'application/pdf');
+  res.setHeader(
+    'Content-Disposition',
+    `attachment; filename=voucher-${booking.bookingNumber}.pdf`
+  );
+  res.setHeader('Content-Length', pdfBuffer.length);
+
+  // Send PDF buffer
+  res.send(pdfBuffer);
 });
 
 /**
