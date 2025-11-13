@@ -29,6 +29,7 @@ import { toast } from 'react-hot-toast';
 import emailAPI from '../../services/emailAPI';
 import QuotesTab from '../../components/emails/QuotesTab';
 import HTMLEditor from '../../components/emails/HTMLEditor';
+import CustomizePackageModal from '../../components/modals/CustomizePackageModal';
 
 const EmailDetail = () => {
   const { id } = useParams();
@@ -61,6 +62,10 @@ const EmailDetail = () => {
   const [editedData, setEditedData] = useState({});
   const [saving, setSaving] = useState(false);
   const [addingToQuote, setAddingToQuote] = useState(null); // Track which package is being added
+  
+  // Customize package modal state
+  const [showCustomizeModal, setShowCustomizeModal] = useState(false);
+  const [packageToCustomize, setPackageToCustomize] = useState(null);
 
   useEffect(() => {
     fetchEmail();
@@ -338,11 +343,19 @@ const EmailDetail = () => {
   };
 
   const handleAddToQuote = async (match) => {
-    // Switch to quotes tab and pass the selected match
+    // Open customize modal first
+    setPackageToCustomize(match);
+    setShowCustomizeModal(true);
+  };
+  
+  const handleSaveCustomizedPackage = (customizedPackage) => {
+    // Close modal
+    setShowCustomizeModal(false);
+    
+    // Switch to quotes tab and pass the customized package
     setActiveTab('quotes');
-    // Store the selected match in a way the QuotesTab can access it
-    window.selectedMatchForQuote = match;
-    toast.success('Switched to Quotes tab. Complete the pricing and click "Create Quote".');
+    window.selectedMatchForQuote = customizedPackage;
+    toast.success('Package customized! Complete the quote and click "Create Quote".');
   };
 
   // Calculate missing information dynamically
@@ -1728,6 +1741,15 @@ const EmailDetail = () => {
           </div>
         </div>
       )}
+      
+      {/* Customize Package Modal */}
+      <CustomizePackageModal
+        isOpen={showCustomizeModal}
+        onClose={() => setShowCustomizeModal(false)}
+        onSave={handleSaveCustomizedPackage}
+        packageData={packageToCustomize}
+        title="Customize Package for Quote"
+      />
     </div>
   );
 };

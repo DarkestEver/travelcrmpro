@@ -12,7 +12,8 @@ import {
   FiMapPin,
   FiLayers,
   FiUpload,
-  FiFilter
+  FiFilter,
+  FiCopy
 } from 'react-icons/fi';
 import DataTable from '../components/DataTable';
 import Modal from '../components/Modal';
@@ -135,8 +136,32 @@ const Itineraries = () => {
     },
   });
 
+  // Duplicate mutation
+  const duplicateMutation = useMutation({
+    mutationFn: (id) => itinerariesAPI.duplicate(id),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries(['itineraries']);
+      const itineraryId = data?.itinerary?._id || data?.data?._id;
+      if (itineraryId) {
+        toast.success('Itinerary duplicated successfully! Opening in builder...');
+        navigate(`/itineraries/${itineraryId}/build`);
+      } else {
+        toast.success('Itinerary duplicated successfully');
+      }
+    },
+    onError: (error) => {
+      toast.error(error.response?.data?.message || 'Failed to duplicate itinerary');
+    },
+  });
+
   const handleImport = (itineraryData) => {
     importMutation.mutate(itineraryData);
+  };
+
+  const handleDuplicate = (itinerary) => {
+    if (window.confirm(`Duplicate "${itinerary.title}"? This will create a copy with all days and components.`)) {
+      duplicateMutation.mutate(itinerary._id);
+    }
   };
 
   const handleEdit = (itinerary) => {
@@ -251,6 +276,13 @@ const Itineraries = () => {
             title="Preview"
           >
             <FiEye className="w-4 h-4" />
+          </button>
+          <button
+            onClick={() => handleDuplicate(row)}
+            className="text-orange-600 hover:text-orange-800"
+            title="Duplicate"
+          >
+            <FiCopy className="w-4 h-4" />
           </button>
           <button
             onClick={() => handleExportJSON(row)}

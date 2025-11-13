@@ -41,6 +41,7 @@ class MatchingEngine {
         inclusions: it.inclusions,
         exclusions: it.exclusions,
         suitableFor: it.suitableFor,
+        sourceType: 'itinerary', // Mark as itinerary
         // Map to expected package structure
         packageData: {
           destination: it.destination?.city || it.destination?.country,
@@ -52,8 +53,25 @@ class MatchingEngine {
         }
       }));
 
+      // Mark supplier packages
+      packages = packages.map(pkg => ({ ...pkg, sourceType: 'supplier' }));
+
       // Combine both sources
       packages = [...packages, ...itineraryPackages];
+
+      // Deduplicate by title and destination (case-insensitive)
+      const seenPackages = new Map();
+      packages = packages.filter(pkg => {
+        const key = `${(pkg.title || '').toLowerCase()}_${JSON.stringify(pkg.destination || {})}`;
+        if (seenPackages.has(key)) {
+          console.log(`⚠️  Duplicate detected: ${pkg.title} - Keeping first occurrence`);
+          return false;
+        }
+        seenPackages.set(key, true);
+        return true;
+      });
+
+      console.log(`📦 Total packages after deduplication: ${packages.length} (${itineraryPackages.length} itineraries + ${packages.filter(p => p.sourceType === 'supplier').length} supplier packages)`);
 
       // Score each package
       const scoredPackages = packages.map(pkg => {
