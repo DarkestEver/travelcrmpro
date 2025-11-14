@@ -30,6 +30,7 @@ const expenseRoutes = require('./expenseRoutes');
 const reportRoutes = require('./reportRoutes');
 const bankReconciliationRoutes = require('./bankReconciliationRoutes');
 const currencyRoutes = require('./currencyRoutes');
+const supplierInventoryRoutes = require('./supplierInventoryRoutes');
 
 const router = express.Router();
 
@@ -62,6 +63,7 @@ router.use('/agent-portal', agentPortalRoutes); // Agent self-service portal
 router.use('/agent-payments', agentPaymentRoutes); // Agent payment management
 router.use('/customers', customerRoutes);
 router.use('/suppliers', supplierRoutes);
+router.use('/supplier-inventory', supplierInventoryRoutes); // Supplier inventory management
 router.use('/itineraries', itineraryRoutes);
 router.use('/quotes', quoteRoutes);
 router.use('/bookings', bookingRoutes);
