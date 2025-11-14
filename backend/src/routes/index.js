@@ -33,6 +33,7 @@ const currencyRoutes = require('./currencyRoutes');
 const supplierInventoryRoutes = require('./supplierInventoryRoutes');
 const rateSheetRoutes = require('./rateSheetRoutes');
 const healthCheckRoutes = require('./healthCheckRoutes');
+const demandForecastingRoutes = require('./demandForecastingRoutes');
 
 const router = express.Router();
 
@@ -79,6 +80,7 @@ router.use('/expenses', expenseRoutes); // Expense tracking
 router.use('/reports', reportRoutes); // Financial reports and analytics
 router.use('/bank-reconciliation', bankReconciliationRoutes); // Bank reconciliation
 router.use('/currency', currencyRoutes); // Currency conversion and exchange rates
+router.use('/demand-forecasting', demandForecastingRoutes); // Demand forecasting and predictions
 router.use('/email', emailTestRoutes); // Email test endpoints
 router.use('/test', testRoutes); // Test endpoints (development only)
 
