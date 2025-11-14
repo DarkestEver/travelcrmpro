@@ -391,9 +391,3 @@ exports.getReviewQueue = asyncHandler(async (req, res) => {
   
   successResponse(res, 200, 'Review queue retrieved successfully', result);
 });
-
-module.exports = {
-  getDashboardStats,
-  getAnalytics,
-  getReviewQueue
-};

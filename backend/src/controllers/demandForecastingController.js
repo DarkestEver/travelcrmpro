@@ -3,9 +3,9 @@
  * Phase 7.1: API endpoints for demand analysis and predictions
  */
 
-const asyncHandler = require('express-async-handler');
+const { asyncHandler } = require('../middleware/errorHandler');
 const demandForecastingService = require('../services/demandForecastingService');
-const { successResponse } = require('../utils/responseHelper');
+const { successResponse } = require('../utils/response');
 
 /**
  * @desc    Get historical booking analysis

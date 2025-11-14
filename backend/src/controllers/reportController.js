@@ -3,8 +3,8 @@
  * Handles financial report generation and exports
  */
 
-const asyncHandler = require('../middleware/asyncHandler');
-const { successResponse, errorResponse } = require('../utils/responseFormatter');
+const { asyncHandler } = require('../middleware/errorHandler');
+const { successResponse } = require('../utils/response');
 const reportService = require('../services/reportService');
 
 /**

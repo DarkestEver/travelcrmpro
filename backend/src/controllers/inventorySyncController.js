@@ -3,9 +3,9 @@
  * Phase 7.2: API endpoints for inventory synchronization
  */
 
-const asyncHandler = require('express-async-handler');
+const { asyncHandler } = require('../middleware/errorHandler');
 const inventorySyncService = require('../services/inventorySyncService');
-const { successResponse } = require('../utils/responseHelper');
+const { successResponse } = require('../utils/response');
 
 /**
  * @desc    Sync all inventory with bookings

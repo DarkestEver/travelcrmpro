@@ -5,7 +5,7 @@
 
 const performanceService = require('../services/performanceService');
 const cacheService = require('../services/cacheService');
-const { asyncHandler } = require('../middleware/errorMiddleware');
+const { asyncHandler } = require('../middleware/errorHandler');
 
 /**
  * Get performance metrics
