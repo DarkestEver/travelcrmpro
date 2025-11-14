@@ -191,6 +191,13 @@ bookingSchema.pre('save', function(next) {
   next();
 });
 
+// Compound indexes for performance optimization (Phase 10)
+bookingSchema.index({ tenantId: 1, bookingStatus: 1, 'travelDates.startDate': 1 });
+bookingSchema.index({ tenantId: 1, agentId: 1, createdAt: -1 });
+bookingSchema.index({ tenantId: 1, customerId: 1 });
+bookingSchema.index({ tenantId: 1, paymentStatus: 1 });
+bookingSchema.index({ tenantId: 1, 'travelDates.startDate': 1, 'travelDates.endDate': 1 });
+
 const Booking = mongoose.model('Booking', bookingSchema);
 
 module.exports = Booking;

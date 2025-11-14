@@ -2,7 +2,6 @@ const express = require('express');
 const http = require('http');
 const cors = require('cors');
 const helmet = require('helmet');
-const compression = require('compression');
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
 const cron = require('node-cron');
@@ -20,6 +19,10 @@ const getPDFService = require('./services/pdfService');
 const { verifyConnection } = require('./config/emailConfig');
 const slaCheckService = require('./services/slaCheckService');
 const emailPollingService = require('./services/emailPollingService');
+
+// Phase 10: Performance optimization middleware
+const { compressionMiddleware, compressionStats } = require('./middleware/compressionMiddleware');
+const performanceMiddleware = require('./middleware/performanceMiddleware');
 
 // Initialize Express app
 const app = express();
@@ -95,8 +98,12 @@ app.use('/api/v1/payments/webhook', express.raw({ type: 'application/json' }));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Compression middleware
-app.use(compression());
+// Phase 10: Compression middleware with statistics
+app.use(compressionStats);
+app.use(compressionMiddleware);
+
+// Phase 10: Performance monitoring middleware
+app.use(performanceMiddleware);
 
 // Logging middleware
 if (process.env.NODE_ENV === 'development') {

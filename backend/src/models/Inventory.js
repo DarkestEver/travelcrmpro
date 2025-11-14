@@ -381,4 +381,11 @@ inventorySchema.methods.updateStats = async function(bookingAmount) {
   await this.save();
 };
 
+// Compound indexes for performance optimization (Phase 10)
+inventorySchema.index({ tenant: 1, serviceType: 1, status: 1 });
+inventorySchema.index({ tenant: 1, supplier: 1, status: 1 });
+inventorySchema.index({ tenant: 1, featured: 1, status: 1 });
+inventorySchema.index({ tenant: 1, 'location.city': 1, serviceType: 1 });
+inventorySchema.index({ tenant: 1, 'pricing.basePrice': 1, status: 1 });
+
 module.exports = mongoose.model('Inventory', inventorySchema);

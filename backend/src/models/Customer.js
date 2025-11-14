@@ -159,6 +159,12 @@ customerSchema.virtual('fullName').get(function () {
   return this.name || '';
 });
 
+// Compound indexes for performance optimization (Phase 10)
+customerSchema.index({ tenantId: 1, email: 1 }, { unique: true });
+customerSchema.index({ tenantId: 1, phone: 1 });
+customerSchema.index({ tenantId: 1, agentId: 1 });
+customerSchema.index({ tenantId: 1, portalAccess: 1 });
+
 const Customer = mongoose.model('Customer', customerSchema);
 
 module.exports = Customer;

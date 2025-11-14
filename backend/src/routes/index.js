@@ -35,11 +35,15 @@ const rateSheetRoutes = require('./rateSheetRoutes');
 const healthCheckRoutes = require('./healthCheckRoutes');
 const demandForecastingRoutes = require('./demandForecastingRoutes');
 const inventorySyncRoutes = require('./inventorySyncRoutes');
+const performanceRoutes = require('./performanceRoutes'); // Phase 10: Performance monitoring
 
 const router = express.Router();
 
 // Health check routes (must be before tenant middleware)
 router.use('/health', healthCheckRoutes);
+
+// Performance monitoring routes (must be before tenant middleware for system-wide metrics)
+router.use('/performance', performanceRoutes); // Phase 10: Performance monitoring
 
 // Apply tenant middleware to all routes except auth and health
 router.use(identifyTenant);
