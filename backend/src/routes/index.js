@@ -32,17 +32,12 @@ const bankReconciliationRoutes = require('./bankReconciliationRoutes');
 const currencyRoutes = require('./currencyRoutes');
 const supplierInventoryRoutes = require('./supplierInventoryRoutes');
 const rateSheetRoutes = require('./rateSheetRoutes');
+const healthCheckRoutes = require('./healthCheckRoutes');
 
 const router = express.Router();
 
-// Health check
-router.get('/health', (req, res) => {
-  res.json({
-    success: true,
-    message: 'API is running',
-    timestamp: new Date().toISOString(),
-  });
-});
+// Health check routes (must be before tenant middleware)
+router.use('/health', healthCheckRoutes);
 
 // Apply tenant middleware to all routes except auth and health
 router.use(identifyTenant);
