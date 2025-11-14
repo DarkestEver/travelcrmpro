@@ -108,9 +108,8 @@ const invoiceSchema = new mongoose.Schema({
   timestamps: true
 });
 
-// Indexes
+// Indexes (invoiceNumber already indexed via unique: true and index: true in schema)
 invoiceSchema.index({ tenantId: 1, agentId: 1, status: 1 });
-invoiceSchema.index({ invoiceNumber: 1 });
 invoiceSchema.index({ createdAt: -1 });
 
 // Generate invoice number

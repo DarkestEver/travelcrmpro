@@ -53,9 +53,8 @@ const auditLogSchema = new mongoose.Schema({
 auditLogSchema.index({ userId: 1, timestamp: -1 });
 auditLogSchema.index({ resourceType: 1, resourceId: 1 });
 auditLogSchema.index({ action: 1 });
-auditLogSchema.index({ timestamp: -1 });
 
-// TTL index - auto-delete logs older than 2 years
+// TTL index - auto-delete logs older than 2 years (also serves as timestamp index)
 auditLogSchema.index({ timestamp: 1 }, { expireAfterSeconds: 63072000 }); // 2 years
 
 const AuditLog = mongoose.model('AuditLog', auditLogSchema);

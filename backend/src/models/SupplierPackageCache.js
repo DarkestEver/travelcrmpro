@@ -157,12 +157,11 @@ const supplierPackageCacheSchema = new mongoose.Schema({
   timestamps: true
 });
 
-// Indexes
+// Indexes (cacheExpiry already indexed via index: true in schema)
 supplierPackageCacheSchema.index({ tenantId: 1, destination: 1, status: 1 });
 supplierPackageCacheSchema.index({ tenantId: 1, validFrom: 1, validUntil: 1 });
 supplierPackageCacheSchema.index({ tenantId: 1, packageType: 1 });
 supplierPackageCacheSchema.index({ supplierEmail: 1, status: 1 });
-supplierPackageCacheSchema.index({ cacheExpiry: 1 });
 
 // Text index for search
 supplierPackageCacheSchema.index({

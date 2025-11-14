@@ -538,9 +538,7 @@ const tenantSchema = new mongoose.Schema(
   }
 );
 
-// Indexes
-tenantSchema.index({ subdomain: 1 });
-tenantSchema.index({ customDomain: 1 });
+// Indexes (subdomain and customDomain already indexed via unique: true)
 tenantSchema.index({ status: 1 });
 tenantSchema.index({ 'subscription.status': 1 });
 

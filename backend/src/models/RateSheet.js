@@ -29,7 +29,7 @@ const rateLineItemSchema = new mongoose.Schema({
   serviceCode: {
     type: String,
     trim: true,
-    index: true, // For quick lookups
+    // Index defined at schema level for rates array
   },
   
   // Location

@@ -233,8 +233,7 @@ const inventorySchema = new mongoose.Schema({
   timestamps: true
 });
 
-// Indexes for efficient querying
-inventorySchema.index({ tenant: 1, supplier: 1, status: 1 });
+// Indexes for efficient querying (removed duplicates - comprehensive indexes added in Phase 10)
 inventorySchema.index({ serviceType: 1, status: 1 });
 inventorySchema.index({ 'location.city': 1, 'location.country': 1 });
 inventorySchema.index({ featured: 1, status: 1 });
