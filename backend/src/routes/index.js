@@ -34,6 +34,7 @@ const supplierInventoryRoutes = require('./supplierInventoryRoutes');
 const rateSheetRoutes = require('./rateSheetRoutes');
 const healthCheckRoutes = require('./healthCheckRoutes');
 const demandForecastingRoutes = require('./demandForecastingRoutes');
+const inventorySyncRoutes = require('./inventorySyncRoutes');
 
 const router = express.Router();
 
@@ -81,6 +82,7 @@ router.use('/reports', reportRoutes); // Financial reports and analytics
 router.use('/bank-reconciliation', bankReconciliationRoutes); // Bank reconciliation
 router.use('/currency', currencyRoutes); // Currency conversion and exchange rates
 router.use('/demand-forecasting', demandForecastingRoutes); // Demand forecasting and predictions
+router.use('/inventory-sync', inventorySyncRoutes); // Real-time inventory synchronization
 router.use('/email', emailTestRoutes); // Email test endpoints
 router.use('/test', testRoutes); // Test endpoints (development only)
 

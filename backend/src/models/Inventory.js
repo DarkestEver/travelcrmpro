@@ -199,6 +199,35 @@ const inventorySchema = new mongoose.Schema({
   lastUpdatedBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'
+  },
+
+  // Sync history for capacity tracking
+  syncHistory: [{
+    timestamp: {
+      type: Date,
+      default: Date.now
+    },
+    bookingId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Booking'
+    },
+    action: {
+      type: String,
+      enum: ['reserve', 'confirm', 'cancel', 'complete', 'sync_correction', 'manual_override']
+    },
+    capacityChange: Number,
+    previousAvailable: Number,
+    newAvailable: Number,
+    discrepancy: Number,
+    source: {
+      type: String,
+      enum: ['booking_sync', 'manual_sync', 'admin']
+    }
+  }],
+
+  lastUpdated: {
+    type: Date,
+    default: Date.now
   }
 }, {
   timestamps: true
