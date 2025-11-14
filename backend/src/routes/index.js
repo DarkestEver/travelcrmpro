@@ -29,6 +29,7 @@ const assignmentRoutes = require('./assignmentRoutes');
 const expenseRoutes = require('./expenseRoutes');
 const reportRoutes = require('./reportRoutes');
 const bankReconciliationRoutes = require('./bankReconciliationRoutes');
+const currencyRoutes = require('./currencyRoutes');
 
 const router = express.Router();
 
@@ -78,6 +79,7 @@ router.use('/assignments', assignmentRoutes); // Query assignment system
 router.use('/expenses', expenseRoutes); // Expense tracking
 router.use('/reports', reportRoutes); // Financial reports and analytics
 router.use('/bank-reconciliation', bankReconciliationRoutes); // Bank reconciliation
+router.use('/currency', currencyRoutes); // Currency conversion and exchange rates
 router.use('/email', emailTestRoutes); // Email test endpoints
 router.use('/test', testRoutes); // Test endpoints (development only)
 
