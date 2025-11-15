@@ -50,7 +50,7 @@
         "testMatch": [
           "**/*.@(spec|test).?(c|m)[jt]s?(x)"
         ],
-        "timeout": 30000
+        "timeout": 60000
       }
     ],
     "shard": null,
@@ -85,7 +85,7 @@
               "tags": [],
               "tests": [
                 {
-                  "timeout": 30000,
+                  "timeout": 60000,
                   "annotations": [],
                   "expectedStatus": "passed",
                   "projectId": "chromium",
@@ -95,7 +95,7 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 52772,
+                      "duration": 12183,
                       "errors": [],
                       "stdout": [
                         {
@@ -107,7 +107,7 @@
                       ],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2025-11-15T09:04:18.447Z",
+                      "startTime": "2025-11-15T09:58:09.300Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -126,7 +126,7 @@
               "tags": [],
               "tests": [
                 {
-                  "timeout": 30000,
+                  "timeout": 60000,
                   "annotations": [],
                   "expectedStatus": "passed",
                   "projectId": "chromium",
@@ -136,7 +136,7 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 26141,
+                      "duration": 10082,
                       "errors": [],
                       "stdout": [
                         {
@@ -175,7 +175,7 @@
                       ],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2025-11-15T09:05:17.548Z",
+                      "startTime": "2025-11-15T09:58:22.613Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -194,7 +194,7 @@
               "tags": [],
               "tests": [
                 {
-                  "timeout": 30000,
+                  "timeout": 60000,
                   "annotations": [],
                   "expectedStatus": "passed",
                   "projectId": "chromium",
@@ -204,7 +204,7 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 31143,
+                      "duration": 24706,
                       "errors": [],
                       "stdout": [
                         {
@@ -219,7 +219,7 @@
                       ],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2025-11-15T09:05:44.102Z",
+                      "startTime": "2025-11-15T09:58:32.800Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -238,7 +238,7 @@
               "tags": [],
               "tests": [
                 {
-                  "timeout": 30000,
+                  "timeout": 60000,
                   "annotations": [],
                   "expectedStatus": "passed",
                   "projectId": "chromium",
@@ -248,7 +248,7 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 23793,
+                      "duration": 20282,
                       "errors": [],
                       "stdout": [
                         {
@@ -260,7 +260,7 @@
                       ],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2025-11-15T09:06:15.309Z",
+                      "startTime": "2025-11-15T09:58:57.560Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -279,7 +279,7 @@
               "tags": [],
               "tests": [
                 {
-                  "timeout": 30000,
+                  "timeout": 60000,
                   "annotations": [],
                   "expectedStatus": "passed",
                   "projectId": "chromium",
@@ -289,7 +289,7 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 23826,
+                      "duration": 11022,
                       "errors": [],
                       "stdout": [
                         {
@@ -301,7 +301,7 @@
                       ],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2025-11-15T09:06:39.179Z",
+                      "startTime": "2025-11-15T09:59:17.899Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -320,7 +320,7 @@
               "tags": [],
               "tests": [
                 {
-                  "timeout": 30000,
+                  "timeout": 60000,
                   "annotations": [],
                   "expectedStatus": "passed",
                   "projectId": "chromium",
@@ -330,7 +330,7 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 24615,
+                      "duration": 17003,
                       "errors": [],
                       "stdout": [
                         {
@@ -351,7 +351,7 @@
                       ],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2025-11-15T09:07:03.098Z",
+                      "startTime": "2025-11-15T09:59:29.066Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -370,7 +370,7 @@
               "tags": [],
               "tests": [
                 {
-                  "timeout": 30000,
+                  "timeout": 60000,
                   "annotations": [],
                   "expectedStatus": "passed",
                   "projectId": "chromium",
@@ -380,7 +380,7 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 21744,
+                      "duration": 18309,
                       "errors": [],
                       "stdout": [
                         {
@@ -395,7 +395,7 @@
                       ],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2025-11-15T09:07:27.939Z",
+                      "startTime": "2025-11-15T09:59:46.139Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -414,7 +414,7 @@
               "tags": [],
               "tests": [
                 {
-                  "timeout": 30000,
+                  "timeout": 60000,
                   "annotations": [],
                   "expectedStatus": "passed",
                   "projectId": "chromium",
@@ -424,14 +424,20 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 51393,
+                      "duration": 20037,
                       "errors": [],
                       "stdout": [
                         {
                           "text": "\n🏦 Testing Bank Reconciliation...\n"
                         },
                         {
-                          "text": "  ✅ All API requests successful\n"
+                          "text": "  ⚠️  Failed API requests: 2\n"
+                        },
+                        {
+                          "text": "     404 - http://localhost:5000/api/v1/bank-reconciliation/accounts\n"
+                        },
+                        {
+                          "text": "     404 - http://localhost:5000/api/v1/bank-reconciliation/accounts\n"
                         },
                         {
                           "text": "✅ Bank Reconciliation page tested\n"
@@ -439,7 +445,7 @@
                       ],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2025-11-15T09:07:49.744Z",
+                      "startTime": "2025-11-15T10:00:04.791Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -458,7 +464,7 @@
               "tags": [],
               "tests": [
                 {
-                  "timeout": 30000,
+                  "timeout": 60000,
                   "annotations": [],
                   "expectedStatus": "passed",
                   "projectId": "chromium",
@@ -468,7 +474,7 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 29225,
+                      "duration": 14798,
                       "errors": [],
                       "stdout": [
                         {
@@ -489,7 +495,7 @@
                       ],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2025-11-15T09:08:41.425Z",
+                      "startTime": "2025-11-15T10:00:24.882Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -508,7 +514,7 @@
               "tags": [],
               "tests": [
                 {
-                  "timeout": 30000,
+                  "timeout": 60000,
                   "annotations": [],
                   "expectedStatus": "passed",
                   "projectId": "chromium",
@@ -518,7 +524,7 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 23001,
+                      "duration": 17989,
                       "errors": [],
                       "stdout": [
                         {
@@ -530,7 +536,7 @@
                       ],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2025-11-15T09:09:11.129Z",
+                      "startTime": "2025-11-15T10:00:39.734Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -549,7 +555,7 @@
               "tags": [],
               "tests": [
                 {
-                  "timeout": 30000,
+                  "timeout": 60000,
                   "annotations": [],
                   "expectedStatus": "passed",
                   "projectId": "chromium",
@@ -559,7 +565,7 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 15935,
+                      "duration": 23918,
                       "errors": [],
                       "stdout": [
                         {
@@ -580,7 +586,7 @@
                       ],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2025-11-15T09:09:34.219Z",
+                      "startTime": "2025-11-15T10:00:57.793Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -595,11 +601,11 @@
             },
             {
               "title": "12 - Check for Console Errors Across Pages",
-              "ok": false,
+              "ok": true,
               "tags": [],
               "tests": [
                 {
-                  "timeout": 30000,
+                  "timeout": 60000,
                   "annotations": [],
                   "expectedStatus": "passed",
                   "projectId": "chromium",
@@ -608,25 +614,9 @@
                     {
                       "workerIndex": 0,
                       "parallelIndex": 0,
-                      "status": "timedOut",
-                      "duration": 41635,
-                      "error": {
-                        "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m",
-                        "stack": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
-                      },
-                      "errors": [
-                        {
-                          "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
-                        },
-                        {
-                          "location": {
-                            "file": "C:\\Users\\dell\\Desktop\\Travel-crm\\e2e-tests\\tests\\user-journey.spec.js",
-                            "column": 18,
-                            "line": 367
-                          },
-                          "message": "Error: page.click: Test timeout of 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('text=\"Suppliers\"')\u001b[22m\n\n\n\u001b[0m \u001b[90m 365 |\u001b[39m     \n \u001b[90m 366 |\u001b[39m     \u001b[36mfor\u001b[39m (\u001b[36mconst\u001b[39m pageName \u001b[36mof\u001b[39m pagesToCheck) {\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 367 |\u001b[39m       \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mclick(\u001b[32m`text=\"${pageName}\"`\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m     |\u001b[39m                  \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 368 |\u001b[39m       \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForTimeout(\u001b[35m2000\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 369 |\u001b[39m       console\u001b[33m.\u001b[39mlog(\u001b[32m`  Checked: ${pageName}`\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 370 |\u001b[39m     }\u001b[0m\n\u001b[2m    at C:\\Users\\dell\\Desktop\\Travel-crm\\e2e-tests\\tests\\user-journey.spec.js:367:18\u001b[22m"
-                        }
-                      ],
+                      "status": "passed",
+                      "duration": 19504,
+                      "errors": [],
                       "stdout": [
                         {
                           "text": "\n🐛 Checking for console errors...\n"
@@ -639,32 +629,25 @@
                         },
                         {
                           "text": "  Checked: Customers\n"
+                        },
+                        {
+                          "text": "  Checked: Suppliers\n"
+                        },
+                        {
+                          "text": "  ✅ No console errors detected\n"
+                        },
+                        {
+                          "text": "✅ Console error check completed\n"
                         }
                       ],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2025-11-15T09:09:50.219Z",
+                      "startTime": "2025-11-15T10:01:21.765Z",
                       "annotations": [],
-                      "attachments": [
-                        {
-                          "name": "screenshot",
-                          "contentType": "image/png",
-                          "path": "C:\\Users\\dell\\Desktop\\Travel-crm\\e2e-tests\\test-results\\user-journey-Travel-CRM----ef926-Console-Errors-Across-Pages-chromium\\test-failed-1.png"
-                        },
-                        {
-                          "name": "video",
-                          "contentType": "video/webm",
-                          "path": "C:\\Users\\dell\\Desktop\\Travel-crm\\e2e-tests\\test-results\\user-journey-Travel-CRM----ef926-Console-Errors-Across-Pages-chromium\\video.webm"
-                        },
-                        {
-                          "name": "error-context",
-                          "contentType": "text/markdown",
-                          "path": "C:\\Users\\dell\\Desktop\\Travel-crm\\e2e-tests\\test-results\\user-journey-Travel-CRM----ef926-Console-Errors-Across-Pages-chromium\\error-context.md"
-                        }
-                      ]
+                      "attachments": []
                     }
                   ],
-                  "status": "unexpected"
+                  "status": "expected"
                 }
               ],
               "id": "f2e35cec349d95006b50-d33510cd54e3f2458729",
@@ -674,142 +657,90 @@
             },
             {
               "title": "13 - Check for Network 404 Errors",
-              "ok": false,
+              "ok": true,
               "tags": [],
               "tests": [
                 {
-                  "timeout": 30000,
+                  "timeout": 60000,
                   "annotations": [],
                   "expectedStatus": "passed",
                   "projectId": "chromium",
                   "projectName": "chromium",
                   "results": [
                     {
-                      "workerIndex": 1,
+                      "workerIndex": 0,
                       "parallelIndex": 0,
-                      "status": "timedOut",
-                      "duration": 35406,
-                      "error": {
-                        "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m",
-                        "stack": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
-                      },
-                      "errors": [
-                        {
-                          "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
-                        },
-                        {
-                          "location": {
-                            "file": "C:\\Users\\dell\\Desktop\\Travel-crm\\e2e-tests\\tests\\user-journey.spec.js",
-                            "column": 18,
-                            "line": 402
-                          },
-                          "message": "Error: page.click: Test timeout of 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('text=\"Suppliers\"')\u001b[22m\n\n\n\u001b[0m \u001b[90m 400 |\u001b[39m     \n \u001b[90m 401 |\u001b[39m     \u001b[36mfor\u001b[39m (\u001b[36mconst\u001b[39m pageName \u001b[36mof\u001b[39m pages) {\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 402 |\u001b[39m       \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mclick(\u001b[32m`text=\"${pageName}\"`\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m     |\u001b[39m                  \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 403 |\u001b[39m       \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForTimeout(\u001b[35m2000\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 404 |\u001b[39m     }\n \u001b[90m 405 |\u001b[39m     \u001b[0m\n\u001b[2m    at C:\\Users\\dell\\Desktop\\Travel-crm\\e2e-tests\\tests\\user-journey.spec.js:402:18\u001b[22m"
-                        }
-                      ],
+                      "status": "passed",
+                      "duration": 22841,
+                      "errors": [],
                       "stdout": [
                         {
                           "text": "\n🌐 Checking for 404 errors...\n"
+                        },
+                        {
+                          "text": "  ✅ No 404 errors detected\n"
+                        },
+                        {
+                          "text": "✅ 404 check completed\n"
                         }
                       ],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2025-11-15T09:10:48.996Z",
+                      "startTime": "2025-11-15T10:01:41.359Z",
                       "annotations": [],
-                      "attachments": [
-                        {
-                          "name": "screenshot",
-                          "contentType": "image/png",
-                          "path": "C:\\Users\\dell\\Desktop\\Travel-crm\\e2e-tests\\test-results\\user-journey-Travel-CRM----b8f42-heck-for-Network-404-Errors-chromium\\test-failed-1.png"
-                        },
-                        {
-                          "name": "video",
-                          "contentType": "video/webm",
-                          "path": "C:\\Users\\dell\\Desktop\\Travel-crm\\e2e-tests\\test-results\\user-journey-Travel-CRM----b8f42-heck-for-Network-404-Errors-chromium\\video.webm"
-                        },
-                        {
-                          "name": "error-context",
-                          "contentType": "text/markdown",
-                          "path": "C:\\Users\\dell\\Desktop\\Travel-crm\\e2e-tests\\test-results\\user-journey-Travel-CRM----b8f42-heck-for-Network-404-Errors-chromium\\error-context.md"
-                        }
-                      ]
+                      "attachments": []
                     }
                   ],
-                  "status": "unexpected"
+                  "status": "expected"
                 }
               ],
               "id": "f2e35cec349d95006b50-ca17dcb4ce06b6928f0d",
               "file": "user-journey.spec.js",
-              "line": 386,
+              "line": 396,
               "column": 7
             },
             {
               "title": "14 - Test _id vs id Issues",
-              "ok": false,
+              "ok": true,
               "tags": [],
               "tests": [
                 {
-                  "timeout": 30000,
+                  "timeout": 60000,
                   "annotations": [],
                   "expectedStatus": "passed",
                   "projectId": "chromium",
                   "projectName": "chromium",
                   "results": [
                     {
-                      "workerIndex": 2,
+                      "workerIndex": 0,
                       "parallelIndex": 0,
-                      "status": "timedOut",
-                      "duration": 38603,
-                      "error": {
-                        "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m",
-                        "stack": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
-                      },
-                      "errors": [
-                        {
-                          "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
-                        },
-                        {
-                          "location": {
-                            "file": "C:\\Users\\dell\\Desktop\\Travel-crm\\e2e-tests\\tests\\user-journey.spec.js",
-                            "column": 16,
-                            "line": 432
-                          },
-                          "message": "Error: page.click: Test timeout of 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('text=\"Suppliers\"')\u001b[22m\n\n\n\u001b[0m \u001b[90m 430 |\u001b[39m     \n \u001b[90m 431 |\u001b[39m     \u001b[90m// Navigate to pages that display data\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 432 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mclick(\u001b[32m'text=\"Suppliers\"'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m     |\u001b[39m                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 433 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForTimeout(\u001b[35m3000\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 434 |\u001b[39m     \n \u001b[90m 435 |\u001b[39m     \u001b[36mif\u001b[39m (idErrors\u001b[33m.\u001b[39mlength \u001b[33m>\u001b[39m \u001b[35m0\u001b[39m) {\u001b[0m\n\u001b[2m    at C:\\Users\\dell\\Desktop\\Travel-crm\\e2e-tests\\tests\\user-journey.spec.js:432:16\u001b[22m"
-                        }
-                      ],
+                      "status": "passed",
+                      "duration": 18110,
+                      "errors": [],
                       "stdout": [
                         {
                           "text": "\n🆔 Checking for ID field issues...\n"
+                        },
+                        {
+                          "text": "  ✅ No ID-related errors\n"
+                        },
+                        {
+                          "text": "✅ ID field check completed\n"
                         }
                       ],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2025-11-15T09:11:45.518Z",
+                      "startTime": "2025-11-15T10:02:04.284Z",
                       "annotations": [],
-                      "attachments": [
-                        {
-                          "name": "screenshot",
-                          "contentType": "image/png",
-                          "path": "C:\\Users\\dell\\Desktop\\Travel-crm\\e2e-tests\\test-results\\user-journey-Travel-CRM----0401b-g-14---Test-id-vs-id-Issues-chromium\\test-failed-1.png"
-                        },
-                        {
-                          "name": "video",
-                          "contentType": "video/webm",
-                          "path": "C:\\Users\\dell\\Desktop\\Travel-crm\\e2e-tests\\test-results\\user-journey-Travel-CRM----0401b-g-14---Test-id-vs-id-Issues-chromium\\video.webm"
-                        },
-                        {
-                          "name": "error-context",
-                          "contentType": "text/markdown",
-                          "path": "C:\\Users\\dell\\Desktop\\Travel-crm\\e2e-tests\\test-results\\user-journey-Travel-CRM----0401b-g-14---Test-id-vs-id-Issues-chromium\\error-context.md"
-                        }
-                      ]
+                      "attachments": []
                     }
                   ],
-                  "status": "unexpected"
+                  "status": "expected"
                 }
               ],
               "id": "f2e35cec349d95006b50-8f29aab87ca940f56abd",
               "file": "user-journey.spec.js",
-              "line": 418,
+              "line": 437,
               "column": 7
             }
           ]
@@ -819,11 +750,11 @@
   ],
   "errors": [],
   "stats": {
-    "startTime": "2025-11-15T09:03:25.222Z",
-    "duration": 544987.9650000001,
-    "expected": 11,
+    "startTime": "2025-11-15T09:57:39.782Z",
+    "duration": 283162.189,
+    "expected": 14,
     "skipped": 0,
-    "unexpected": 3,
+    "unexpected": 0,
     "flaky": 0
   }
 }

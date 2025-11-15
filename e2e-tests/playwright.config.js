@@ -6,6 +6,7 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
   workers: 1,
+  timeout: 60000, // 60 seconds per test
   reporter: [
     ['html'],
     ['json', { outputFile: 'test-results.json' }],

@@ -258,7 +258,7 @@ test.describe('Travel CRM - Complete User Journey Testing', () => {
     await page.waitForTimeout(500);
     await page.click('text="Inventory"');
     
-    await page.waitForTimeout(3000);
+    await page.waitForTimeout(2000);
     
     expect(page.url()).toMatch(/\/inventory/);
     
@@ -369,9 +369,13 @@ test.describe('Travel CRM - Complete User Journey Testing', () => {
     }
     
     // Check Suppliers (under Supplier Management submenu)
-    await page.click('text="Supplier Management"');
-    await page.waitForTimeout(500);
-    await page.locator('text="Suppliers"').nth(1).click(); // Click the submenu item
+    // Ensure submenu is open
+    const isSupplierMenuVisible = await page.locator('[href="/suppliers"]').isVisible().catch(() => false);
+    if (!isSupplierMenuVisible) {
+      await page.click('text="Supplier Management"');
+      await page.waitForTimeout(500);
+    }
+    await page.click('[href="/suppliers"]');
     await page.waitForTimeout(2000);
     console.log(`  Checked: Suppliers`);
     
@@ -410,9 +414,12 @@ test.describe('Travel CRM - Complete User Journey Testing', () => {
     }
     
     // Check Suppliers (under Supplier Management)
-    await page.click('text="Supplier Management"');
-    await page.waitForTimeout(500);
-    await page.locator('text="Suppliers"').nth(1).click();
+    const isSupplierMenuVisible2 = await page.locator('[href="/suppliers"]').isVisible().catch(() => false);
+    if (!isSupplierMenuVisible2) {
+      await page.click('text="Supplier Management"');
+      await page.waitForTimeout(500);
+    }
+    await page.click('[href="/suppliers"]');
     await page.waitForTimeout(2000);
     
     if (notFoundRequests.length > 0) {
@@ -442,9 +449,12 @@ test.describe('Travel CRM - Complete User Journey Testing', () => {
     
     // Navigate to pages that display data
     // Use Supplier Management > Suppliers instead of direct Suppliers link
-    await page.click('text="Supplier Management"');
-    await page.waitForTimeout(500);
-    await page.locator('text="Suppliers"').nth(1).click();
+    const isSupplierMenuVisible3 = await page.locator('[href="/suppliers"]').isVisible().catch(() => false);
+    if (!isSupplierMenuVisible3) {
+      await page.click('text="Supplier Management"');
+      await page.waitForTimeout(500);
+    }
+    await page.click('[href="/suppliers"]');
     await page.waitForTimeout(3000);
     
     if (idErrors.length > 0) {
