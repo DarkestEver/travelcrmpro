@@ -359,8 +359,7 @@ test.describe('Travel CRM - Complete User Journey Testing', () => {
     const pagesToCheck = [
       'Dashboard',
       'Agents',
-      'Customers',
-      'Suppliers'
+      'Customers'
     ];
     
     for (const pageName of pagesToCheck) {
@@ -368,6 +367,13 @@ test.describe('Travel CRM - Complete User Journey Testing', () => {
       await page.waitForTimeout(2000);
       console.log(`  Checked: ${pageName}`);
     }
+    
+    // Check Suppliers (under Supplier Management submenu)
+    await page.click('text="Supplier Management"');
+    await page.waitForTimeout(500);
+    await page.locator('text="Suppliers"').nth(1).click(); // Click the submenu item
+    await page.waitForTimeout(2000);
+    console.log(`  Checked: Suppliers`);
     
     if (allErrors.length > 0) {
       console.log(`\n  ⚠️  Total console errors: ${allErrors.length}`);
@@ -396,12 +402,18 @@ test.describe('Travel CRM - Complete User Journey Testing', () => {
     });
     
     // Navigate through main pages
-    const pages = ['Agents', 'Customers', 'Suppliers', 'Itineraries'];
+    const pages = ['Agents', 'Customers', 'Itineraries'];
     
     for (const pageName of pages) {
       await page.click(`text="${pageName}"`);
       await page.waitForTimeout(2000);
     }
+    
+    // Check Suppliers (under Supplier Management)
+    await page.click('text="Supplier Management"');
+    await page.waitForTimeout(500);
+    await page.locator('text="Suppliers"').nth(1).click();
+    await page.waitForTimeout(2000);
     
     if (notFoundRequests.length > 0) {
       console.log(`\n  ❌ 404 errors found: ${notFoundRequests.length}`);
@@ -429,7 +441,10 @@ test.describe('Travel CRM - Complete User Journey Testing', () => {
     });
     
     // Navigate to pages that display data
-    await page.click('text="Suppliers"');
+    // Use Supplier Management > Suppliers instead of direct Suppliers link
+    await page.click('text="Supplier Management"');
+    await page.waitForTimeout(500);
+    await page.locator('text="Suppliers"').nth(1).click();
     await page.waitForTimeout(3000);
     
     if (idErrors.length > 0) {

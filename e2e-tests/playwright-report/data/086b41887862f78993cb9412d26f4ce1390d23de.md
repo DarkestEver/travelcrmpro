@@ -1,0 +1,371 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e3]:
+  - generic [ref=e4]:
+    - generic [ref=e6]:
+      - generic [ref=e7]: T
+      - generic [ref=e8]:
+        - heading "Travel CRM" [level=1] [ref=e9]
+        - paragraph [ref=e10]: super admin
+    - navigation [ref=e11]:
+      - link "Dashboard" [ref=e13] [cursor=pointer]:
+        - /url: /dashboard
+        - img [ref=e14]
+        - generic [ref=e17]: Dashboard
+      - button "Emails & Queries" [ref=e20] [cursor=pointer]:
+        - generic [ref=e21]:
+          - img [ref=e22]
+          - generic [ref=e25]: Emails & Queries
+        - img [ref=e26]
+      - link "Agents" [ref=e29] [cursor=pointer]:
+        - /url: /agents
+        - img [ref=e30]
+        - generic [ref=e34]: Agents
+      - link "Customers" [active] [ref=e36] [cursor=pointer]:
+        - /url: /customers
+        - img [ref=e37]
+        - generic [ref=e42]: Customers
+      - link "Itineraries" [ref=e44] [cursor=pointer]:
+        - /url: /itineraries
+        - img [ref=e45]
+        - generic [ref=e47]: Itineraries
+      - link "Quotes" [ref=e49] [cursor=pointer]:
+        - /url: /quotes
+        - img [ref=e50]
+        - generic [ref=e53]: Quotes
+      - link "Bookings" [ref=e55] [cursor=pointer]:
+        - /url: /bookings
+        - img [ref=e56]
+        - generic [ref=e58]: Bookings
+      - button "Finance" [ref=e61] [cursor=pointer]:
+        - generic [ref=e62]:
+          - img [ref=e63]
+          - generic [ref=e65]: Finance
+        - img [ref=e66]
+      - button "Supplier Management" [ref=e70] [cursor=pointer]:
+        - generic [ref=e71]:
+          - img [ref=e72]
+          - generic [ref=e77]: Supplier Management
+        - img [ref=e78]
+      - button "Analytics & Insights" [ref=e82] [cursor=pointer]:
+        - generic [ref=e83]:
+          - img [ref=e84]
+          - generic [ref=e85]: Analytics & Insights
+        - img [ref=e86]
+      - button "System Administration" [ref=e90] [cursor=pointer]:
+        - generic [ref=e91]:
+          - img [ref=e92]
+          - generic [ref=e94]: System Administration
+        - img [ref=e95]
+      - link "Analytics" [ref=e98] [cursor=pointer]:
+        - /url: /analytics
+        - img [ref=e99]
+        - generic [ref=e100]: Analytics
+      - button "Settings" [ref=e103] [cursor=pointer]:
+        - generic [ref=e104]:
+          - img [ref=e105]
+          - generic [ref=e108]: Settings
+        - img [ref=e109]
+      - link "Tenant Management" [ref=e112] [cursor=pointer]:
+        - /url: /tenants
+        - img [ref=e113]
+        - generic [ref=e116]: Tenant Management
+      - link "Audit Logs" [ref=e118] [cursor=pointer]:
+        - /url: /audit-logs
+        - img [ref=e119]
+        - generic [ref=e121]: Audit Logs
+  - generic [ref=e122]:
+    - banner [ref=e123]:
+      - generic [ref=e124]:
+        - generic [ref=e125]:
+          - heading "Welcome back, Admin User!" [level=2] [ref=e126]
+          - paragraph [ref=e127]: Travel CRM
+        - generic [ref=e128]:
+          - button "Notifications" [ref=e130] [cursor=pointer]:
+            - img [ref=e131]
+          - generic [ref=e133]:
+            - link "A Admin User" [ref=e134] [cursor=pointer]:
+              - /url: /profile
+              - generic [ref=e135]: A
+              - generic [ref=e136]: Admin User
+            - button "Logout" [ref=e137] [cursor=pointer]:
+              - img [ref=e138]
+    - main [ref=e141]:
+      - generic [ref=e143]:
+        - generic [ref=e144]:
+          - generic [ref=e145]:
+            - heading "Customers" [level=1] [ref=e146]
+            - paragraph [ref=e147]: Manage your customers and their information
+          - button "Add Customer" [ref=e148] [cursor=pointer]:
+            - img [ref=e149]
+            - text: Add Customer
+        - generic [ref=e150]:
+          - generic [ref=e153]:
+            - img [ref=e154]
+            - textbox "Search customers..." [ref=e157]
+          - table [ref=e159]:
+            - rowgroup [ref=e160]:
+              - row "Name Contact Country Status Actions" [ref=e161]:
+                - cell "Name" [ref=e162]
+                - cell "Contact" [ref=e163]
+                - cell "Country" [ref=e164]
+                - cell "Status" [ref=e165]
+                - cell "Actions" [ref=e166]
+            - rowgroup [ref=e167]:
+              - row "John Doe john.doe7446@example.com +1234567890 john.doe7446@example.com N/A active" [ref=e168]:
+                - cell "John Doe john.doe7446@example.com" [ref=e169]:
+                  - generic [ref=e170]:
+                    - img [ref=e172]
+                    - generic [ref=e175]:
+                      - generic [ref=e176]: John Doe
+                      - generic [ref=e177]: john.doe7446@example.com
+                - cell "+1234567890 john.doe7446@example.com" [ref=e178]:
+                  - generic [ref=e179]:
+                    - generic [ref=e180]:
+                      - img [ref=e181]
+                      - text: "+1234567890"
+                    - generic [ref=e183]:
+                      - img [ref=e184]
+                      - text: john.doe7446@example.com
+                - cell "N/A" [ref=e187]
+                - cell "active" [ref=e188]:
+                  - generic [ref=e189]: active
+                - cell [ref=e190]:
+                  - generic [ref=e191]:
+                    - button "Edit" [ref=e192] [cursor=pointer]:
+                      - img [ref=e193]
+                    - button "Delete" [ref=e196] [cursor=pointer]:
+                      - img [ref=e197]
+              - row "John Doe john.doe6682@example.com +1234567890 john.doe6682@example.com N/A active" [ref=e199]:
+                - cell "John Doe john.doe6682@example.com" [ref=e200]:
+                  - generic [ref=e201]:
+                    - img [ref=e203]
+                    - generic [ref=e206]:
+                      - generic [ref=e207]: John Doe
+                      - generic [ref=e208]: john.doe6682@example.com
+                - cell "+1234567890 john.doe6682@example.com" [ref=e209]:
+                  - generic [ref=e210]:
+                    - generic [ref=e211]:
+                      - img [ref=e212]
+                      - text: "+1234567890"
+                    - generic [ref=e214]:
+                      - img [ref=e215]
+                      - text: john.doe6682@example.com
+                - cell "N/A" [ref=e218]
+                - cell "active" [ref=e219]:
+                  - generic [ref=e220]: active
+                - cell [ref=e221]:
+                  - generic [ref=e222]:
+                    - button "Edit" [ref=e223] [cursor=pointer]:
+                      - img [ref=e224]
+                    - button "Delete" [ref=e227] [cursor=pointer]:
+                      - img [ref=e228]
+              - row "John Doe john.doe2730@example.com +1234567890 john.doe2730@example.com N/A active" [ref=e230]:
+                - cell "John Doe john.doe2730@example.com" [ref=e231]:
+                  - generic [ref=e232]:
+                    - img [ref=e234]
+                    - generic [ref=e237]:
+                      - generic [ref=e238]: John Doe
+                      - generic [ref=e239]: john.doe2730@example.com
+                - cell "+1234567890 john.doe2730@example.com" [ref=e240]:
+                  - generic [ref=e241]:
+                    - generic [ref=e242]:
+                      - img [ref=e243]
+                      - text: "+1234567890"
+                    - generic [ref=e245]:
+                      - img [ref=e246]
+                      - text: john.doe2730@example.com
+                - cell "N/A" [ref=e249]
+                - cell "active" [ref=e250]:
+                  - generic [ref=e251]: active
+                - cell [ref=e252]:
+                  - generic [ref=e253]:
+                    - button "Edit" [ref=e254] [cursor=pointer]:
+                      - img [ref=e255]
+                    - button "Delete" [ref=e258] [cursor=pointer]:
+                      - img [ref=e259]
+              - row "John Doe john.doe6791@example.com +1234567890 john.doe6791@example.com N/A active" [ref=e261]:
+                - cell "John Doe john.doe6791@example.com" [ref=e262]:
+                  - generic [ref=e263]:
+                    - img [ref=e265]
+                    - generic [ref=e268]:
+                      - generic [ref=e269]: John Doe
+                      - generic [ref=e270]: john.doe6791@example.com
+                - cell "+1234567890 john.doe6791@example.com" [ref=e271]:
+                  - generic [ref=e272]:
+                    - generic [ref=e273]:
+                      - img [ref=e274]
+                      - text: "+1234567890"
+                    - generic [ref=e276]:
+                      - img [ref=e277]
+                      - text: john.doe6791@example.com
+                - cell "N/A" [ref=e280]
+                - cell "active" [ref=e281]:
+                  - generic [ref=e282]: active
+                - cell [ref=e283]:
+                  - generic [ref=e284]:
+                    - button "Edit" [ref=e285] [cursor=pointer]:
+                      - img [ref=e286]
+                    - button "Delete" [ref=e289] [cursor=pointer]:
+                      - img [ref=e290]
+              - row "John Doe john.doe4164@example.com +1234567890 john.doe4164@example.com N/A active" [ref=e292]:
+                - cell "John Doe john.doe4164@example.com" [ref=e293]:
+                  - generic [ref=e294]:
+                    - img [ref=e296]
+                    - generic [ref=e299]:
+                      - generic [ref=e300]: John Doe
+                      - generic [ref=e301]: john.doe4164@example.com
+                - cell "+1234567890 john.doe4164@example.com" [ref=e302]:
+                  - generic [ref=e303]:
+                    - generic [ref=e304]:
+                      - img [ref=e305]
+                      - text: "+1234567890"
+                    - generic [ref=e307]:
+                      - img [ref=e308]
+                      - text: john.doe4164@example.com
+                - cell "N/A" [ref=e311]
+                - cell "active" [ref=e312]:
+                  - generic [ref=e313]: active
+                - cell [ref=e314]:
+                  - generic [ref=e315]:
+                    - button "Edit" [ref=e316] [cursor=pointer]:
+                      - img [ref=e317]
+                    - button "Delete" [ref=e320] [cursor=pointer]:
+                      - img [ref=e321]
+              - row "John Doe john.doe4508@example.com +1234567890 john.doe4508@example.com N/A active" [ref=e323]:
+                - cell "John Doe john.doe4508@example.com" [ref=e324]:
+                  - generic [ref=e325]:
+                    - img [ref=e327]
+                    - generic [ref=e330]:
+                      - generic [ref=e331]: John Doe
+                      - generic [ref=e332]: john.doe4508@example.com
+                - cell "+1234567890 john.doe4508@example.com" [ref=e333]:
+                  - generic [ref=e334]:
+                    - generic [ref=e335]:
+                      - img [ref=e336]
+                      - text: "+1234567890"
+                    - generic [ref=e338]:
+                      - img [ref=e339]
+                      - text: john.doe4508@example.com
+                - cell "N/A" [ref=e342]
+                - cell "active" [ref=e343]:
+                  - generic [ref=e344]: active
+                - cell [ref=e345]:
+                  - generic [ref=e346]:
+                    - button "Edit" [ref=e347] [cursor=pointer]:
+                      - img [ref=e348]
+                    - button "Delete" [ref=e351] [cursor=pointer]:
+                      - img [ref=e352]
+              - row "John Doe john.doe583@example.com +1234567890 john.doe583@example.com N/A active" [ref=e354]:
+                - cell "John Doe john.doe583@example.com" [ref=e355]:
+                  - generic [ref=e356]:
+                    - img [ref=e358]
+                    - generic [ref=e361]:
+                      - generic [ref=e362]: John Doe
+                      - generic [ref=e363]: john.doe583@example.com
+                - cell "+1234567890 john.doe583@example.com" [ref=e364]:
+                  - generic [ref=e365]:
+                    - generic [ref=e366]:
+                      - img [ref=e367]
+                      - text: "+1234567890"
+                    - generic [ref=e369]:
+                      - img [ref=e370]
+                      - text: john.doe583@example.com
+                - cell "N/A" [ref=e373]
+                - cell "active" [ref=e374]:
+                  - generic [ref=e375]: active
+                - cell [ref=e376]:
+                  - generic [ref=e377]:
+                    - button "Edit" [ref=e378] [cursor=pointer]:
+                      - img [ref=e379]
+                    - button "Delete" [ref=e382] [cursor=pointer]:
+                      - img [ref=e383]
+              - row "John Doe john.doe4387@example.com +1234567890 john.doe4387@example.com N/A active" [ref=e385]:
+                - cell "John Doe john.doe4387@example.com" [ref=e386]:
+                  - generic [ref=e387]:
+                    - img [ref=e389]
+                    - generic [ref=e392]:
+                      - generic [ref=e393]: John Doe
+                      - generic [ref=e394]: john.doe4387@example.com
+                - cell "+1234567890 john.doe4387@example.com" [ref=e395]:
+                  - generic [ref=e396]:
+                    - generic [ref=e397]:
+                      - img [ref=e398]
+                      - text: "+1234567890"
+                    - generic [ref=e400]:
+                      - img [ref=e401]
+                      - text: john.doe4387@example.com
+                - cell "N/A" [ref=e404]
+                - cell "active" [ref=e405]:
+                  - generic [ref=e406]: active
+                - cell [ref=e407]:
+                  - generic [ref=e408]:
+                    - button "Edit" [ref=e409] [cursor=pointer]:
+                      - img [ref=e410]
+                    - button "Delete" [ref=e413] [cursor=pointer]:
+                      - img [ref=e414]
+              - row "John Doe john.doe1795@example.com +1234567890 john.doe1795@example.com N/A active" [ref=e416]:
+                - cell "John Doe john.doe1795@example.com" [ref=e417]:
+                  - generic [ref=e418]:
+                    - img [ref=e420]
+                    - generic [ref=e423]:
+                      - generic [ref=e424]: John Doe
+                      - generic [ref=e425]: john.doe1795@example.com
+                - cell "+1234567890 john.doe1795@example.com" [ref=e426]:
+                  - generic [ref=e427]:
+                    - generic [ref=e428]:
+                      - img [ref=e429]
+                      - text: "+1234567890"
+                    - generic [ref=e431]:
+                      - img [ref=e432]
+                      - text: john.doe1795@example.com
+                - cell "N/A" [ref=e435]
+                - cell "active" [ref=e436]:
+                  - generic [ref=e437]: active
+                - cell [ref=e438]:
+                  - generic [ref=e439]:
+                    - button "Edit" [ref=e440] [cursor=pointer]:
+                      - img [ref=e441]
+                    - button "Delete" [ref=e444] [cursor=pointer]:
+                      - img [ref=e445]
+              - row "John Doe john.doe9365@example.com +1234567890 john.doe9365@example.com N/A active" [ref=e447]:
+                - cell "John Doe john.doe9365@example.com" [ref=e448]:
+                  - generic [ref=e449]:
+                    - img [ref=e451]
+                    - generic [ref=e454]:
+                      - generic [ref=e455]: John Doe
+                      - generic [ref=e456]: john.doe9365@example.com
+                - cell "+1234567890 john.doe9365@example.com" [ref=e457]:
+                  - generic [ref=e458]:
+                    - generic [ref=e459]:
+                      - img [ref=e460]
+                      - text: "+1234567890"
+                    - generic [ref=e462]:
+                      - img [ref=e463]
+                      - text: john.doe9365@example.com
+                - cell "N/A" [ref=e466]
+                - cell "active" [ref=e467]:
+                  - generic [ref=e468]: active
+                - cell [ref=e469]:
+                  - generic [ref=e470]:
+                    - button "Edit" [ref=e471] [cursor=pointer]:
+                      - img [ref=e472]
+                    - button "Delete" [ref=e475] [cursor=pointer]:
+                      - img [ref=e476]
+          - generic [ref=e479]:
+            - generic [ref=e480]: Showing 1 to 10 of 27 results
+            - generic [ref=e481]:
+              - button [disabled] [ref=e482]:
+                - img [ref=e483]
+              - button [disabled] [ref=e486]:
+                - img [ref=e487]
+              - generic [ref=e489]:
+                - button "1" [ref=e490] [cursor=pointer]
+                - button "2" [ref=e491] [cursor=pointer]
+                - button "3" [ref=e492] [cursor=pointer]
+              - button [ref=e493] [cursor=pointer]:
+                - img [ref=e494]
+              - button [ref=e496] [cursor=pointer]:
+                - img [ref=e497]
+```

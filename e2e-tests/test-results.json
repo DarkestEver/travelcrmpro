@@ -1,0 +1,829 @@
+{
+  "config": {
+    "configFile": "C:\\Users\\dell\\Desktop\\Travel-crm\\e2e-tests\\playwright.config.js",
+    "rootDir": "C:/Users/dell/Desktop/Travel-crm/e2e-tests/tests",
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "reporter": [
+      [
+        "html",
+        null
+      ],
+      [
+        "json",
+        {
+          "outputFile": "test-results.json"
+        }
+      ],
+      [
+        "list",
+        null
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "quiet": false,
+    "projects": [
+      {
+        "outputDir": "C:/Users/dell/Desktop/Travel-crm/e2e-tests/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "chromium",
+        "name": "chromium",
+        "testDir": "C:/Users/dell/Desktop/Travel-crm/e2e-tests/tests",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      }
+    ],
+    "shard": null,
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.56.1",
+    "workers": 1,
+    "webServer": {
+      "command": "cd .. && cd frontend && npm run dev",
+      "url": "http://localhost:5174",
+      "reuseExistingServer": true,
+      "timeout": 120000
+    }
+  },
+  "suites": [
+    {
+      "title": "user-journey.spec.js",
+      "file": "user-journey.spec.js",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Travel CRM - Complete User Journey Testing",
+          "file": "user-journey.spec.js",
+          "line": 11,
+          "column": 6,
+          "specs": [
+            {
+              "title": "01 - Login as Super Admin",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 52772,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "\n🔐 Testing login...\n"
+                        },
+                        {
+                          "text": "✅ Login successful\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-11-15T09:04:18.447Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "f2e35cec349d95006b50-479384abe9e6542541f9",
+              "file": "user-journey.spec.js",
+              "line": 18,
+              "column": 7
+            },
+            {
+              "title": "02 - Check Navigation Menu",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 26141,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "\n📋 Testing navigation menu...\n"
+                        },
+                        {
+                          "text": "  ✅ Found: Dashboard\n"
+                        },
+                        {
+                          "text": "  ✅ Found: Agents\n"
+                        },
+                        {
+                          "text": "  ✅ Found: Customers\n"
+                        },
+                        {
+                          "text": "  ✅ Found: Itineraries\n"
+                        },
+                        {
+                          "text": "  ✅ Found: Quotes\n"
+                        },
+                        {
+                          "text": "  ✅ Found: Bookings\n"
+                        },
+                        {
+                          "text": "  ✅ Found: Finance\n"
+                        },
+                        {
+                          "text": "  ✅ Found: Supplier Management\n"
+                        },
+                        {
+                          "text": "  ✅ Found: Analytics\n"
+                        },
+                        {
+                          "text": "✅ Navigation menu checked\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-11-15T09:05:17.548Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "f2e35cec349d95006b50-4d15e06aea778776fb0b",
+              "file": "user-journey.spec.js",
+              "line": 37,
+              "column": 7
+            },
+            {
+              "title": "03 - Navigate to Agents Page",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 31143,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "\n👥 Testing Agents page...\n"
+                        },
+                        {
+                          "text": "  ✅ Data display found\n"
+                        },
+                        {
+                          "text": "✅ Agents page loaded\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-11-15T09:05:44.102Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "f2e35cec349d95006b50-6b96531ba619e7f09c8d",
+              "file": "user-journey.spec.js",
+              "line": 72,
+              "column": 7
+            },
+            {
+              "title": "04 - Navigate to Customers Page",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 23793,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "\n👤 Testing Customers page...\n"
+                        },
+                        {
+                          "text": "✅ Customers page loaded\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-11-15T09:06:15.309Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "f2e35cec349d95006b50-764893b9e99c96a880a9",
+              "file": "user-journey.spec.js",
+              "line": 97,
+              "column": 7
+            },
+            {
+              "title": "05 - Navigate to Suppliers Page",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 23826,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "\n🚚 Testing Suppliers page...\n"
+                        },
+                        {
+                          "text": "✅ Suppliers page loaded\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-11-15T09:06:39.179Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "f2e35cec349d95006b50-7c978c47c6d9220eae22",
+              "file": "user-journey.spec.js",
+              "line": 110,
+              "column": 7
+            },
+            {
+              "title": "06 - Check Finance Menu",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 24615,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "\n💰 Testing Finance menu...\n"
+                        },
+                        {
+                          "text": "  ✅ Found: Overview\n"
+                        },
+                        {
+                          "text": "  ✅ Found: Bank Reconciliation\n"
+                        },
+                        {
+                          "text": "  ✅ Found: Multi-Currency\n"
+                        },
+                        {
+                          "text": "✅ Finance menu checked\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-11-15T09:07:03.098Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "f2e35cec349d95006b50-4c2bdb5f77b9d1434add",
+              "file": "user-journey.spec.js",
+              "line": 137,
+              "column": 7
+            },
+            {
+              "title": "07 - Test Finance Overview Page",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 21744,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "\n📊 Testing Finance Overview...\n"
+                        },
+                        {
+                          "text": "  ✅ No console errors\n"
+                        },
+                        {
+                          "text": "✅ Finance Overview checked\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-11-15T09:07:27.939Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "f2e35cec349d95006b50-fcb472fad111f2f9829c",
+              "file": "user-journey.spec.js",
+              "line": 166,
+              "column": 7
+            },
+            {
+              "title": "08 - Test Bank Reconciliation Page",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 51393,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "\n🏦 Testing Bank Reconciliation...\n"
+                        },
+                        {
+                          "text": "  ✅ All API requests successful\n"
+                        },
+                        {
+                          "text": "✅ Bank Reconciliation page tested\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-11-15T09:07:49.744Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "f2e35cec349d95006b50-9f3291398be5e8fe5bac",
+              "file": "user-journey.spec.js",
+              "line": 202,
+              "column": 7
+            },
+            {
+              "title": "09 - Test Supplier Inventory Page",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 29225,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "\n📦 Testing Supplier Inventory...\n"
+                        },
+                        {
+                          "text": "  ⚠️  Failed API requests: 2\n"
+                        },
+                        {
+                          "text": "     404 - http://localhost:5000/api/v1/inventory?status=all&category=all&supplier=all\n"
+                        },
+                        {
+                          "text": "     404 - http://localhost:5000/api/v1/inventory?status=all&category=all&supplier=all\n"
+                        },
+                        {
+                          "text": "✅ Supplier Inventory tested\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-11-15T09:08:41.425Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "f2e35cec349d95006b50-b29f0368efe7e2700556",
+              "file": "user-journey.spec.js",
+              "line": 241,
+              "column": 7
+            },
+            {
+              "title": "10 - Test Rate Sheets Page",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 23001,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "\n📄 Testing Rate Sheets...\n"
+                        },
+                        {
+                          "text": "✅ Rate Sheets tested\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-11-15T09:09:11.129Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "f2e35cec349d95006b50-b7ddb0f23bf8dfa9cd80",
+              "file": "user-journey.spec.js",
+              "line": 277,
+              "column": 7
+            },
+            {
+              "title": "11 - Check for Permission Denied Errors",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 15935,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "\n🔒 Testing permissions...\n"
+                        },
+                        {
+                          "text": "  ✅ Access granted to: Agents\n"
+                        },
+                        {
+                          "text": "  ✅ Access granted to: Customers\n"
+                        },
+                        {
+                          "text": "  ✅ Access granted to: Analytics\n"
+                        },
+                        {
+                          "text": "✅ Permission checks completed\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-11-15T09:09:34.219Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "f2e35cec349d95006b50-dcfd26beb19f2a9174e4",
+              "file": "user-journey.spec.js",
+              "line": 310,
+              "column": 7
+            },
+            {
+              "title": "12 - Check for Console Errors Across Pages",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "timedOut",
+                      "duration": 41635,
+                      "error": {
+                        "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m",
+                        "stack": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
+                      },
+                      "errors": [
+                        {
+                          "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
+                        },
+                        {
+                          "location": {
+                            "file": "C:\\Users\\dell\\Desktop\\Travel-crm\\e2e-tests\\tests\\user-journey.spec.js",
+                            "column": 18,
+                            "line": 367
+                          },
+                          "message": "Error: page.click: Test timeout of 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('text=\"Suppliers\"')\u001b[22m\n\n\n\u001b[0m \u001b[90m 365 |\u001b[39m     \n \u001b[90m 366 |\u001b[39m     \u001b[36mfor\u001b[39m (\u001b[36mconst\u001b[39m pageName \u001b[36mof\u001b[39m pagesToCheck) {\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 367 |\u001b[39m       \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mclick(\u001b[32m`text=\"${pageName}\"`\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m     |\u001b[39m                  \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 368 |\u001b[39m       \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForTimeout(\u001b[35m2000\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 369 |\u001b[39m       console\u001b[33m.\u001b[39mlog(\u001b[32m`  Checked: ${pageName}`\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 370 |\u001b[39m     }\u001b[0m\n\u001b[2m    at C:\\Users\\dell\\Desktop\\Travel-crm\\e2e-tests\\tests\\user-journey.spec.js:367:18\u001b[22m"
+                        }
+                      ],
+                      "stdout": [
+                        {
+                          "text": "\n🐛 Checking for console errors...\n"
+                        },
+                        {
+                          "text": "  Checked: Dashboard\n"
+                        },
+                        {
+                          "text": "  Checked: Agents\n"
+                        },
+                        {
+                          "text": "  Checked: Customers\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-11-15T09:09:50.219Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "C:\\Users\\dell\\Desktop\\Travel-crm\\e2e-tests\\test-results\\user-journey-Travel-CRM----ef926-Console-Errors-Across-Pages-chromium\\test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "C:\\Users\\dell\\Desktop\\Travel-crm\\e2e-tests\\test-results\\user-journey-Travel-CRM----ef926-Console-Errors-Across-Pages-chromium\\video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "C:\\Users\\dell\\Desktop\\Travel-crm\\e2e-tests\\test-results\\user-journey-Travel-CRM----ef926-Console-Errors-Across-Pages-chromium\\error-context.md"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "f2e35cec349d95006b50-d33510cd54e3f2458729",
+              "file": "user-journey.spec.js",
+              "line": 347,
+              "column": 7
+            },
+            {
+              "title": "13 - Check for Network 404 Errors",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "timedOut",
+                      "duration": 35406,
+                      "error": {
+                        "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m",
+                        "stack": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
+                      },
+                      "errors": [
+                        {
+                          "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
+                        },
+                        {
+                          "location": {
+                            "file": "C:\\Users\\dell\\Desktop\\Travel-crm\\e2e-tests\\tests\\user-journey.spec.js",
+                            "column": 18,
+                            "line": 402
+                          },
+                          "message": "Error: page.click: Test timeout of 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('text=\"Suppliers\"')\u001b[22m\n\n\n\u001b[0m \u001b[90m 400 |\u001b[39m     \n \u001b[90m 401 |\u001b[39m     \u001b[36mfor\u001b[39m (\u001b[36mconst\u001b[39m pageName \u001b[36mof\u001b[39m pages) {\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 402 |\u001b[39m       \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mclick(\u001b[32m`text=\"${pageName}\"`\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m     |\u001b[39m                  \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 403 |\u001b[39m       \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForTimeout(\u001b[35m2000\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 404 |\u001b[39m     }\n \u001b[90m 405 |\u001b[39m     \u001b[0m\n\u001b[2m    at C:\\Users\\dell\\Desktop\\Travel-crm\\e2e-tests\\tests\\user-journey.spec.js:402:18\u001b[22m"
+                        }
+                      ],
+                      "stdout": [
+                        {
+                          "text": "\n🌐 Checking for 404 errors...\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-11-15T09:10:48.996Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "C:\\Users\\dell\\Desktop\\Travel-crm\\e2e-tests\\test-results\\user-journey-Travel-CRM----b8f42-heck-for-Network-404-Errors-chromium\\test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "C:\\Users\\dell\\Desktop\\Travel-crm\\e2e-tests\\test-results\\user-journey-Travel-CRM----b8f42-heck-for-Network-404-Errors-chromium\\video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "C:\\Users\\dell\\Desktop\\Travel-crm\\e2e-tests\\test-results\\user-journey-Travel-CRM----b8f42-heck-for-Network-404-Errors-chromium\\error-context.md"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "f2e35cec349d95006b50-ca17dcb4ce06b6928f0d",
+              "file": "user-journey.spec.js",
+              "line": 386,
+              "column": 7
+            },
+            {
+              "title": "14 - Test _id vs id Issues",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 0,
+                      "status": "timedOut",
+                      "duration": 38603,
+                      "error": {
+                        "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m",
+                        "stack": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
+                      },
+                      "errors": [
+                        {
+                          "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
+                        },
+                        {
+                          "location": {
+                            "file": "C:\\Users\\dell\\Desktop\\Travel-crm\\e2e-tests\\tests\\user-journey.spec.js",
+                            "column": 16,
+                            "line": 432
+                          },
+                          "message": "Error: page.click: Test timeout of 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('text=\"Suppliers\"')\u001b[22m\n\n\n\u001b[0m \u001b[90m 430 |\u001b[39m     \n \u001b[90m 431 |\u001b[39m     \u001b[90m// Navigate to pages that display data\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 432 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mclick(\u001b[32m'text=\"Suppliers\"'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m     |\u001b[39m                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 433 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForTimeout(\u001b[35m3000\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 434 |\u001b[39m     \n \u001b[90m 435 |\u001b[39m     \u001b[36mif\u001b[39m (idErrors\u001b[33m.\u001b[39mlength \u001b[33m>\u001b[39m \u001b[35m0\u001b[39m) {\u001b[0m\n\u001b[2m    at C:\\Users\\dell\\Desktop\\Travel-crm\\e2e-tests\\tests\\user-journey.spec.js:432:16\u001b[22m"
+                        }
+                      ],
+                      "stdout": [
+                        {
+                          "text": "\n🆔 Checking for ID field issues...\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-11-15T09:11:45.518Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "C:\\Users\\dell\\Desktop\\Travel-crm\\e2e-tests\\test-results\\user-journey-Travel-CRM----0401b-g-14---Test-id-vs-id-Issues-chromium\\test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "C:\\Users\\dell\\Desktop\\Travel-crm\\e2e-tests\\test-results\\user-journey-Travel-CRM----0401b-g-14---Test-id-vs-id-Issues-chromium\\video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "C:\\Users\\dell\\Desktop\\Travel-crm\\e2e-tests\\test-results\\user-journey-Travel-CRM----0401b-g-14---Test-id-vs-id-Issues-chromium\\error-context.md"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "f2e35cec349d95006b50-8f29aab87ca940f56abd",
+              "file": "user-journey.spec.js",
+              "line": 418,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2025-11-15T09:03:25.222Z",
+    "duration": 544987.9650000001,
+    "expected": 11,
+    "skipped": 0,
+    "unexpected": 3,
+    "flaky": 0
+  }
+}
