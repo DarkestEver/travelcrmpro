@@ -40,9 +40,9 @@ const upload = multer({
   }
 });
 
-// All routes require authentication and admin/accountant role
+// All routes require authentication and super_admin/operator/admin/accountant role
 router.use(protect);
-router.use(restrictTo('admin', 'accountant'));
+router.use(restrictTo('super_admin', 'operator', 'admin', 'accountant'));
 
 // Import and matching
 router.post('/import', upload.single('bankStatement'), importBankStatement);

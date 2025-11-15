@@ -11,8 +11,8 @@ const { protect, restrictTo } = require('../middleware/auth');
 // All routes require authentication
 router.use(protect);
 
-// Admin and operator access for most forecasting endpoints
-router.use(restrictTo('admin', 'operator'));
+// Super admin, admin and operator access for most forecasting endpoints
+router.use(restrictTo('super_admin', 'admin', 'operator'));
 
 // Historical analysis
 router.get(
@@ -50,10 +50,10 @@ router.get(
   demandForecastingController.getDemandInsights
 );
 
-// ML dataset (admin only)
+// ML dataset (super admin and admin only)
 router.get(
   '/ml-dataset',
-  restrictTo('admin'),
+  restrictTo('super_admin', 'admin'),
   demandForecastingController.getMLDataset
 );
 

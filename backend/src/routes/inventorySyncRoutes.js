@@ -11,8 +11,8 @@ const { protect, restrictTo } = require('../middleware/auth');
 // All routes require authentication
 router.use(protect);
 
-// Admin and operator access for sync operations
-router.use(restrictTo('admin', 'operator'));
+// Super admin, admin and operator access for sync operations
+router.use(restrictTo('super_admin', 'admin', 'operator'));
 
 // Sync operations
 router.post('/sync-all', inventorySyncController.syncAllInventory);
@@ -25,7 +25,7 @@ router.post('/update-capacity', inventorySyncController.updateCapacity);
 router.get('/check-conflicts', inventorySyncController.checkConflicts);
 router.post(
   '/resolve-conflict/:inventoryId',
-  restrictTo('admin'), // Admin only for conflict resolution
+  restrictTo('super_admin', 'admin'), // Super admin and admin only for conflict resolution
   inventorySyncController.resolveConflict
 );
 

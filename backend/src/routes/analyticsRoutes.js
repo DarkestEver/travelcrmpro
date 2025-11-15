@@ -5,6 +5,48 @@ const analyticsService = require('../services/analyticsService');
 const { successResponse } = require('../utils/response');
 
 /**
+ * @route   GET /api/v1/analytics
+ * @desc    Get analytics overview (redirects to dashboard)
+ * @access  Private (Admin, Operator, Agent)
+ */
+router.get(
+  '/',
+  authenticate,
+  authorize('super_admin', 'operator', 'agent'),
+  async (req, res, next) => {
+    try {
+      const { startDate, endDate } = req.query;
+
+      const filters = {
+        startDate,
+        endDate,
+        tenantId: req.tenantId,
+      };
+
+      // If user is agent, filter by their ID
+      if (req.user.role === 'agent') {
+        const Agent = require('../models/Agent');
+        const agent = await Agent.findOne({ user: req.user.id });
+        if (agent) {
+          filters.agentId = agent._id;
+        }
+      }
+
+      const analytics = await analyticsService.getDashboardAnalytics(filters);
+
+      return successResponse(
+        res,
+        200,
+        'Analytics overview fetched successfully',
+        analytics
+      );
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+/**
  * @route   GET /api/v1/analytics/dashboard
  * @desc    Get dashboard analytics
  * @access  Private (Admin, Operator, Agent)

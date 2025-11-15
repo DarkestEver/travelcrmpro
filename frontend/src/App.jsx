@@ -97,6 +97,22 @@ import ReviewQueue from './pages/emails/ReviewQueue'
 import EmailAnalytics from './pages/emails/EmailAnalytics'
 import ProcessingHistory from './pages/emails/ProcessingHistory'
 
+// Finance & Bank Reconciliation Pages
+import BankReconciliation from './pages/finance/bank-reconciliation/BankReconciliation'
+import MultiCurrency from './pages/finance/multi-currency/MultiCurrency'
+
+// Supplier Management Pages
+import SupplierInventoryManagement from './pages/supplier/inventory/SupplierInventory'
+import RateSheets from './pages/supplier/ratesheet/RateSheets'
+
+// Analytics & Forecasting Pages
+import DemandForecasting from './pages/analytics/demand/DemandForecasting'
+
+// Admin & Monitoring Pages
+import InventorySync from './pages/admin/sync/InventorySync'
+import PerformanceDashboard from './pages/admin/performance/PerformanceDashboard'
+import SystemHealth from './pages/admin/health/SystemHealth'
+
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
   const { user, accessToken } = useAuthStore()
@@ -325,6 +341,54 @@ function App() {
         <Route path="emails/analytics" element={
           <RoleBasedRoute allowedRoles={['super_admin', 'operator', 'admin']}>
             <EmailAnalytics />
+          </RoleBasedRoute>
+        } />
+        
+        {/* Finance Routes */}
+        <Route path="finance/bank-reconciliation" element={
+          <RoleBasedRoute allowedRoles={['super_admin', 'operator']}>
+            <BankReconciliation />
+          </RoleBasedRoute>
+        } />
+        <Route path="finance/multi-currency" element={
+          <RoleBasedRoute allowedRoles={['super_admin', 'operator']}>
+            <MultiCurrency />
+          </RoleBasedRoute>
+        } />
+        
+        {/* Supplier Management Routes */}
+        <Route path="supplier/inventory" element={
+          <RoleBasedRoute allowedRoles={['super_admin', 'operator']}>
+            <SupplierInventoryManagement />
+          </RoleBasedRoute>
+        } />
+        <Route path="supplier/rate-sheets" element={
+          <RoleBasedRoute allowedRoles={['super_admin', 'operator']}>
+            <RateSheets />
+          </RoleBasedRoute>
+        } />
+        
+        {/* Analytics & Forecasting Routes */}
+        <Route path="analytics/demand-forecasting" element={
+          <RoleBasedRoute allowedRoles={['super_admin', 'operator']}>
+            <DemandForecasting />
+          </RoleBasedRoute>
+        } />
+        
+        {/* Admin & Monitoring Routes */}
+        <Route path="admin/sync" element={
+          <RoleBasedRoute allowedRoles={['super_admin', 'operator']}>
+            <InventorySync />
+          </RoleBasedRoute>
+        } />
+        <Route path="admin/performance" element={
+          <RoleBasedRoute allowedRoles={['super_admin', 'operator']}>
+            <PerformanceDashboard />
+          </RoleBasedRoute>
+        } />
+        <Route path="admin/health" element={
+          <RoleBasedRoute allowedRoles={['super_admin', 'operator']}>
+            <SystemHealth />
           </RoleBasedRoute>
         } />
         

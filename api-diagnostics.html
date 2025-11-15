@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Travel CRM - API Diagnostics</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+        .section {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .section h2 {
+            margin-top: 0;
+            color: #333;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+        .status {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        .status.success { background: #d4edda; color: #155724; }
+        .status.error { background: #f8d7da; color: #721c24; }
+        .status.warning { background: #fff3cd; color: #856404; }
+        .status.info { background: #d1ecf1; color: #0c5460; }
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+        }
+        button:hover {
+            background: #5568d3;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .result {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            margin: 10px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .error-result {
+            border-left-color: #dc3545;
+            background: #fff5f5;
+        }
+        .success-result {
+            border-left-color: #28a745;
+            background: #f0fff4;
+        }
+        .info-box {
+            background: #e7f3ff;
+            border-left: 4px solid #2196F3;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        .checklist {
+            list-style: none;
+            padding: 0;
+        }
+        .checklist li {
+            padding: 10px;
+            margin: 5px 0;
+            background: #f8f9fa;
+            border-radius: 5px;
+            position: relative;
+            padding-left: 35px;
+        }
+        .checklist li:before {
+            content: "☐";
+            position: absolute;
+            left: 10px;
+            font-size: 20px;
+        }
+        .checklist li.checked:before {
+            content: "☑";
+            color: #28a745;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background: #667eea;
+            color: white;
+            font-weight: 600;
+        }
+        tr:hover {
+            background: #f5f5f5;
+        }
+        .code {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            margin: 10px 0;
+        }
+        .endpoint {
+            font-family: 'Courier New', monospace;
+            background: #f0f0f0;
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-size: 13px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🔍 Travel CRM - API Diagnostics Tool</h1>
+        <p>Identify API errors, permission issues, and data inconsistencies</p>
+    </div>
+
+    <div class="section">
+        <h2>1. Check User Authentication</h2>
+        <button onclick="checkAuth()">Check Authentication Status</button>
+        <button onclick="checkUserRole()">Check User Role</button>
+        <div id="auth-result"></div>
+    </div>
+
+    <div class="section">
+        <h2>2. Test API Endpoints</h2>
+        <div class="info-box">
+            <strong>Note:</strong> Make sure the backend is running on <code>http://localhost:5000</code>
+        </div>
+        <button onclick="testAllEndpoints()">Test All Common Endpoints</button>
+        <button onclick="testEndpoint('GET', '/health')">Test Health Check</button>
+        <button onclick="testEndpoint('GET', '/suppliers')">Test Suppliers</button>
+        <button onclick="testEndpoint('GET', '/agents')">Test Agents</button>
+        <div id="endpoint-results"></div>
+    </div>
+
+    <div class="section">
+        <h2>3. Common Issues Detected</h2>
+        <div id="issues-detected">
+            <p style="color: #666;">Run diagnostics to detect issues...</p>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>4. API Endpoints Reference</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Endpoint</th>
+                    <th>Method</th>
+                    <th>Auth Required</th>
+                    <th>Roles</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td class="endpoint">/api/v1/health</td><td>GET</td><td>No</td><td>All</td></tr>
+                <tr><td class="endpoint">/api/v1/performance</td><td>GET</td><td>Yes</td><td>super_admin</td></tr>
+                <tr><td class="endpoint">/api/v1/auth/login</td><td>POST</td><td>No</td><td>All</td></tr>
+                <tr><td class="endpoint">/api/v1/tenants</td><td>GET</td><td>Yes</td><td>super_admin</td></tr>
+                <tr><td class="endpoint">/api/v1/agents</td><td>GET</td><td>Yes</td><td>super_admin, operator</td></tr>
+                <tr><td class="endpoint">/api/v1/customers</td><td>GET</td><td>Yes</td><td>super_admin, operator, agent</td></tr>
+                <tr><td class="endpoint">/api/v1/suppliers</td><td>GET</td><td>Yes</td><td>super_admin, operator, agent</td></tr>
+                <tr><td class="endpoint">/api/v1/supplier-inventory</td><td>GET</td><td>Yes</td><td>super_admin, operator</td></tr>
+                <tr><td class="endpoint">/api/v1/rate-sheets</td><td>GET</td><td>Yes</td><td>super_admin, operator</td></tr>
+                <tr><td class="endpoint">/api/v1/itineraries</td><td>GET</td><td>Yes</td><td>super_admin, operator, agent</td></tr>
+                <tr><td class="endpoint">/api/v1/quotes</td><td>GET</td><td>Yes</td><td>super_admin, operator, agent</td></tr>
+                <tr><td class="endpoint">/api/v1/bookings</td><td>GET</td><td>Yes</td><td>super_admin, operator, agent</td></tr>
+                <tr><td class="endpoint">/api/v1/finance</td><td>GET</td><td>Yes</td><td>super_admin, operator</td></tr>
+                <tr><td class="endpoint">/api/v1/bank-reconciliation</td><td>GET</td><td>Yes</td><td>super_admin, operator</td></tr>
+                <tr><td class="endpoint">/api/v1/currency</td><td>GET</td><td>Yes</td><td>super_admin, operator</td></tr>
+                <tr><td class="endpoint">/api/v1/demand-forecasting</td><td>GET</td><td>Yes</td><td>super_admin, operator</td></tr>
+                <tr><td class="endpoint">/api/v1/inventory-sync</td><td>GET</td><td>Yes</td><td>super_admin, operator</td></tr>
+                <tr><td class="endpoint">/api/v1/analytics</td><td>GET</td><td>Yes</td><td>super_admin, operator</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="section">
+        <h2>5. Browser Console Errors</h2>
+        <div class="info-box">
+            <strong>How to check:</strong>
+            <ol>
+                <li>Open the Travel CRM application in another tab</li>
+                <li>Press F12 to open Developer Tools</li>
+                <li>Go to the "Console" tab</li>
+                <li>Navigate through the application</li>
+                <li>Look for red error messages</li>
+            </ol>
+        </div>
+        <ul class="checklist">
+            <li>Check for 404 (Not Found) errors</li>
+            <li>Check for 403 (Forbidden) errors</li>
+            <li>Check for 401 (Unauthorized) errors</li>
+            <li>Check for "_id is undefined" errors</li>
+            <li>Check for "Cannot read property 'id'" errors</li>
+        </ul>
+    </div>
+
+    <div class="section">
+        <h2>6. Network Tab Analysis</h2>
+        <div class="info-box">
+            <strong>Steps:</strong>
+            <ol>
+                <li>Open Developer Tools (F12)</li>
+                <li>Go to "Network" tab</li>
+                <li>Clear existing requests (🚫 icon)</li>
+                <li>Navigate to a page (e.g., Suppliers)</li>
+                <li>Look for failed requests (red)</li>
+                <li>Click on failed request to see details</li>
+            </ol>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:5000/api/v1';
+        let issues = [];
+
+        function getAuthToken() {
+            try {
+                const authStorage = localStorage.getItem('auth-storage');
+                if (!authStorage) {
+                    return null;
+                }
+                const parsed = JSON.parse(authStorage);
+                return parsed?.state?.accessToken;
+            } catch (e) {
+                console.error('Error getting auth token:', e);
+                return null;
+            }
+        }
+
+        function getUserFromStorage() {
+            try {
+                const authStorage = localStorage.getItem('auth-storage');
+                if (!authStorage) {
+                    return null;
+                }
+                const parsed = JSON.parse(authStorage);
+                return parsed?.state?.user;
+            } catch (e) {
+                console.error('Error getting user:', e);
+                return null;
+            }
+        }
+
+        function checkAuth() {
+            const resultDiv = document.getElementById('auth-result');
+            const token = getAuthToken();
+            const user = getUserFromStorage();
+
+            let html = '<div class="result">';
+            if (token && user) {
+                html += '<div class="status success">Authenticated</div>\n\n';
+                html += '<strong>Token:</strong> ' + token.substring(0, 20) + '...\n';
+                html += '<strong>User:</strong> ' + JSON.stringify(user, null, 2);
+                html += '</div>';
+            } else {
+                html += '<div class="status error">Not Authenticated</div>\n\n';
+                html += 'No authentication token found. Please login first.';
+                html += '</div>';
+                issues.push('User is not authenticated');
+            }
+            resultDiv.innerHTML = html;
+            updateIssues();
+        }
+
+        function checkUserRole() {
+            const resultDiv = document.getElementById('auth-result');
+            const user = getUserFromStorage();
+
+            let html = '<div class="result">';
+            if (user && user.role) {
+                html += '<div class="status success">Role Found</div>\n\n';
+                html += '<strong>User Role:</strong> ' + user.role + '\n';
+                html += '<strong>Expected:</strong> super_admin\n\n';
+                
+                if (user.role === 'super_admin') {
+                    html += '<div class="status success">✓ Correct Role</div>';
+                } else {
+                    html += '<div class="status warning">⚠ Different Role</div>\n';
+                    html += 'Note: Testing with role "' + user.role + '" instead of "super_admin"';
+                    issues.push('User role is "' + user.role + '" not "super_admin"');
+                }
+                html += '</div>';
+            } else {
+                html += '<div class="status error">No Role Found</div>\n\n';
+                html += 'User object does not contain role property.';
+                html += '</div>';
+                issues.push('User role is missing from token/storage');
+            }
+            resultDiv.innerHTML = html;
+            updateIssues();
+        }
+
+        async function testEndpoint(method, path, requiresAuth = true) {
+            const resultDiv = document.getElementById('endpoint-results');
+            const url = API_BASE + path;
+            
+            const testHtml = '<div class="result"><div class="status info">Testing...</div> ' + 
+                            method + ' ' + url + '</div>';
+            resultDiv.insertAdjacentHTML('afterbegin', testHtml);
+
+            try {
+                const headers = {
+                    'Content-Type': 'application/json'
+                };
+
+                if (requiresAuth) {
+                    const token = getAuthToken();
+                    if (!token) {
+                        throw new Error('No auth token available');
+                    }
+                    headers['Authorization'] = 'Bearer ' + token;
+                }
+
+                const response = await fetch(url, {
+                    method: method,
+                    headers: headers
+                });
+
+                const data = await response.json();
+                
+                let resultClass = response.ok ? 'success-result' : 'error-result';
+                let statusClass = response.ok ? 'success' : 'error';
+                
+                let html = '<div class="result ' + resultClass + '">';
+                html += '<div class="status ' + statusClass + '">' + response.status + ' ' + response.statusText + '</div>\n\n';
+                html += '<strong>Request:</strong> ' + method + ' ' + url + '\n';
+                html += '<strong>Response:</strong>\n' + JSON.stringify(data, null, 2);
+                html += '</div>';
+
+                if (!response.ok) {
+                    issues.push(method + ' ' + path + ' failed with ' + response.status);
+                }
+
+                resultDiv.querySelector('.result:first-child').outerHTML = html;
+            } catch (error) {
+                let html = '<div class="result error-result">';
+                html += '<div class="status error">Error</div>\n\n';
+                html += '<strong>Request:</strong> ' + method + ' ' + url + '\n';
+                html += '<strong>Error:</strong> ' + error.message;
+                html += '</div>';
+                resultDiv.querySelector('.result:first-child').outerHTML = html;
+                issues.push(method + ' ' + path + ' - ' + error.message);
+            }
+            
+            updateIssues();
+        }
+
+        async function testAllEndpoints() {
+            issues = []; // Reset issues
+            document.getElementById('endpoint-results').innerHTML = '';
+            
+            const endpoints = [
+                { method: 'GET', path: '/health', auth: false },
+                { method: 'GET', path: '/suppliers', auth: true },
+                { method: 'GET', path: '/agents', auth: true },
+                { method: 'GET', path: '/customers', auth: true },
+                { method: 'GET', path: '/itineraries', auth: true },
+                { method: 'GET', path: '/quotes', auth: true },
+                { method: 'GET', path: '/bookings', auth: true },
+                { method: 'GET', path: '/supplier-inventory', auth: true },
+                { method: 'GET', path: '/rate-sheets', auth: true },
+                { method: 'GET', path: '/currency', auth: true },
+                { method: 'GET', path: '/bank-reconciliation', auth: true },
+                { method: 'GET', path: '/analytics', auth: true }
+            ];
+
+            for (const endpoint of endpoints) {
+                await testEndpoint(endpoint.method, endpoint.path, endpoint.auth);
+                await new Promise(resolve => setTimeout(resolve, 500)); // Delay between requests
+            }
+        }
+
+        function updateIssues() {
+            const issuesDiv = document.getElementById('issues-detected');
+            
+            if (issues.length === 0) {
+                issuesDiv.innerHTML = '<p style="color: #28a745;">✓ No issues detected</p>';
+                return;
+            }
+
+            let html = '<div class="result error-result">';
+            html += '<strong>⚠ Issues Found (' + issues.length + '):</strong>\n\n';
+            issues.forEach((issue, i) => {
+                html += (i + 1) + '. ' + issue + '\n';
+            });
+            html += '</div>';
+            issuesDiv.innerHTML = html;
+        }
+
+        // Auto-check auth on load
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                checkAuth();
+                checkUserRole();
+            }, 500);
+        });
+    </script>
+</body>
+</html>

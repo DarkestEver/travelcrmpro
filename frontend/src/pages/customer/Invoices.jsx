@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useQuery } from '@tantml:parameter>
+import { useQuery } from '@tanstack/react-query';
 import { getInvoices } from '../../services/customerInvoiceAPI';
 import {
   DocumentTextIcon,

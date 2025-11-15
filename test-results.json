@@ -1,0 +1,52 @@
+{
+  "passed": [
+    "Backend is running",
+    "Found: App.jsx",
+    "Found: main.jsx",
+    "Found: components/Sidebar.jsx",
+    "Found: components/RoleBasedRoute.jsx",
+    "Found: services/api.js",
+    "Found: services/api/inventoryApi.js",
+    "Found: services/api/rateSheetApi.js",
+    "Found: stores/authStore.js",
+    "bankReconciliationApi.js: OK (9 exports)",
+    "currencyApi.js: OK (8 exports)",
+    "demandForecastingApi.js: OK (8 exports)",
+    "healthApi.js: OK (8 exports)",
+    "inventoryApi.js: OK (14 exports)",
+    "inventorySyncApi.js: OK (14 exports)",
+    "performanceApi.js: OK (13 exports)",
+    "rateSheetApi.js: OK (11 exports)",
+    "No duplicate \"Suppliers\" menu items found",
+    "Found \"Supplier Management\" parent menu",
+    "RoleBasedRoute references super_admin role",
+    "Health Check: GET /health → 200",
+    "Login: POST /auth/login → 200",
+    "Login successful. Token: eyJhbGciOiJIUzI1NiIs...",
+    "Tenants List: GET /tenants → 200",
+    "Agents List: GET /agents → 200",
+    "Customers List: GET /customers → 200",
+    "Suppliers List: GET /suppliers → 200",
+    "Itineraries List: GET /itineraries → 200",
+    "Quotes List: GET /quotes → 200",
+    "Bookings List: GET /bookings → 200",
+    "Finance Overview: GET /finance → 200",
+    "Currency Rates: GET /currency/rates → 200",
+    "Supplier Inventory: GET /supplier-inventory → 200",
+    "Rate Sheets: GET /rate-sheets → 200",
+    "Inventory Sync Status: GET /inventory-sync/status → 200",
+    "Analytics Overview: GET /analytics → 200",
+    "Performance Metrics: GET /performance/metrics → 200",
+    "Notifications: GET /notifications → 200",
+    "Audit Logs: GET /audit-logs → 200"
+  ],
+  "failed": [
+    "Missing: services/api/supplierApi.js",
+    "Bank Reconciliation: GET /bank-reconciliation → 404 - Route /api/v1/bank-reconciliation not found",
+    "Demand Forecasting: GET /demand-forecasting → 404 - Route /api/v1/demand-forecasting not found"
+  ],
+  "warnings": [
+    "No _id transformation detected in API base"
+  ],
+  "timestamp": "2025-11-15T08:14:50.931Z"
+}

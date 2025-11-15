@@ -26,6 +26,9 @@ const { protect, authorize } = require('../middleware/auth');
 router.use(protect);
 router.use(authorize('finance', 'super_admin', 'operator'));
 
+// Root overview (redirects to dashboard data)
+router.get('/', getDashboard);
+
 // Dashboard
 router.get('/dashboard', getDashboard);
 

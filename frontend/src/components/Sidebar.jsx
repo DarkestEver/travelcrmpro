@@ -19,7 +19,12 @@ import {
   FiChevronDown,
   FiChevronRight,
   FiCpu,
-  FiClock
+  FiClock,
+  FiDollarSign,
+  FiPackage,
+  FiRefreshCw,
+  FiActivity,
+  FiHeart
 } from 'react-icons/fi'
 
 const Sidebar = () => {
@@ -27,6 +32,10 @@ const Sidebar = () => {
   const { logo, companyName, primaryColor, isLoading } = useTenantBranding()
   const [emailsOpen, setEmailsOpen] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [financeOpen, setFinanceOpen] = useState(false)
+  const [supplierOpen, setSupplierOpen] = useState(false)
+  const [analyticsOpen, setAnalyticsOpen] = useState(false)
+  const [adminOpen, setAdminOpen] = useState(false)
 
   const navItems = [
     {
@@ -75,12 +84,6 @@ const Sidebar = () => {
       roles: ['super_admin', 'operator', 'agent'],
     },
     {
-      name: 'Suppliers',
-      path: '/suppliers',
-      icon: FiTruck,
-      roles: ['super_admin', 'operator', 'agent'],
-    },
-    {
       name: 'Itineraries',
       path: '/itineraries',
       icon: FiMap,
@@ -97,6 +100,89 @@ const Sidebar = () => {
       path: '/bookings',
       icon: FiCalendar,
       roles: ['super_admin', 'operator', 'agent'],
+    },
+    {
+      name: 'Finance',
+      icon: FiDollarSign,
+      roles: ['super_admin', 'operator'],
+      submenu: [
+        {
+          name: 'Overview',
+          path: '/analytics',
+          icon: FiBarChart2,
+        },
+        {
+          name: 'Bank Reconciliation',
+          path: '/finance/bank-reconciliation',
+          icon: FiDollarSign,
+        },
+        {
+          name: 'Multi-Currency',
+          path: '/finance/multi-currency',
+          icon: FiDollarSign,
+        },
+      ],
+    },
+    {
+      name: 'Supplier Management',
+      icon: FiTruck,
+      roles: ['super_admin', 'operator'],
+      submenu: [
+        {
+          name: 'Suppliers',
+          path: '/suppliers',
+          icon: FiTruck,
+        },
+        {
+          name: 'Inventory',
+          path: '/supplier/inventory',
+          icon: FiPackage,
+        },
+        {
+          name: 'Rate Sheets',
+          path: '/supplier/rate-sheets',
+          icon: FiFileText,
+        },
+        {
+          name: 'Sync Dashboard',
+          path: '/admin/sync',
+          icon: FiRefreshCw,
+        },
+      ],
+    },
+    {
+      name: 'Analytics & Insights',
+      icon: FiBarChart2,
+      roles: ['super_admin', 'operator'],
+      submenu: [
+        {
+          name: 'Overview',
+          path: '/analytics',
+          icon: FiBarChart2,
+        },
+        {
+          name: 'Demand Forecasting',
+          path: '/analytics/demand-forecasting',
+          icon: FiTrendingUp,
+        },
+      ],
+    },
+    {
+      name: 'System Administration',
+      icon: FiActivity,
+      roles: ['super_admin', 'operator'],
+      submenu: [
+        {
+          name: 'Performance',
+          path: '/admin/performance',
+          icon: FiActivity,
+        },
+        {
+          name: 'System Health',
+          path: '/admin/health',
+          icon: FiHeart,
+        },
+      ],
     },
     {
       name: 'Analytics',
@@ -186,6 +272,14 @@ const Sidebar = () => {
                       setEmailsOpen(!emailsOpen)
                     } else if (item.name === 'Settings') {
                       setSettingsOpen(!settingsOpen)
+                    } else if (item.name === 'Finance') {
+                      setFinanceOpen(!financeOpen)
+                    } else if (item.name === 'Supplier Management') {
+                      setSupplierOpen(!supplierOpen)
+                    } else if (item.name === 'Analytics & Insights') {
+                      setAnalyticsOpen(!analyticsOpen)
+                    } else if (item.name === 'System Administration') {
+                      setAdminOpen(!adminOpen)
                     }
                   }}
                   className="flex items-center justify-between w-full px-4 py-3 rounded-lg mb-2 transition-colors text-gray-700 hover:bg-gray-100"
@@ -194,14 +288,24 @@ const Sidebar = () => {
                     <item.icon className="text-xl" />
                     <span className="font-medium">{item.name}</span>
                   </div>
-                  {(item.name === 'Emails & Queries' ? emailsOpen : settingsOpen) ? (
+                  {(item.name === 'Emails & Queries' ? emailsOpen : 
+                    item.name === 'Settings' ? settingsOpen :
+                    item.name === 'Finance' ? financeOpen :
+                    item.name === 'Supplier Management' ? supplierOpen :
+                    item.name === 'Analytics & Insights' ? analyticsOpen :
+                    item.name === 'System Administration' ? adminOpen : false) ? (
                     <FiChevronDown className="text-lg" />
                   ) : (
                     <FiChevronRight className="text-lg" />
                   )}
                 </button>
                 
-                {((item.name === 'Emails & Queries' && emailsOpen) || (item.name === 'Settings' && settingsOpen)) && (
+                {((item.name === 'Emails & Queries' && emailsOpen) || 
+                  (item.name === 'Settings' && settingsOpen) ||
+                  (item.name === 'Finance' && financeOpen) ||
+                  (item.name === 'Supplier Management' && supplierOpen) ||
+                  (item.name === 'Analytics & Insights' && analyticsOpen) ||
+                  (item.name === 'System Administration' && adminOpen)) && (
                   <div className="ml-4 space-y-1">
                     {item.submenu.map((subItem) => (
                       <NavLink

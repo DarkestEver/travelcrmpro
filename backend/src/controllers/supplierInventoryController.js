@@ -20,11 +20,25 @@ exports.createInventory = asyncHandler(async (req, res) => {
 
 /**
  * @desc    Get all inventory items for supplier
- * @route   GET /api/v1/supplier-portal/inventory
- * @access  Private (Supplier only)
+ * @route   GET /api/v1/supplier-inventory or GET /api/v1/supplier-portal/inventory
+ * @access  Private (Supplier only or Admin viewing all)
  */
 exports.getMyInventory = asyncHandler(async (req, res) => {
-  const supplierId = req.supplier._id;
+  // Allow admin/super_admin to view all inventory, or supplier to view their own
+  let supplierId;
+  
+  if (['super_admin', 'admin', 'operator'].includes(req.user.role)) {
+    // Admin can view specific supplier's inventory via query param, or all if not specified
+    supplierId = req.query.supplierId || null;
+  } else if (req.supplier) {
+    supplierId = req.supplier._id;
+  } else {
+    return res.status(403).json({
+      success: false,
+      message: 'Access denied. Supplier profile required.'
+    });
+  }
+  
   const { status, serviceType, search, limit } = req.query;
   
   const inventory = await inventoryService.getSupplierInventory(supplierId, {

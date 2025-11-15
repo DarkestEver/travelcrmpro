@@ -51,12 +51,31 @@ exports.uploadRateSheet = asyncHandler(async (req, res) => {
 /**
  * @desc    Create rate sheet manually
  * @route   POST /api/rate-sheets
- * @access  Private/Supplier
+ * @access  Private/Supplier/Admin
  */
 exports.createRateSheet = asyncHandler(async (req, res) => {
+  // Determine supplier ID based on role
+  let supplierId;
+  if (['super_admin', 'admin', 'operator'].includes(req.user.role)) {
+    supplierId = req.body.supplierId; // Admin must specify supplier
+    if (!supplierId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Supplier ID is required for admin users',
+      });
+    }
+  } else if (req.supplier) {
+    supplierId = req.supplier._id; // Supplier creates for themselves
+  } else {
+    return res.status(403).json({
+      success: false,
+      message: 'Access denied. Insufficient permissions.',
+    });
+  }
+  
   const rateSheet = await rateSheetService.createRateSheet(
     req.body,
-    req.supplier._id,
+    supplierId,
     req.user._id
   );
   
@@ -70,9 +89,22 @@ exports.createRateSheet = asyncHandler(async (req, res) => {
 /**
  * @desc    Get my rate sheets
  * @route   GET /api/rate-sheets
- * @access  Private/Supplier
+ * @access  Private/Supplier/Admin
  */
 exports.getMyRateSheets = asyncHandler(async (req, res) => {
+  // Determine supplier ID based on role
+  let supplierId;
+  if (['super_admin', 'admin', 'operator'].includes(req.user.role)) {
+    supplierId = req.query.supplierId || null; // Admin can view all or specific supplier
+  } else if (req.supplier) {
+    supplierId = req.supplier._id; // Supplier views their own
+  } else {
+    return res.status(403).json({
+      success: false,
+      message: 'Access denied. Insufficient permissions.',
+    });
+  }
+  
   const filters = {
     status: req.query.status,
     search: req.query.search,
@@ -82,7 +114,7 @@ exports.getMyRateSheets = asyncHandler(async (req, res) => {
   };
   
   const result = await rateSheetService.getSupplierRateSheets(
-    req.supplier._id,
+    supplierId,
     filters
   );
   
@@ -99,12 +131,25 @@ exports.getMyRateSheets = asyncHandler(async (req, res) => {
 /**
  * @desc    Get rate sheet by ID
  * @route   GET /api/rate-sheets/:id
- * @access  Private/Supplier
+ * @access  Private/Supplier/Admin
  */
 exports.getRateSheetById = asyncHandler(async (req, res) => {
+  // Determine supplier ID based on role
+  let supplierId;
+  if (['super_admin', 'admin', 'operator'].includes(req.user.role)) {
+    supplierId = null; // Admin can view any rate sheet
+  } else if (req.supplier) {
+    supplierId = req.supplier._id; // Supplier can only view their own
+  } else {
+    return res.status(403).json({
+      success: false,
+      message: 'Access denied. Insufficient permissions.',
+    });
+  }
+  
   const rateSheet = await rateSheetService.getRateSheetById(
     req.params.id,
-    req.supplier._id
+    supplierId
   );
   
   res.json({
@@ -116,12 +161,25 @@ exports.getRateSheetById = asyncHandler(async (req, res) => {
 /**
  * @desc    Update rate sheet
  * @route   PUT /api/rate-sheets/:id
- * @access  Private/Supplier
+ * @access  Private/Supplier/Admin
  */
 exports.updateRateSheet = asyncHandler(async (req, res) => {
+  // Determine supplier ID based on role
+  let supplierId;
+  if (['super_admin', 'admin', 'operator'].includes(req.user.role)) {
+    supplierId = null; // Admin can update any rate sheet
+  } else if (req.supplier) {
+    supplierId = req.supplier._id; // Supplier can only update their own
+  } else {
+    return res.status(403).json({
+      success: false,
+      message: 'Access denied. Insufficient permissions.',
+    });
+  }
+  
   const rateSheet = await rateSheetService.updateRateSheet(
     req.params.id,
-    req.supplier._id,
+    supplierId,
     req.body
   );
   
@@ -135,12 +193,25 @@ exports.updateRateSheet = asyncHandler(async (req, res) => {
 /**
  * @desc    Delete rate sheet
  * @route   DELETE /api/rate-sheets/:id
- * @access  Private/Supplier
+ * @access  Private/Supplier/Admin
  */
 exports.deleteRateSheet = asyncHandler(async (req, res) => {
+  // Determine supplier ID based on role
+  let supplierId;
+  if (['super_admin', 'admin', 'operator'].includes(req.user.role)) {
+    supplierId = null; // Admin can delete any rate sheet
+  } else if (req.supplier) {
+    supplierId = req.supplier._id; // Supplier can only delete their own
+  } else {
+    return res.status(403).json({
+      success: false,
+      message: 'Access denied. Insufficient permissions.',
+    });
+  }
+  
   const result = await rateSheetService.deleteRateSheet(
     req.params.id,
-    req.supplier._id
+    supplierId
   );
   
   res.json({
@@ -152,12 +223,25 @@ exports.deleteRateSheet = asyncHandler(async (req, res) => {
 /**
  * @desc    Activate rate sheet
  * @route   PATCH /api/rate-sheets/:id/activate
- * @access  Private/Supplier
+ * @access  Private/Supplier/Admin
  */
 exports.activateRateSheet = asyncHandler(async (req, res) => {
+  // Determine supplier ID based on role
+  let supplierId;
+  if (['super_admin', 'admin', 'operator'].includes(req.user.role)) {
+    supplierId = null; // Admin can activate any rate sheet
+  } else if (req.supplier) {
+    supplierId = req.supplier._id; // Supplier can only activate their own
+  } else {
+    return res.status(403).json({
+      success: false,
+      message: 'Access denied. Insufficient permissions.',
+    });
+  }
+  
   const rateSheet = await rateSheetService.activateRateSheet(
     req.params.id,
-    req.supplier._id
+    supplierId
   );
   
   res.json({
@@ -170,12 +254,25 @@ exports.activateRateSheet = asyncHandler(async (req, res) => {
 /**
  * @desc    Archive rate sheet
  * @route   PATCH /api/rate-sheets/:id/archive
- * @access  Private/Supplier
+ * @access  Private/Supplier/Admin
  */
 exports.archiveRateSheet = asyncHandler(async (req, res) => {
+  // Determine supplier ID based on role
+  let supplierId;
+  if (['super_admin', 'admin', 'operator'].includes(req.user.role)) {
+    supplierId = null; // Admin can archive any rate sheet
+  } else if (req.supplier) {
+    supplierId = req.supplier._id; // Supplier can only archive their own
+  } else {
+    return res.status(403).json({
+      success: false,
+      message: 'Access denied. Insufficient permissions.',
+    });
+  }
+  
   const rateSheet = await rateSheetService.archiveRateSheet(
     req.params.id,
-    req.supplier._id
+    supplierId
   );
   
   res.json({
@@ -234,12 +331,25 @@ exports.rejectRateSheet = asyncHandler(async (req, res) => {
 /**
  * @desc    Create new version of rate sheet
  * @route   POST /api/rate-sheets/:id/new-version
- * @access  Private/Supplier
+ * @access  Private/Supplier/Admin
  */
 exports.createNewVersion = asyncHandler(async (req, res) => {
+  // Determine supplier ID based on role
+  let supplierId;
+  if (['super_admin', 'admin', 'operator'].includes(req.user.role)) {
+    supplierId = null; // Admin can create version for any rate sheet
+  } else if (req.supplier) {
+    supplierId = req.supplier._id; // Supplier can only create version for their own
+  } else {
+    return res.status(403).json({
+      success: false,
+      message: 'Access denied. Insufficient permissions.',
+    });
+  }
+  
   const newVersion = await rateSheetService.createNewVersion(
     req.params.id,
-    req.supplier._id,
+    supplierId,
     req.body
   );
   
@@ -253,11 +363,24 @@ exports.createNewVersion = asyncHandler(async (req, res) => {
 /**
  * @desc    Get rate sheet history
  * @route   GET /api/rate-sheets/history/:name
- * @access  Private/Supplier
+ * @access  Private/Supplier/Admin
  */
 exports.getRateSheetHistory = asyncHandler(async (req, res) => {
+  // Determine supplier ID based on role
+  let supplierId;
+  if (['super_admin', 'admin', 'operator'].includes(req.user.role)) {
+    supplierId = req.query.supplierId || null; // Admin can view history for all or specific supplier
+  } else if (req.supplier) {
+    supplierId = req.supplier._id; // Supplier views their own history
+  } else {
+    return res.status(403).json({
+      success: false,
+      message: 'Access denied. Insufficient permissions.',
+    });
+  }
+  
   const history = await rateSheetService.getRateSheetHistory(
-    req.supplier._id,
+    supplierId,
     req.params.name
   );
   
@@ -288,10 +411,23 @@ exports.compareVersions = asyncHandler(async (req, res) => {
 /**
  * @desc    Get supplier rate sheet statistics
  * @route   GET /api/rate-sheets/stats
- * @access  Private/Supplier
+ * @access  Private/Supplier/Admin
  */
 exports.getRateSheetStats = asyncHandler(async (req, res) => {
-  const stats = await rateSheetService.getSupplierStats(req.supplier._id);
+  // Determine supplier ID based on role
+  let supplierId;
+  if (['super_admin', 'admin', 'operator'].includes(req.user.role)) {
+    supplierId = req.query.supplierId || null; // Admin can view stats for all or specific supplier
+  } else if (req.supplier) {
+    supplierId = req.supplier._id; // Supplier views their own stats
+  } else {
+    return res.status(403).json({
+      success: false,
+      message: 'Access denied. Insufficient permissions.',
+    });
+  }
+  
+  const stats = await rateSheetService.getSupplierStats(supplierId);
   
   res.json({
     success: true,
