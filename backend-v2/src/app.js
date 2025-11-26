@@ -27,6 +27,7 @@ const reportRoutes = require('./routes/report');
 const rateListRoutes = require('./routes/rateList');
 const quoteRoutes = require('./routes/quote');
 const packageRoutes = require('./routes/package');
+const queryRoutes = require('./routes/query');
 const metricsRoutes = require('./routes/metrics');
 const { NotFoundError } = require('./lib/errors');
 
@@ -115,6 +116,7 @@ app.use('/reports', reportRoutes);
 app.use('/rate-lists', rateListRoutes);
 app.use('/quotes', quoteRoutes);
 app.use('/packages', packageRoutes);
+app.use('/queries', queryRoutes);
 app.use('/metrics', metricsRoutes);
 
 // All phases complete!
