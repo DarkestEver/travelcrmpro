@@ -61,6 +61,7 @@ describe('Document Management API', () => {
       slug: 'test-travel-docs-' + Date.now(),
       subdomain: 'test-travel-docs',
       email: 'admin@testtravel.com',
+      status: 'active', // Required for tenant middleware to find it
       settings: {
         currency: 'INR',
         timezone: 'Asia/Kolkata',
@@ -672,6 +673,7 @@ describe('Document Management API', () => {
         slug: 'other-agency-' + Date.now(),
         subdomain: 'other-agency',
         email: 'admin@other.com',
+        status: 'active', // Required for tenant middleware to find it
       });
 
       const otherTenantCustomer = await User.create({

@@ -23,18 +23,18 @@ exports.getDashboard = async (req, res, next) => {
     // Get upcoming bookings
     const upcomingBookings = await Booking.find({
       tenant: tenantId,
-      'customer._id': customerId,
+      'customer.email': req.user.email,
       status: { $in: ['confirmed', 'pending'] },
-      'travelDates.startDate': { $gte: new Date() },
+      travelStartDate: { $gte: new Date() },
     })
-      .sort('travelDates.startDate')
+      .sort('travelStartDate')
       .limit(5)
       .lean();
 
     // Get recent quotes
     const recentQuotes = await Quote.find({
       tenant: tenantId,
-      customer: customerId,
+      'customer.email': req.user.email,
       status: { $in: ['draft', 'sent', 'viewed'] },
     })
       .sort('-createdAt')
@@ -44,10 +44,10 @@ exports.getDashboard = async (req, res, next) => {
     // Get pending payments
     const pendingPayments = await Payment.find({
       tenant: tenantId,
-      customer: customerId,
+      'customer.email': req.user.email,
       status: { $in: ['pending', 'processing'] },
     })
-      .populate('booking', 'bookingNumber destination')
+      .populate('booking', 'bookingNumber')
       .sort('-createdAt')
       .limit(5)
       .lean();
@@ -60,14 +60,14 @@ exports.getDashboard = async (req, res, next) => {
     // Calculate stats
     const totalBookings = await Booking.countDocuments({
       tenant: tenantId,
-      'customer._id': customerId,
+      'customer.email': req.user.email,
     });
 
     const totalSpentResult = await Booking.aggregate([
       {
         $match: {
           tenant: tenantId,
-          'customer._id': customerId,
+          'customer.email': req.user.email,
           status: { $in: ['confirmed', 'completed'] },
         },
       },
@@ -185,14 +185,24 @@ exports.createQuery = async (req, res, next) => {
     const queryNumber = await Query.generateQueryNumber(req.user.tenant);
 
     const queryData = {
-      ...req.body,
       tenant: req.user.tenant,
       queryNumber,
+      source: req.body.source || 'website',
       customer: {
         name: `${req.user.firstName} ${req.user.lastName}`,
         email: req.user.email,
-        phone: req.user.phone || req.body.customer?.phone,
+        phone: req.user.phone || req.body.phone,
       },
+      tripDetails: {
+        destination: req.body.destination,
+        travelDates: req.body.travelDates,
+        travelers: {
+          adults: req.body.numberOfTravelers || 2,
+        },
+      },
+      budget: req.body.budget,
+      message: req.body.message,
+      priority: req.body.priority || 'medium',
       createdBy: req.user._id,
     };
 
@@ -220,7 +230,7 @@ exports.getMyQuotes = async (req, res, next) => {
 
     const query = {
       tenant: req.user.tenant,
-      customer: req.user._id,
+      'customer.email': req.user.email, // Customer is an embedded object, not a reference
     };
 
     if (status) query.status = status;
@@ -261,16 +271,27 @@ exports.getMyQuotes = async (req, res, next) => {
  */
 exports.getQuoteById = async (req, res, next) => {
   try {
+    // First check if quote exists in tenant
+    const quoteExists = await Quote.findOne({
+      _id: req.params.id,
+      tenant: req.user.tenant,
+    });
+
+    if (!quoteExists) {
+      throw new NotFoundError('Quote not found');
+    }
+
+    // Then check if it belongs to this customer
     const quote = await Quote.findOne({
       _id: req.params.id,
       tenant: req.user.tenant,
-      customer: req.user._id,
+      'customer.email': req.user.email,
     })
       .populate('itinerary')
       .populate('createdBy', 'firstName lastName email');
 
     if (!quote) {
-      throw new NotFoundError('Quote not found');
+      throw new ForbiddenError('Access denied to this quote');
     }
 
     res.json({
@@ -292,25 +313,25 @@ exports.getMyBookings = async (req, res, next) => {
 
     const query = {
       tenant: req.user.tenant,
-      'customer._id': req.user._id,
+      'customer.email': req.user.email,
     };
 
     if (status) query.status = status;
 
     if (upcoming === 'true') {
-      query['travelDates.startDate'] = { $gte: new Date() };
+      query.travelStartDate = { $gte: new Date() };
     }
 
     if (past === 'true') {
-      query['travelDates.endDate'] = { $lt: new Date() };
+      query.travelEndDate = { $lt: new Date() };
     }
 
     const skip = (parseInt(page) - 1) * parseInt(limit);
 
     const [bookings, totalCount] = await Promise.all([
       Booking.find(query)
-        .populate('assignedTo', 'firstName lastName')
-        .sort('-travelDates.startDate')
+        .populate('itinerary')
+        .sort('-travelStartDate')
         .skip(skip)
         .limit(parseInt(limit))
         .lean(),
@@ -343,7 +364,7 @@ exports.getBookingById = async (req, res, next) => {
     const booking = await Booking.findOne({
       _id: req.params.id,
       tenant: req.user.tenant,
-      'customer._id': req.user._id,
+      'customer.email': req.user.email,
     })
       .populate('itinerary')
       .populate('quote');
@@ -371,7 +392,7 @@ exports.getMyPayments = async (req, res, next) => {
 
     const query = {
       tenant: req.user.tenant,
-      customer: req.user._id,
+      'customer.email': req.user.email,
     };
 
     if (status) query.status = status;
@@ -381,7 +402,7 @@ exports.getMyPayments = async (req, res, next) => {
 
     const [payments, totalCount] = await Promise.all([
       Payment.find(query)
-        .populate('booking', 'bookingNumber destination')
+        .populate('booking', 'bookingNumber')
         .sort('-createdAt')
         .skip(skip)
         .limit(parseInt(limit))
@@ -415,9 +436,9 @@ exports.getPaymentById = async (req, res, next) => {
     const payment = await Payment.findOne({
       _id: req.params.id,
       tenant: req.user.tenant,
-      customer: req.user._id,
+      'customer.email': req.user.email,
     })
-      .populate('booking', 'bookingNumber destination customer')
+      .populate('booking', 'bookingNumber customer')
       .populate('invoice');
 
     if (!payment) {
@@ -488,15 +509,20 @@ exports.getExpiringDocuments = async (req, res, next) => {
   try {
     const { days = 90 } = req.query;
 
-    const documents = await Document.getExpiringDocuments(req.user.tenant, parseInt(days))
-      .where('customer').equals(req.user._id);
+    const expiryDate = new Date();
+    expiryDate.setDate(expiryDate.getDate() + parseInt(days));
+
+    const documents = await Document.find({
+      tenant: req.user.tenant,
+      customer: req.user._id,
+      expiryDate: { $lte: expiryDate, $gte: new Date() },
+    })
+      .populate('booking', 'bookingNumber')
+      .sort('expiryDate');
 
     res.json({
       success: true,
-      data: {
-        documents,
-        count: documents.length,
-      },
+      data: documents,
     });
   } catch (error) {
     next(error);
@@ -511,16 +537,20 @@ exports.submitReview = async (req, res, next) => {
   try {
     const { bookingId, overallRating, ratings, reviewText, photos, highlights, wouldRecommend, traveledWith } = req.body;
 
-    // Verify booking belongs to customer
+    // First verify booking exists and belongs to customer
     const booking = await Booking.findOne({
       _id: bookingId,
       tenant: req.user.tenant,
-      'customer._id': req.user._id,
-      status: 'completed',
+      'customer.email': req.user.email,
     });
 
     if (!booking) {
-      throw new NotFoundError('Booking not found or not completed');
+      throw new NotFoundError('Booking not found');
+    }
+
+    // Then check if completed
+    if (booking.status !== 'completed') {
+      throw new ForbiddenError('Reviews can only be submitted for completed bookings');
     }
 
     // Check if review already exists
@@ -544,7 +574,7 @@ exports.submitReview = async (req, res, next) => {
       highlights,
       wouldRecommend,
       traveledWith,
-      tripDate: booking.travelDates?.startDate,
+      tripDate: booking.travelStartDate,
       createdBy: req.user._id,
     });
 
@@ -591,9 +621,9 @@ exports.getBookingPayments = async (req, res, next) => {
   try {
     // Verify booking belongs to customer
     const booking = await Booking.findOne({
-      _id: req.params.bookingId,
+      _id: req.params.id,
       tenant: req.user.tenant,
-      'customer._id': req.user._id,
+      'customer.email': req.user.email,
     });
 
     if (!booking) {
@@ -602,9 +632,8 @@ exports.getBookingPayments = async (req, res, next) => {
 
     const payments = await Payment.find({
       tenant: req.user.tenant,
-      booking: req.params.bookingId,
+      booking: req.params.id,
     })
-      .populate('invoice')
       .sort('dueDate');
 
     res.json({

@@ -58,11 +58,21 @@ exports.uploadDocument = async (req, res, next) => {
  */
 exports.getDocumentById = async (req, res, next) => {
   try {
-    const document = await Document.findOne({
+    const { USER_ROLES } = require('../config/constants');
+    
+    // Build query based on user role
+    const query = {
       _id: req.params.id,
       tenant: req.user.tenant,
-      customer: req.user._id,
-    })
+    };
+
+    // Customers can only view their own documents
+    // Agents/Operators/Admins can view any document in their tenant
+    if (req.user.role === USER_ROLES.CUSTOMER) {
+      query.customer = req.user._id;
+    }
+
+    const document = await Document.findOne(query)
       .populate('booking', 'bookingNumber destination')
       .populate('verifiedBy', 'firstName lastName');
 

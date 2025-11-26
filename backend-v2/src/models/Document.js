@@ -253,7 +253,6 @@ documentSchema.statics.getExpiringDocuments = function(tenantId, days = 90) {
       $lte: futureDate,
     },
     isExpired: false,
-    verificationStatus: 'verified',
   })
     .populate('customer', 'firstName lastName email')
     .sort('expiryDate');

@@ -30,12 +30,6 @@ router.post(
   documentController.uploadDocument
 );
 
-router.get(
-  '/:id',
-  checkRole(USER_ROLES.CUSTOMER, USER_ROLES.AGENT, USER_ROLES.OPERATOR, USER_ROLES.TENANT_ADMIN),
-  documentController.getDocumentById
-);
-
 router.patch(
   '/:id',
   checkRole(USER_ROLES.CUSTOMER),
@@ -85,6 +79,19 @@ router.get(
   documentController.getPendingVerification
 );
 
+router.get(
+  '/expiring',
+  checkRole(USER_ROLES.AGENT, USER_ROLES.OPERATOR, USER_ROLES.TENANT_ADMIN),
+  validateQuery(getExpiringDocumentsSchema),
+  documentController.getExpiringDocuments
+);
+
+router.get(
+  '/shared-with-me',
+  checkRole(USER_ROLES.AGENT, USER_ROLES.OPERATOR, USER_ROLES.TENANT_ADMIN),
+  documentController.getSharedDocuments
+);
+
 router.post(
   '/:id/verify',
   checkRole(USER_ROLES.AGENT, USER_ROLES.OPERATOR, USER_ROLES.TENANT_ADMIN),
@@ -99,17 +106,11 @@ router.post(
   documentController.rejectDocument
 );
 
+// This must be last to avoid matching specific routes above
 router.get(
-  '/shared-with-me',
-  checkRole(USER_ROLES.AGENT, USER_ROLES.OPERATOR, USER_ROLES.TENANT_ADMIN),
-  documentController.getSharedDocuments
-);
-
-router.get(
-  '/expiring',
-  checkRole(USER_ROLES.AGENT, USER_ROLES.OPERATOR, USER_ROLES.TENANT_ADMIN),
-  validateQuery(getExpiringDocumentsSchema),
-  documentController.getExpiringDocuments
+  '/:id',
+  checkRole(USER_ROLES.CUSTOMER, USER_ROLES.AGENT, USER_ROLES.OPERATOR, USER_ROLES.TENANT_ADMIN),
+  documentController.getDocumentById
 );
 
 module.exports = router;

@@ -350,6 +350,17 @@ const quoteSchema = new Schema({
   // Email tracking
   emailsSent: [emailSentSchema],
 
+  // Follow-up campaign tracking
+  lastFollowUpSent: Date,
+  followUpCount: {
+    type: Number,
+    default: 0,
+  },
+  expiryWarningSent: {
+    type: Boolean,
+    default: false,
+  },
+
   // Notes and metadata
   internalNotes: {
     type: String,

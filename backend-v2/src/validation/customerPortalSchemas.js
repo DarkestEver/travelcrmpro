@@ -49,7 +49,7 @@ const submitReviewSchema = Joi.object({
 });
 
 const getMyQueriesSchema = Joi.object({
-  status: Joi.string().valid('new', 'assigned', 'in_progress', 'responded', 'resolved', 'closed', 'spam').optional(),
+  status: Joi.string().valid('draft', 'pending', 'assigned', 'in_progress', 'quoted', 'won', 'lost', 'cancelled').optional(),
   page: Joi.number().min(1).default(1),
   limit: Joi.number().min(1).max(100).default(20),
 });

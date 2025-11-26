@@ -30,7 +30,9 @@ const packageRoutes = require('./routes/package');
 const queryRoutes = require('./routes/query');
 const customerPortalRoutes = require('./routes/customerPortal');
 const documentRoutes = require('./routes/document');
+const automationRoutes = require('./routes/automation');
 const metricsRoutes = require('./routes/metrics');
+const reviewRoutes = require('./routes/reviewRoutes');
 const { NotFoundError } = require('./lib/errors');
 
 const app = express();
@@ -121,7 +123,9 @@ app.use('/packages', packageRoutes);
 app.use('/queries', queryRoutes);
 app.use('/customer', customerPortalRoutes);
 app.use('/documents', documentRoutes);
+app.use('/automation', automationRoutes);
 app.use('/metrics', metricsRoutes);
+app.use('/', reviewRoutes);  // Includes both /reviews and /public/reviews paths
 
 // All phases complete!
 

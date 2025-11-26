@@ -82,23 +82,29 @@ async function createTestBooking(tenant, customer, admin, options = {}) {
 }
 
 async function createTestQuote(tenant, customer, admin, options = {}) {
+  // Create itinerary if not provided
+  let itinerary = options.itinerary;
+  if (!itinerary) {
+    itinerary = await createTestItinerary(tenant, admin, {
+      title: options.title || 'Paris Package',
+      destination: options.destination || 'Paris'
+    });
+  }
+
   return await Quote.create({
     tenant: tenant._id,
     quoteNumber: options.quoteNumber || 'QT-' + Date.now(),
+    itinerary: itinerary._id,
+    title: options.title || 'Paris Package',
     customer: {
       name: options.customerName || (customer.firstName + ' ' + customer.lastName),
       email: options.customerEmail || customer.email,
       phone: options.customerPhone || customer.phone
     },
-    destination: {
-      name: options.destinationName || 'Paris',
-      country: options.destinationCountry || 'France'
-    },
+    destination: options.destination || 'Paris', // String, not object
     travelDates: {
       startDate: options.startDate || new Date(Date.now() + 60 * 24 * 60 * 60 * 1000),
       endDate: options.endDate || new Date(Date.now() + 67 * 24 * 60 * 60 * 1000),
-      duration: options.duration || 7,
-      flexibility: 'fixed'
     },
     travelers: {
       adults: options.adults || 2,
@@ -107,7 +113,7 @@ async function createTestQuote(tenant, customer, admin, options = {}) {
     },
     pricing: {
       subtotal: options.subtotal || 80000,
-      totalPrice: options.totalPrice || 80000,
+      grandTotal: options.grandTotal || options.subtotal || 80000, // Required field
       currency: options.currency || 'INR'
     },
     status: options.status || 'sent',
@@ -129,6 +135,7 @@ async function createTestPayment(tenant, customer, booking, admin, options = {})
     currency: options.currency || 'INR',
     method: options.method || 'bank-transfer',
     status: options.status || 'pending',
+    processedBy: options.processedBy || admin._id, // Required field
     createdBy: admin._id
   });
 }
@@ -164,6 +171,7 @@ describe('Customer Portal API', () => {
       slug: 'test-travel-' + Date.now(),
       subdomain: 'test-travel',
       email: 'admin@testtravel.com',
+      status: 'active', // Required for tenant middleware to find it
       settings: {
         currency: 'INR',
         timezone: 'Asia/Kolkata',
@@ -247,8 +255,8 @@ describe('Customer Portal API', () => {
 
       await createTestQuote(tenant, customer, admin, {
         quoteNumber: 'QT-001',
-        destinationName: 'London',
-        destinationCountry: 'UK'
+        title: 'London Package',
+        destination: 'London'
       });
 
       await createTestPayment(tenant, customer, booking, admin, {
@@ -262,6 +270,7 @@ describe('Customer Portal API', () => {
         fileName: 'passport.pdf',
         fileUrl: 'https://example.com/passport.pdf',
         expiryDate: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000), // 60 days from now
+        uploadedBy: admin._id, // Required field
       });
 
       const res = await request(app)
@@ -330,8 +339,8 @@ describe('Customer Portal API', () => {
       expect(res.body.success).toBe(true);
       expect(res.body.data).toHaveProperty('queryNumber');
       expect(res.body.data.queryNumber).toMatch(/^QRY-/);
-      expect(res.body.data.destination).toBe('Switzerland');
-      expect(res.body.data.status).toBe('new');
+      expect(res.body.data.tripDetails.destination).toBe('Switzerland');
+      expect(res.body.data.status).toBe('draft'); // Default status from Query model
       expect(res.body.data).toHaveProperty('sla');
     });
 
@@ -339,13 +348,17 @@ describe('Customer Portal API', () => {
       await Query.create({
         tenant: tenant._id,
         queryNumber: 'QRY-202401-0001',
-        firstName: 'John',
-        lastName: 'Doe',
-        email: 'customer@test.com',
-        phone: '9876543210',
-        destination: 'Paris',
+        source: 'website',
+        customer: {
+          name: 'John Doe',
+          email: 'customer@test.com',
+          phone: '9876543210',
+        },
+        tripDetails: {
+          destination: 'Paris',
+        },
         message: 'Test query',
-        status: 'new',
+        status: 'pending',
         priority: 'medium',
       });
 
@@ -356,42 +369,50 @@ describe('Customer Portal API', () => {
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
       expect(res.body.data.queries.length).toBeGreaterThan(0);
-      expect(res.body.data.queries[0].email).toBe('customer@test.com');
+      expect(res.body.data.queries[0].customer.email).toBe('customer@test.com');
     });
 
     it('should filter queries by status', async () => {
       await Query.create({
         tenant: tenant._id,
         queryNumber: 'QRY-202401-0002',
-        firstName: 'John',
-        lastName: 'Doe',
-        email: 'customer@test.com',
-        phone: '9876543210',
-        destination: 'London',
+        source: 'website',
+        customer: {
+          name: 'John Doe',
+          email: 'customer@test.com',
+          phone: '9876543210',
+        },
+        tripDetails: {
+          destination: 'London',
+        },
         message: 'Test query',
-        status: 'resolved',
+        status: 'won',
         priority: 'medium',
       });
 
       const res = await request(app)
-        .get('/customer/queries?status=resolved')
+        .get('/customer/queries?status=won')
         .set('Authorization', `Bearer ${customerToken}`);
 
       expect(res.status).toBe(200);
-      expect(res.body.data.queries.every(q => q.status === 'resolved')).toBe(true);
+      expect(res.body.data.queries.every(q => q.status === 'won')).toBe(true);
     });
 
     it('should not show other customers queries', async () => {
       await Query.create({
         tenant: tenant._id,
         queryNumber: 'QRY-202401-0003',
-        firstName: 'Jane',
-        lastName: 'Smith',
-        email: 'other@test.com',
-        phone: '9876543211',
-        destination: 'Tokyo',
+        source: 'website',
+        customer: {
+          name: 'Jane Smith',
+          email: 'other@test.com',
+          phone: '9876543211',
+        },
+        tripDetails: {
+          destination: 'Tokyo',
+        },
         message: 'Test query',
-        status: 'new',
+        status: 'pending',
         priority: 'medium',
       });
 
@@ -408,9 +429,9 @@ describe('Customer Portal API', () => {
     it('should get customer quotes', async () => {
       await createTestQuote(tenant, customer, admin, {
         quoteNumber: 'QT-002',
-        destinationName: 'Dubai',
-        destinationCountry: 'UAE',
-        totalPrice: 75000
+        title: 'Dubai Package',
+        destination: 'Dubai',
+        subtotal: 75000
       });
 
       const res = await request(app)
@@ -425,9 +446,9 @@ describe('Customer Portal API', () => {
     it('should get quote by ID', async () => {
       const quote = await createTestQuote(tenant, customer, admin, {
         quoteNumber: 'QT-003',
-        destinationName: 'Maldives',
-        destinationCountry: 'Maldives',
-        totalPrice: 120000
+        title: 'Maldives Package',
+        destination: 'Maldives',
+        subtotal: 120000
       });
 
       const res = await request(app)
@@ -441,12 +462,12 @@ describe('Customer Portal API', () => {
     it('should not allow access to other customers quotes', async () => {
       const quote = await createTestQuote(tenant, otherCustomer, admin, {
         quoteNumber: 'QT-004',
+        title: 'Bali Package',
+        destination: 'Bali',
         customerName: otherCustomer.firstName + ' ' + otherCustomer.lastName,
         customerEmail: otherCustomer.email,
         customerPhone: otherCustomer.phone,
-        destinationName: 'Bali',
-        destinationCountry: 'Indonesia',
-        totalPrice: 90000
+        subtotal: 90000
       });
 
       const res = await request(app)
@@ -487,7 +508,7 @@ describe('Customer Portal API', () => {
         .set('Authorization', `Bearer ${customerToken}`);
 
       expect(res.status).toBe(200);
-      expect(res.body.data.bookings.every(b => new Date(b.startDate) > new Date())).toBe(true);
+      expect(res.body.data.bookings.every(b => new Date(b.travelStartDate) > new Date())).toBe(true);
     });
 
     it('should filter past bookings', async () => {
@@ -505,7 +526,7 @@ describe('Customer Portal API', () => {
         .set('Authorization', `Bearer ${customerToken}`);
 
       expect(res.status).toBe(200);
-      expect(res.body.data.bookings.every(b => new Date(b.endDate) < new Date())).toBe(true);
+      expect(res.body.data.bookings.every(b => new Date(b.travelEndDate) < new Date())).toBe(true);
     });
   });
 
@@ -566,6 +587,7 @@ describe('Customer Portal API', () => {
         fileName: 'passport.pdf',
         fileUrl: 'https://example.com/passport.pdf',
         verificationStatus: 'verified',
+        uploadedBy: admin._id, // Required field
       });
 
       const res = await request(app)
@@ -583,6 +605,7 @@ describe('Customer Portal API', () => {
         documentType: 'visa',
         fileName: 'visa.pdf',
         fileUrl: 'https://example.com/visa.pdf',
+        uploadedBy: admin._id, // Required field
       });
 
       const res = await request(app)
@@ -601,6 +624,7 @@ describe('Customer Portal API', () => {
         fileName: 'passport.pdf',
         fileUrl: 'https://example.com/passport.pdf',
         expiryDate: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000), // 60 days
+        uploadedBy: admin._id, // Required field
       });
 
       const res = await request(app)
@@ -662,6 +686,7 @@ describe('Customer Portal API', () => {
         overallRating: 4,
         reviewText: 'Great trip',
         status: 'approved',
+        createdBy: customer._id
       });
 
       const res = await request(app)
@@ -673,7 +698,7 @@ describe('Customer Portal API', () => {
           reviewText: 'Updated review',
         });
 
-      expect(res.status).toBe(400);
+      expect(res.status).toBe(403);
       expect(res.body.error.message).toContain('already submitted');
     });
 
@@ -696,7 +721,7 @@ describe('Customer Portal API', () => {
           reviewText: 'Premature review',
         });
 
-      expect(res.status).toBe(400);
+      expect(res.status).toBe(403);
       expect(res.body.error.message).toContain('completed');
     });
 
@@ -717,6 +742,7 @@ describe('Customer Portal API', () => {
         overallRating: 4,
         reviewText: 'Nice experience',
         status: 'approved',
+        createdBy: customer._id
       });
 
       const res = await request(app)
