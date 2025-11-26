@@ -28,6 +28,8 @@ const rateListRoutes = require('./routes/rateList');
 const quoteRoutes = require('./routes/quote');
 const packageRoutes = require('./routes/package');
 const queryRoutes = require('./routes/query');
+const customerPortalRoutes = require('./routes/customerPortal');
+const documentRoutes = require('./routes/document');
 const metricsRoutes = require('./routes/metrics');
 const { NotFoundError } = require('./lib/errors');
 
@@ -117,6 +119,8 @@ app.use('/rate-lists', rateListRoutes);
 app.use('/quotes', quoteRoutes);
 app.use('/packages', packageRoutes);
 app.use('/queries', queryRoutes);
+app.use('/customer', customerPortalRoutes);
+app.use('/documents', documentRoutes);
 app.use('/metrics', metricsRoutes);
 
 // All phases complete!
