@@ -38,6 +38,100 @@ const Booking = require('../../src/models/Booking');
 const Payment = require('../../src/models/Payment');
 const Document = require('../../src/models/Document');
 const Review = require('../../src/models/Review');
+const Itinerary = require('../../src/models/Itinerary');
+
+// Helper functions to create test fixtures with all required fields
+async function createTestItinerary(tenant, admin, options = {}) {
+  return await Itinerary.create({
+    tenant: tenant._id,
+    title: options.title || 'Test Itinerary',
+    destination: options.destination || 'Paris',
+    startDate: options.startDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+    endDate: options.endDate || new Date(Date.now() + 37 * 24 * 60 * 60 * 1000),
+    duration: options.duration || 7,
+    days: options.days || [{
+      dayNumber: 1,
+      title: 'Day 1',
+      activities: [{ title: 'Arrival' }]
+    }],
+    createdBy: admin._id
+  });
+}
+
+async function createTestBooking(tenant, customer, admin, options = {}) {
+  const itinerary = await createTestItinerary(tenant, admin, options);
+  return await Booking.create({
+    tenant: tenant._id,
+    itinerary: itinerary._id,
+    bookingNumber: options.bookingNumber || 'BKG-' + Date.now(),
+    status: options.status || 'confirmed',
+    customer: {
+      name: options.customerName || (customer.firstName + ' ' + customer.lastName),
+      email: options.customerEmail || customer.email,
+      phone: options.customerPhone || customer.phone
+    },
+    travelStartDate: options.travelStartDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+    travelEndDate: options.travelEndDate || new Date(Date.now() + 37 * 24 * 60 * 60 * 1000),
+    pricing: {
+      basePrice: options.basePrice || 100000,
+      totalPrice: options.totalPrice || 100000,
+      currency: options.currency || 'INR'
+    },
+    createdBy: admin._id
+  });
+}
+
+async function createTestQuote(tenant, customer, admin, options = {}) {
+  return await Quote.create({
+    tenant: tenant._id,
+    quoteNumber: options.quoteNumber || 'QT-' + Date.now(),
+    customer: {
+      name: options.customerName || (customer.firstName + ' ' + customer.lastName),
+      email: options.customerEmail || customer.email,
+      phone: options.customerPhone || customer.phone
+    },
+    destination: {
+      name: options.destinationName || 'Paris',
+      country: options.destinationCountry || 'France'
+    },
+    travelDates: {
+      startDate: options.startDate || new Date(Date.now() + 60 * 24 * 60 * 60 * 1000),
+      endDate: options.endDate || new Date(Date.now() + 67 * 24 * 60 * 60 * 1000),
+      duration: options.duration || 7,
+      flexibility: 'fixed'
+    },
+    travelers: {
+      adults: options.adults || 2,
+      children: options.children || 0,
+      infants: options.infants || 0
+    },
+    pricing: {
+      subtotal: options.subtotal || 80000,
+      totalPrice: options.totalPrice || 80000,
+      currency: options.currency || 'INR'
+    },
+    status: options.status || 'sent',
+    validUntil: options.validUntil || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+    createdBy: admin._id
+  });
+}
+
+async function createTestPayment(tenant, customer, booking, admin, options = {}) {
+  return await Payment.create({
+    tenant: tenant._id,
+    transactionId: options.transactionId || ('TXN-' + Date.now()),
+    booking: booking._id,
+    customer: {
+      name: options.customerName || (customer.firstName + ' ' + customer.lastName),
+      email: options.customerEmail || customer.email
+    },
+    amount: options.amount || 30000,
+    currency: options.currency || 'INR',
+    method: options.method || 'bank-transfer',
+    status: options.status || 'pending',
+    createdBy: admin._id
+  });
+}
 
 describe('Customer Portal API', () => {
   let tenant, tenantSlug, customer, customerToken, admin, adminToken;
@@ -56,6 +150,7 @@ describe('Customer Portal API', () => {
     await Document.deleteMany({});
     await Payment.deleteMany({});
     await Booking.deleteMany({});
+    await Itinerary.deleteMany({});
     await Quote.deleteMany({});
     await Query.deleteMany({});
     await User.deleteMany({});
@@ -143,34 +238,21 @@ describe('Customer Portal API', () => {
 
   describe('GET /customer/dashboard', () => {
     it('should return customer dashboard with aggregated data', async () => {
-      // Create test data
-      const booking = await Booking.create({
-        tenant: tenant._id,
-        customer: customer._id,
+      // Create test data using helpers
+      const booking = await createTestBooking(tenant, customer, admin, {
         bookingNumber: 'BKG-001',
-        status: 'confirmed',
-        destination: 'Paris',
-        startDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
-        endDate: new Date(Date.now() + 37 * 24 * 60 * 60 * 1000),
-        totalAmount: 100000,
+        title: 'Paris Adventure',
+        destination: 'Paris'
       });
 
-      await Quote.create({
-        tenant: tenant._id,
-        customer: customer._id,
+      await createTestQuote(tenant, customer, admin, {
         quoteNumber: 'QT-001',
-        status: 'sent',
-        destination: 'London',
-        totalAmount: 80000,
+        destinationName: 'London',
+        destinationCountry: 'UK'
       });
 
-      await Payment.create({
-        tenant: tenant._id,
-        customer: customer._id,
-        booking: booking._id,
-        amount: 30000,
-        status: 'pending',
-        paymentMethod: 'bank_transfer',
+      await createTestPayment(tenant, customer, booking, admin, {
+        amount: 30000
       });
 
       await Document.create({
@@ -201,15 +283,12 @@ describe('Customer Portal API', () => {
 
     it('should only show authenticated customer data', async () => {
       // Create data for other customer
-      await Booking.create({
-        tenant: tenant._id,
-        customer: otherCustomer._id,
+      await createTestBooking(tenant, otherCustomer, admin, {
         bookingNumber: 'BKG-002',
-        status: 'confirmed',
-        destination: 'Rome',
-        startDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-        endDate: new Date(Date.now() + 37 * 24 * 60 * 60 * 1000),
-        totalAmount: 120000,
+        customerName: otherCustomer.firstName + ' ' + otherCustomer.lastName,
+        customerEmail: otherCustomer.email,
+        customerPhone: otherCustomer.phone,
+        destination: 'Rome'
       });
 
       const res = await request(app)
@@ -327,13 +406,11 @@ describe('Customer Portal API', () => {
 
   describe('Quote Management', () => {
     it('should get customer quotes', async () => {
-      await Quote.create({
-        tenant: tenant._id,
-        customer: customer._id,
+      await createTestQuote(tenant, customer, admin, {
         quoteNumber: 'QT-002',
-        status: 'sent',
-        destination: 'Dubai',
-        totalAmount: 75000,
+        destinationName: 'Dubai',
+        destinationCountry: 'UAE',
+        totalPrice: 75000
       });
 
       const res = await request(app)
@@ -346,13 +423,11 @@ describe('Customer Portal API', () => {
     });
 
     it('should get quote by ID', async () => {
-      const quote = await Quote.create({
-        tenant: tenant._id,
-        customer: customer._id,
+      const quote = await createTestQuote(tenant, customer, admin, {
         quoteNumber: 'QT-003',
-        status: 'sent',
-        destination: 'Maldives',
-        totalAmount: 120000,
+        destinationName: 'Maldives',
+        destinationCountry: 'Maldives',
+        totalPrice: 120000
       });
 
       const res = await request(app)
@@ -364,13 +439,14 @@ describe('Customer Portal API', () => {
     });
 
     it('should not allow access to other customers quotes', async () => {
-      const quote = await Quote.create({
-        tenant: tenant._id,
-        customer: otherCustomer._id,
+      const quote = await createTestQuote(tenant, otherCustomer, admin, {
         quoteNumber: 'QT-004',
-        status: 'sent',
-        destination: 'Bali',
-        totalAmount: 90000,
+        customerName: otherCustomer.firstName + ' ' + otherCustomer.lastName,
+        customerEmail: otherCustomer.email,
+        customerPhone: otherCustomer.phone,
+        destinationName: 'Bali',
+        destinationCountry: 'Indonesia',
+        totalPrice: 90000
       });
 
       const res = await request(app)
@@ -383,15 +459,10 @@ describe('Customer Portal API', () => {
 
   describe('Booking Management', () => {
     it('should get customer bookings', async () => {
-      await Booking.create({
-        tenant: tenant._id,
-        customer: customer._id,
+      await createTestBooking(tenant, customer, admin, {
         bookingNumber: 'BKG-003',
-        status: 'confirmed',
         destination: 'Singapore',
-        startDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-        endDate: new Date(Date.now() + 35 * 24 * 60 * 60 * 1000),
-        totalAmount: 85000,
+        totalPrice: 85000
       });
 
       const res = await request(app)
@@ -403,15 +474,12 @@ describe('Customer Portal API', () => {
     });
 
     it('should filter upcoming bookings', async () => {
-      await Booking.create({
-        tenant: tenant._id,
-        customer: customer._id,
+      await createTestBooking(tenant, customer, admin, {
         bookingNumber: 'BKG-004',
-        status: 'confirmed',
         destination: 'Thailand',
-        startDate: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000),
-        endDate: new Date(Date.now() + 22 * 24 * 60 * 60 * 1000),
-        totalAmount: 65000,
+        travelStartDate: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000),
+        travelEndDate: new Date(Date.now() + 22 * 24 * 60 * 60 * 1000),
+        totalPrice: 65000
       });
 
       const res = await request(app)
@@ -423,15 +491,13 @@ describe('Customer Portal API', () => {
     });
 
     it('should filter past bookings', async () => {
-      await Booking.create({
-        tenant: tenant._id,
-        customer: customer._id,
+      await createTestBooking(tenant, customer, admin, {
         bookingNumber: 'BKG-005',
         status: 'completed',
         destination: 'Dubai',
-        startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
-        endDate: new Date(Date.now() - 25 * 24 * 60 * 60 * 1000),
-        totalAmount: 70000,
+        travelStartDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
+        travelEndDate: new Date(Date.now() - 25 * 24 * 60 * 60 * 1000),
+        totalPrice: 70000
       });
 
       const res = await request(app)
@@ -445,24 +511,18 @@ describe('Customer Portal API', () => {
 
   describe('Payment Management', () => {
     it('should get customer payments', async () => {
-      const booking = await Booking.create({
-        tenant: tenant._id,
-        customer: customer._id,
+      const booking = await createTestBooking(tenant, customer, admin, {
         bookingNumber: 'BKG-006',
-        status: 'confirmed',
         destination: 'Europe',
-        startDate: new Date(Date.now() + 45 * 24 * 60 * 60 * 1000),
-        endDate: new Date(Date.now() + 55 * 24 * 60 * 60 * 1000),
-        totalAmount: 200000,
+        travelStartDate: new Date(Date.now() + 45 * 24 * 60 * 60 * 1000),
+        travelEndDate: new Date(Date.now() + 55 * 24 * 60 * 60 * 1000),
+        totalPrice: 200000
       });
 
-      await Payment.create({
-        tenant: tenant._id,
-        customer: customer._id,
-        booking: booking._id,
+      await createTestPayment(tenant, customer, booking, admin, {
         amount: 50000,
         status: 'completed',
-        paymentMethod: 'credit_card',
+        method: 'credit-card'
       });
 
       const res = await request(app)
@@ -474,24 +534,17 @@ describe('Customer Portal API', () => {
     });
 
     it('should get booking payments', async () => {
-      const booking = await Booking.create({
-        tenant: tenant._id,
-        customer: customer._id,
+      const booking = await createTestBooking(tenant, customer, admin, {
         bookingNumber: 'BKG-007',
-        status: 'confirmed',
-        destination: 'Australia',
-        startDate: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000),
-        endDate: new Date(Date.now() + 75 * 24 * 60 * 60 * 1000),
-        totalAmount: 300000,
+        destination: 'Asia',
+        travelStartDate: new Date(Date.now() + 50 * 24 * 60 * 60 * 1000),
+        travelEndDate: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000),
+        totalPrice: 150000
       });
 
-      await Payment.create({
-        tenant: tenant._id,
-        customer: customer._id,
-        booking: booking._id,
-        amount: 100000,
-        status: 'completed',
-        paymentMethod: 'bank_transfer',
+      await createTestPayment(tenant, customer, booking, admin, {
+        amount: 50000,
+        status: 'completed'
       });
 
       const res = await request(app)
@@ -561,15 +614,13 @@ describe('Customer Portal API', () => {
 
   describe('Review Management', () => {
     it('should submit a review for completed booking', async () => {
-      const booking = await Booking.create({
-        tenant: tenant._id,
-        customer: customer._id,
+      const booking = await createTestBooking(tenant, customer, admin, {
         bookingNumber: 'BKG-008',
         status: 'completed',
         destination: 'Paris',
-        startDate: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000),
-        endDate: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000),
-        totalAmount: 150000,
+        travelStartDate: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000),
+        travelEndDate: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000),
+        totalPrice: 150000
       });
 
       const res = await request(app)
@@ -595,15 +646,13 @@ describe('Customer Portal API', () => {
     });
 
     it('should not allow duplicate reviews for same booking', async () => {
-      const booking = await Booking.create({
-        tenant: tenant._id,
-        customer: customer._id,
+      const booking = await createTestBooking(tenant, customer, admin, {
         bookingNumber: 'BKG-009',
         status: 'completed',
         destination: 'London',
-        startDate: new Date(Date.now() - 25 * 24 * 60 * 60 * 1000),
-        endDate: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000),
-        totalAmount: 180000,
+        travelStartDate: new Date(Date.now() - 25 * 24 * 60 * 60 * 1000),
+        travelEndDate: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000),
+        totalPrice: 180000
       });
 
       await Review.create({
@@ -629,15 +678,13 @@ describe('Customer Portal API', () => {
     });
 
     it('should not allow review for non-completed booking', async () => {
-      const booking = await Booking.create({
-        tenant: tenant._id,
-        customer: customer._id,
+      const booking = await createTestBooking(tenant, customer, admin, {
         bookingNumber: 'BKG-010',
         status: 'confirmed',
         destination: 'Dubai',
-        startDate: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000),
-        endDate: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000),
-        totalAmount: 100000,
+        travelStartDate: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000),
+        travelEndDate: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000),
+        totalPrice: 100000
       });
 
       const res = await request(app)
@@ -654,15 +701,13 @@ describe('Customer Portal API', () => {
     });
 
     it('should get customer reviews', async () => {
-      const booking = await Booking.create({
-        tenant: tenant._id,
-        customer: customer._id,
+      const booking = await createTestBooking(tenant, customer, admin, {
         bookingNumber: 'BKG-011',
         status: 'completed',
         destination: 'Singapore',
-        startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
-        endDate: new Date(Date.now() - 25 * 24 * 60 * 60 * 1000),
-        totalAmount: 95000,
+        travelStartDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
+        travelEndDate: new Date(Date.now() - 25 * 24 * 60 * 60 * 1000),
+        totalPrice: 95000
       });
 
       await Review.create({
