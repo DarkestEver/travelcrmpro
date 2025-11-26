@@ -40,7 +40,7 @@ const Document = require('../../src/models/Document');
 const Review = require('../../src/models/Review');
 
 describe('Customer Portal API', () => {
-  let tenant, customer, customerToken, admin, adminToken;
+  let tenant, tenantSlug, customer, customerToken, admin, adminToken;
   let otherCustomer, otherCustomerToken;
 
   beforeAll(async () => {
@@ -49,6 +49,17 @@ describe('Customer Portal API', () => {
 
   afterAll(async () => {
     await database.disconnect();
+  });
+
+  afterEach(async () => {
+    await Review.deleteMany({});
+    await Document.deleteMany({});
+    await Payment.deleteMany({});
+    await Booking.deleteMany({});
+    await Quote.deleteMany({});
+    await Query.deleteMany({});
+    await User.deleteMany({});
+    await Tenant.deleteMany({});
   });
 
   beforeEach(async () => {
@@ -63,6 +74,7 @@ describe('Customer Portal API', () => {
         timezone: 'Asia/Kolkata',
       },
     });
+    tenantSlug = tenant.slug;
 
     // Create customer user
     customer = await User.create({
@@ -79,11 +91,12 @@ describe('Customer Portal API', () => {
     // Get customer token
     const customerLoginRes = await request(app)
       .post('/auth/login')
+      .set('X-Tenant-Slug', tenantSlug)
       .send({
         email: 'customer@test.com',
         password: 'password123',
       });
-    customerToken = customerLoginRes.body.data.token;
+    customerToken = customerLoginRes.body?.data?.accessToken || '';
 
     // Create another customer for isolation tests
     otherCustomer = await User.create({
@@ -99,11 +112,12 @@ describe('Customer Portal API', () => {
 
     const otherLoginRes = await request(app)
       .post('/auth/login')
+      .set('X-Tenant-Slug', tenantSlug)
       .send({
         email: 'other@test.com',
         password: 'password123',
       });
-    otherCustomerToken = otherLoginRes.body.data.token;
+    otherCustomerToken = otherLoginRes.body?.data?.accessToken || '';
 
     // Create admin user
     admin = await User.create({
@@ -119,11 +133,12 @@ describe('Customer Portal API', () => {
 
     const adminLoginRes = await request(app)
       .post('/auth/login')
+      .set('X-Tenant-Slug', tenantSlug)
       .send({
         email: 'admin@test.com',
         password: 'password123',
       });
-    adminToken = adminLoginRes.body.data.token;
+    adminToken = adminLoginRes.body?.data?.accessToken || '';
   });
 
   describe('GET /customer/dashboard', () => {

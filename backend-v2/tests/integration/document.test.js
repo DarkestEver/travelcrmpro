@@ -36,7 +36,7 @@ const Document = require('../../src/models/Document');
 const Booking = require('../../src/models/Booking');
 
 describe('Document Management API', () => {
-  let tenant, customer, customerToken, agent, agentToken, admin, adminToken;
+  let tenant, tenantSlug, customer, customerToken, agent, agentToken, admin, adminToken;
   let otherCustomer, otherCustomerToken;
 
   beforeAll(async () => {
@@ -45,6 +45,13 @@ describe('Document Management API', () => {
 
   afterAll(async () => {
     await database.disconnect();
+  });
+
+  afterEach(async () => {
+    await Document.deleteMany({});
+    await Booking.deleteMany({});
+    await User.deleteMany({});
+    await Tenant.deleteMany({});
   });
 
   beforeEach(async () => {
@@ -59,6 +66,7 @@ describe('Document Management API', () => {
         timezone: 'Asia/Kolkata',
       },
     });
+    tenantSlug = tenant.slug;
 
     // Create customer user
     customer = await User.create({
@@ -74,8 +82,9 @@ describe('Document Management API', () => {
 
     const customerLoginRes = await request(app)
       .post('/auth/login')
+      .set('X-Tenant-Slug', tenantSlug)
       .send({ email: 'customer@test.com', password: 'password123' });
-    customerToken = customerLoginRes.body.data.token;
+    customerToken = customerLoginRes.body?.data?.accessToken || '';
 
     // Create another customer
     otherCustomer = await User.create({
@@ -91,8 +100,9 @@ describe('Document Management API', () => {
 
     const otherLoginRes = await request(app)
       .post('/auth/login')
+      .set('X-Tenant-Slug', tenantSlug)
       .send({ email: 'other@test.com', password: 'password123' });
-    otherCustomerToken = otherLoginRes.body.data.token;
+    otherCustomerToken = otherLoginRes.body?.data?.accessToken || '';
 
     // Create agent user
     agent = await User.create({
@@ -108,8 +118,9 @@ describe('Document Management API', () => {
 
     const agentLoginRes = await request(app)
       .post('/auth/login')
+      .set('X-Tenant-Slug', tenantSlug)
       .send({ email: 'agent@test.com', password: 'password123' });
-    agentToken = agentLoginRes.body.data.token;
+    agentToken = agentLoginRes.body?.data?.accessToken || '';
 
     // Create admin user
     admin = await User.create({
@@ -125,8 +136,9 @@ describe('Document Management API', () => {
 
     const adminLoginRes = await request(app)
       .post('/auth/login')
+      .set('X-Tenant-Slug', tenantSlug)
       .send({ email: 'admin@test.com', password: 'password123' });
-    adminToken = adminLoginRes.body.data.token;
+    adminToken = adminLoginRes.body?.data?.accessToken || '';
   });
 
   describe('POST /documents/upload', () => {
