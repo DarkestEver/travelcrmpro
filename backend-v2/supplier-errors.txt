@@ -1,0 +1,479 @@
+﻿
+> travel-crm-backend-v2@2.0.0 test
+> jest --coverage --runInBand --forceExit --detectOpenHandles tests/integration/supplier.test.js
+
+node.exe : (node:8944) [MONGOOSE] Warning: 
+Duplicate schema index on {"slug":1} found. 
+This is often due to declaring an index 
+using both "index: true" and 
+"schema.index()". Please remove the 
+duplicate index definition.
+At C:\Program Files\nodejs\npm.ps1:29 char:3
++   & $NODE_EXE $NPM_CLI_JS $args
++   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified:  
+   ((node:8944) [MO...dex definition.:Strin  
+  g) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandE 
+   rror
+ 
+(Use `node --trace-warnings ...` to show 
+where the warning was created)
+(node:8944) [MONGOOSE] Warning: Duplicate 
+schema index on {"domain":1} found. This is 
+often due to declaring an index using both 
+"index: true" and "schema.index()". Please 
+remove the duplicate index definition.
+(node:8944) [MONGOOSE] Warning: Duplicate 
+schema index on {"customDomain":1} found. 
+This is often due to declaring an index 
+using both "index: true" and 
+"schema.index()". Please remove the 
+duplicate index definition.
+(node:8944) [MONGOOSE] Warning: Duplicate 
+schema index on {"providerMessageId":1} 
+found. This is often due to declaring an 
+index using both "index: true" and 
+"schema.index()". Please remove the 
+duplicate index definition.
+(node:8944) [MONGOOSE] Warning: Duplicate 
+schema index on {"booking":1} found. This is 
+often due to declaring an index using both 
+"index: true" and "schema.index()". Please 
+remove the duplicate index definition.
+(node:8944) [MONGOOSE] Warning: Duplicate 
+schema index on {"quote":1} found. This is 
+often due to declaring an index using both 
+"index: true" and "schema.index()". Please 
+remove the duplicate index definition.
+(node:8944) [MONGODB DRIVER] Warning: 
+useNewUrlParser is a deprecated option: 
+useNewUrlParser has no effect since Node.js 
+Driver version 4.0.0 and will be removed in 
+the next major version
+(node:8944) [MONGODB DRIVER] Warning: 
+useUnifiedTopology is a deprecated option: 
+useUnifiedTopology has no effect since 
+Node.js Driver version 4.0.0 and will be 
+removed in the next major version
+FAIL tests/integration/supplier.test.js 
+(90.259 s)
+  Supplier Management
+    GET /suppliers
+      ΓêÜ should get all suppliers for 
+tenant (2170 ms)
+      ΓêÜ should filter suppliers by type 
+(1579 ms)
+      ΓêÜ should search suppliers by name 
+(825 ms)
+      ΓêÜ should paginate suppliers (752 ms)
+      ΓêÜ should allow agents to view 
+suppliers (762 ms)
+    GET /suppliers/:id
+      ΓêÜ should get supplier by ID (727 ms)
+      ├ù should return 404 for non-existent 
+supplier (30714 ms)
+      ├ù should not return supplier from 
+different tenant (864 ms)
+    POST /suppliers
+      ΓêÜ should create new supplier as 
+tenant admin (769 ms)
+      ΓêÜ should reject supplier creation 
+without required fields (771 ms)
+      ΓêÜ should reject supplier creation by 
+agent (901 ms)
+      ΓêÜ should create supplier with full 
+details (856 ms)
+    PUT /suppliers/:id
+      ΓêÜ should update supplier (1104 ms)
+      ΓêÜ should reject update without any 
+fields (887 ms)
+      ΓêÜ should reject supplier update by 
+agent (918 ms)
+      ΓêÜ should update nested fields (824 
+ms)
+    DELETE /suppliers/:id
+      ΓêÜ should delete supplier (744 ms)
+      ΓêÜ should reject deletion by agent 
+(726 ms)
+      ├ù should return 404 for non-existent 
+supplier (30766 ms)
+    PUT /suppliers/:id/rating
+      ├ù should update supplier rating (1000 
+ms)
+      ΓêÜ should reject invalid rating 
+values (1054 ms)
+      ΓêÜ should reject rating update by 
+agent (910 ms)
+    POST /suppliers/:id/documents
+      ΓêÜ should add document to supplier 
+(965 ms)
+      ΓêÜ should reject document without 
+required fields (986 ms)
+      ΓêÜ should reject document addition by 
+agent (838 ms)
+    GET /suppliers/stats
+      ΓêÜ should get supplier statistics 
+(821 ms)
+      ΓêÜ should reject stats request by 
+agent (818 ms)
+
+  ΓùÅ Supplier Management ΓÇ║ GET 
+/suppliers/:id ΓÇ║ should return 404 for 
+non-existent supplier
+
+    NotFoundError: Supplier not found
+
+    [0m [90m  95 |[39m
+     [90m  96 |[39m   [36mif[39m 
+([33m![39msupplier) {
+    [31m[1m>[22m[39m[90m  97 |[39m     
+[36mthrow[39m [36mnew[39m 
+[33mNotFoundError[39m([32m'Supplier not 
+found'[39m[33m,[39m 
+[32m'SUPPLIER_NOT_FOUND'[39m)[33m;[39m
+     [90m     |[39m           
+[31m[1m^[22m[39m
+     [90m  98 |[39m   }
+     [90m  99 |[39m
+     [90m 100 |[39m   
+logger[33m.[39minfo([32m'Supplier 
+retrieved'[39m[33m,[39m {[0m
+
+      at getSupplier 
+(src/controllers/supplierController.js:97:11)
+
+  ΓùÅ Supplier Management ΓÇ║ GET 
+/suppliers/:id ΓÇ║ should return 404 for 
+non-existent supplier
+
+    thrown: "Exceeded timeout of 30000 ms 
+for a test.
+    Add a timeout value to this test to 
+increase the timeout, if this is a 
+long-running test. See https://jestjs.io/docs
+/api#testname-fn-timeout."
+
+    [0m [90m 250 |[39m     })[33m;[39m
+     [90m 251 |[39m
+    [31m[1m>[22m[39m[90m 252 |[39m     
+it([32m'should return 404 for non-existent 
+supplier'[39m[33m,[39m [36masync[39m () 
+[33m=>[39m {
+     [90m     |[39m     
+[31m[1m^[22m[39m
+     [90m 253 |[39m       [36mconst[39m 
+fakeId [33m=[39m [36mnew[39m mongoose[33
+m.[39m[33mTypes[39m[33m.[39m[33mObjectI
+d[39m()[33m;[39m
+     [90m 254 |[39m       [36mconst[39m 
+res [33m=[39m [36mawait[39m request(app)
+     [90m 255 |[39m         [33m.[39m[36
+mget[39m([32m`/suppliers/${fakeId}`[39m)[
+0m
+
+      at it 
+(tests/integration/supplier.test.js:252:5)
+      at describe 
+(tests/integration/supplier.test.js:239:3)
+      at Object.describe 
+(tests/integration/supplier.test.js:181:1)
+
+  ΓùÅ Supplier Management ΓÇ║ GET 
+/suppliers/:id ΓÇ║ should not return 
+supplier from different tenant
+
+    expect(received).toBe(expected) // 
+Object.is equality
+
+    Expected: 404
+    Received: 200
+
+    [0m [90m 267 |[39m         [33m.[39m
+[36mset[39m([32m'X-Tenant-Slug'[39m[33m,
+[39m testTenant2[33m.[39mslug)[33m;[39m
+     [90m 268 |[39m
+    [31m[1m>[22m[39m[90m 269 |[39m     
+  expect(res[33m.[39mstatus)[33m.[39mtoBe
+([35m404[39m)[33m;[39m
+     [90m     |[39m                        
+  [31m[1m^[22m[39m
+     [90m 270 |[39m     })[33m;[39m
+     [90m 271 |[39m   })[33m;[39m
+     [90m 272 |[39m[0m
+
+      at Object.toBe 
+(tests/integration/supplier.test.js:269:26)
+
+  ΓùÅ Supplier Management ΓÇ║ DELETE 
+/suppliers/:id ΓÇ║ should return 404 for 
+non-existent supplier
+
+    NotFoundError: Supplier not found
+
+    [0m [90m 220 |[39m
+     [90m 221 |[39m   [36mif[39m 
+([33m![39msupplier) {
+    [31m[1m>[22m[39m[90m 222 |[39m     
+[36mthrow[39m [36mnew[39m 
+[33mNotFoundError[39m([32m'Supplier not 
+found'[39m[33m,[39m 
+[32m'SUPPLIER_NOT_FOUND'[39m)[33m;[39m
+     [90m     |[39m           
+[31m[1m^[22m[39m
+     [90m 223 |[39m   }
+     [90m 224 |[39m
+     [90m 225 |[39m   [36mawait[39m 
+[33mSupplier[39m[33m.[39mdeleteOne({ 
+_id[33m:[39m id })[33m;[39m[0m
+
+      at deleteSupplier (src/controllers/supp
+lierController.js:222:11)
+
+  ΓùÅ Supplier Management ΓÇ║ DELETE 
+/suppliers/:id ΓÇ║ should return 404 for 
+non-existent supplier
+
+    thrown: "Exceeded timeout of 30000 ms 
+for a test.
+    Add a timeout value to this test to 
+increase the timeout, if this is a 
+long-running test. See https://jestjs.io/docs
+/api#testname-fn-timeout."
+
+    [0m [90m 463 |[39m     })[33m;[39m
+     [90m 464 |[39m
+    [31m[1m>[22m[39m[90m 465 |[39m     
+it([32m'should return 404 for non-existent 
+supplier'[39m[33m,[39m [36masync[39m () 
+[33m=>[39m {
+     [90m     |[39m     
+[31m[1m^[22m[39m
+     [90m 466 |[39m       [36mconst[39m 
+fakeId [33m=[39m [36mnew[39m mongoose[33
+m.[39m[33mTypes[39m[33m.[39m[33mObjectI
+d[39m()[33m;[39m
+     [90m 467 |[39m       [36mconst[39m 
+res [33m=[39m [36mawait[39m request(app)
+     [90m 468 |[39m         [33m.[39m[36
+mdelete[39m([32m`/suppliers/${fakeId}`[39m
+)[0m
+
+      at it 
+(tests/integration/supplier.test.js:465:5)
+      at describe 
+(tests/integration/supplier.test.js:441:3)
+      at Object.describe 
+(tests/integration/supplier.test.js:181:1)
+
+  ΓùÅ Supplier Management ΓÇ║ PUT 
+/suppliers/:id/rating ΓÇ║ should update 
+supplier rating
+
+    expect(received).toBe(expected) // 
+Object.is equality
+
+    Expected: 1
+    Received: 0
+
+    [0m [90m 493 |[39m       expect(res[3
+3m.[39mbody[33m.[39mdata[33m.[39mrating
+[33m.[39mservice)[33m.[39mtoBe([35m4.0[3
+9m)[33m;[39m
+     [90m 494 |[39m       expect(res[33m.
+[39mbody[33m.[39mdata[33m.[39mrating[33m
+.[39mvalue)[33m.[39mtoBe([35m4.2[39m)[3
+3m;[39m
+    [31m[1m>[22m[39m[90m 495 |[39m     
+  expect(res[33m.[39mbody[33m.[39mdata[3
+3m.[39mrating[33m.[39mreviewCount)[33m.[
+39mtoBe([35m1[39m)[33m;[39m
+     [90m     |[39m                        
+                        [31m[1m^[22m[39m
+     [90m 496 |[39m     })[33m;[39m
+     [90m 497 |[39m
+     [90m 498 |[39m     it([32m'should 
+reject invalid rating 
+values'[39m[33m,[39m [36masync[39m () 
+[33m=>[39m {[0m
+
+      at Object.toBe 
+(tests/integration/supplier.test.js:495:48)
+
+---------------------------|---------|----------|---------|---------|------------------------------------------------------------------------------------------------------------------------------
+File                       | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s                                                                                                            
+---------------------------|---------|----------|---------|---------|------------------------------------------------------------------------------------------------------------------------------
+All files                  |   30.57 |     5.86 |   10.95 |   31.13 |                                                                                                                              
+ src                       |   94.44 |       50 |   33.33 |   94.44 |                                                                                                                              
+  app.js                   |   94.44 |       50 |   33.33 |   94.44 | 79-97,124                                                                                                                    
+ src/config                |    90.9 |    69.23 |       0 |   93.75 |                                                                                                                              
+  constants.js             |     100 |      100 |     100 |     100 |                                                                                                                              
+  index.js                 |      75 |    70.83 |       0 |   81.81 | 16-17                                                                                                                        
+  schema.js                |     100 |       50 |     100 |     100 | 30                                                                                                                           
+ src/controllers           |   15.05 |     2.81 |    5.68 |   15.48 |                                                                                                                              
+  authController.js        |   24.63 |     12.5 |   14.28 |   24.63 | 10-38,70,79-94,103-122,131-146,155-175,184-199                                                                               
+  bookingController.js     |    9.55 |        0 |       0 |    9.71 | 13-74,91-115,126-187,198-254,265-283,294-327,338-374,385-430,441-472,483-542                                                 
+  emailController.js       |   12.84 |        0 |       0 |   13.46 | 12-24,35-46,57-87,98-134,145-166,177-256,265-289,306-311                                                                     
+  healthController.js      |   38.88 |        0 |       0 |   38.88 | 10,22-44,52                                                                                                                  
+  itineraryController.js   |    8.29 |        0 |       0 |    8.52 | 13-66,83-112,123-167,178-229,240-255,266-295,306-347,358-390,401-426,437-483,494-539,551-615                                 
+  leadController.js        |    10.2 |        0 |       0 |   10.48 | 12-61,78-103,114-143,155-205,217-233,245-277,289-314,326-355,367-425                                                         
+  packageController.js     |    9.09 |        0 |       0 |    9.47 | 14-29,38-127,136-167,176-186,195-205,214-223,232-257,266-293,302-330,339-357,366-432,441-469,478-512,521-554,563-596,605-625 
+  paymentController.js     |   10.96 |        0 |       0 |   11.33 | 13-66,83-95,106-159,170-216,227-265,276-305,316-354,363-386,395-456,465-481                                                  
+  profileController.js     |   12.22 |        0 |       0 |   12.64 | 11-26,38-114,126-163,175-197,209-240,252-276                                                                                 
+  quoteController.js       |   11.16 |        0 |       0 |   11.21 | 23-87,97-117,127-316,326-374,384-406,416-454,464-506,516-538,548-570,580-598,608-667,677-706,716-729,739-749                 
+  rateListController.js    |   10.42 |        0 |       0 |   10.42 | 16-81,91-109,119-191,201-275,285-310,320-338,348-366,376-394,404-433,443-477,487-502,512-554,564-588,598-653                 
+  reportController.js      |   13.72 |        0 |       0 |   15.55 | 14-52,80-132,147-209,221-291,303-378,393-419                                                                                 
+  supplierController.js    |   94.94 |     67.5 |     100 |   95.87 | 161,259,295,300                                                                                                              
+  tenantController.js      |    8.45 |        0 |       0 |     9.3 | 11-78,87-112,121-194,203-289,298-335,344-374,383-432                                                                         
+  userController.js        |    8.47 |        0 |       0 |    8.47 | 12-91,102-140,151-264,274-331,340-384                                                                                        
+ src/lib                   |   30.84 |     8.16 |   17.56 |   30.96 |                                                                                                                              
+  database.js              |   15.87 |    16.66 |    7.14 |   16.12 | 18-161                                                                                                                       
+  errors.js                |      75 |    10.52 |      50 |      75 | 33,60-78                                                                                                                     
+  logger.js                |    64.7 |       40 |       0 |    64.7 | 33-38,49                                                                                                                     
+  metrics.js               |   72.88 |     3.84 |   13.33 |   72.88 | 177-185,195,205-211,225,234,243,253,262,271,281,288,295,302                                                                  
+  redis.js                 |       0 |        0 |       0 |       0 | 1-269                                                                                                                        
+  sentry.js                |    37.7 |     6.12 |   42.85 |   37.73 | 11-58,71,81,91-97,106-107,119-120,132-141,149-150,157-158                                                                    
+ src/middleware            |   37.46 |    19.58 |   34.04 |    37.6 |                                                                                                                              
+  asyncHandler.js          |      75 |      100 |      50 |      75 | 10                                                                                                                           
+  audit.js                 |       0 |        0 |       0 |       0 | 1-119                                                                                                                        
+  auth.js                  |    37.7 |    17.85 |      40 |    37.7 | 15,30,38,65,73-108,123-141,149-182                                                                                           
+  errorHandler.js          |    42.3 |    39.13 |      50 |      44 | 13-17,21-24,31-37                                                                                                            
+  logger.js                |     100 |      100 |     100 |     100 |                                                                                                                              
+  rbac.js                  |   30.76 |      7.5 |   16.66 |   30.76 | 101-119,126-129,136-163,173,206-233,242-280,289-297,304-312                                                                  
+  response.js              |   86.36 |    58.82 |      60 |   86.36 | 20,36,43                                                                                                                     
+  tenant.js                |   29.16 |    13.46 |      25 |   29.16 | 14-118,144-146,175,183-201,208-238                                                                                           
+  validation.js            |   48.48 |    33.33 |   44.44 |      50 | 40-61,69-91                                                                                                                  
+ src/models                |   33.53 |        4 |    7.55 |   34.07 |                                                                                                                              
+  AuditLog.js              |       0 |        0 |       0 |       0 | 1-365                                                                                                                        
+  Booking.js               |   27.77 |        0 |       0 |   28.08 | 285,290-294,299-301,306-314,320-338,345-368,373-380,388-419,424,433-437,450-460                                              
+  EmailLog.js              |   36.36 |        0 |       0 |   36.36 | 185-189,194-196,201-208,213-215,220-226,231-241,246-315,332,347                                                              
+  EmailTemplate.js         |    37.5 |        0 |       0 |    38.7 | 96,163-177,186-188,193,202,211-374                                                                                           
+  Invoice.js               |   24.44 |        0 |       0 |   24.44 | 235-238,243-247,252,262-289,296-308,316-317,325-330,341-342,351-362,371,382-429,435-444                                      
+  Itinerary.js             |   27.83 |        0 |       0 |   29.34 | 365-366,371-375,380-414,424-431,436-448,453-464,469-484,489,497,504-505,518-530                                              
+  Lead.js                  |   51.51 |        0 |       0 |   56.66 | 227-229,234-237,242-247,252-253,258,263                                                                                      
+  Package.js               |   29.07 |        0 |       0 |   29.49 | 442-443,448,453,458-464,469-485,490-493,498-500,505-507,512-526,531-550,561-580,585,613-693,706,718-746                      
+  Payment.js               |   33.33 |        0 |       0 |   34.69 | 143-150,156-159,164-165,176,184-207,216,238-255                                                                              
+  Quote.js                 |   34.09 |        0 |       0 |   34.09 | 392,399-401,406,420-422,429-431,441-444,452-454,462-464,474-509,519,540-568,578-581,601-634,655-659                          
+  RateList.js              |   18.75 |        0 |       0 |   19.28 | 414-415,425-430,443-450,465-611,618-627,634-643,650-669,683-694,708-736,747,761-769                                          
+  Supplier.js              |   75.75 |    35.29 |      50 |      75 | 182,187-188,212-218,227                                                                                                      
+  Tenant.js                |      50 |    18.51 |      20 |      50 | 218-219,236-242,247-253,259,270-271,278,283-289,294,299,306                                                                  
+  User.js                  |    72.6 |     62.5 |   44.44 |    72.6 | 243,262,266,282-285,290-293,298-299,304,309,314,319,324,333,341                                                              
+ src/routes                |   98.21 |      100 |       0 |   98.21 |                                                                                                                              
+  auth.js                  |     100 |      100 |     100 |     100 |                                                                                                                              
+  booking.js               |     100 |      100 |     100 |     100 |                                                                                                                              
+  email.js                 |     100 |      100 |     100 |     100 |                                                                                                                              
+  health.js                |     100 |      100 |     100 |     100 |                                                                                                                              
+  itinerary.js             |     100 |      100 |     100 |     100 |                                                                                                                              
+  lead.js                  |     100 |      100 |     100 |     100 |                                                                                                                              
+  metrics.js               |   54.54 |      100 |       0 |   54.54 | 13-18                                                                                                                        
+  package.js               |     100 |      100 |     100 |     100 |                                                                                                                              
+  payment.js               |     100 |      100 |     100 |     100 |                                                                                                                              
+  profile.js               |     100 |      100 |     100 |     100 |                                                                                                                              
+  quote.js                 |     100 |      100 |     100 |     100 |                                                                                                                              
+  rateList.js              |     100 |      100 |     100 |     100 |                                                                                                                              
+  report.js                |     100 |      100 |     100 |     100 |                                                                                                                              
+  supplier.js              |     100 |      100 |     100 |     100 |                                                                                                                              
+  tenant.js                |     100 |      100 |     100 |     100 |                                                                                                                              
+  user.js                  |     100 |      100 |     100 |     100 |                                                                                                                              
+ src/services              |   19.12 |     4.17 |    9.63 |   19.39 |                                                                                                                              
+  authService.js           |   26.76 |    15.87 |   11.11 |   26.76 | 19,26-116,125,137,145,155,202-225,235-294,303-343,352-394,404-416                                                            
+  emailService.js          |   23.33 |     0.73 |       0 |   24.41 | 15,22-42,48-51,58-75,87-112,122-166,174-188,208-221,235-248,262-275,289-301,315-335                                          
+  gdprService.js           |       0 |        0 |       0 |       0 | 1-298                                                                                                                        
+  paymentGatewayService.js |    6.12 |     3.38 |    7.14 |    6.12 | 30-526                                                                                                                       
+  pdfService.js            |   11.76 |        0 |    5.55 |    12.5 | 22-341                                                                                                                       
+  tokenService.js          |   51.35 |    16.66 |   71.42 |   51.35 | 21-22,37-38,63-97,106                                                                                                        
+  uploadService.js         |   34.61 |        0 |       0 |   35.06 | 31-40,48-51,59-64,73-78,86-89,103-107,154-165,173-182,189-194,202-212                                                        
+ src/validation            |     100 |      100 |     100 |     100 |                                                                                                                              
+  authSchemas.js           |     100 |      100 |     100 |     100 |                                                                                                                              
+  bookingSchemas.js        |     100 |      100 |     100 |     100 |                                                                                                                              
+  emailSchemas.js          |     100 |      100 |     100 |     100 |                                                                                                                              
+  itinerarySchemas.js      |     100 |      100 |     100 |     100 |                                                                                                                              
+  leadSchemas.js           |     100 |      100 |     100 |     100 |                                                                                                                              
+  paymentSchemas.js        |     100 |      100 |     100 |     100 |                                                                                                                              
+  profileSchemas.js        |     100 |      100 |     100 |     100 |                                                                                                                              
+  quoteSchemas.js          |     100 |      100 |     100 |     100 |                                                                                                                              
+  rateListSchemas.js       |     100 |      100 |     100 |     100 |                                                                                                                              
+  supplierSchemas.js       |     100 |      100 |     100 |     100 |                                                                                                                              
+  tenantSchemas.js         |     100 |      100 |     100 |     100 |                                                                                                                              
+  userSchemas.js           |     100 |      100 |     100 |     100 |                                                                                                                              
+---------------------------|---------|----------|---------|---------|------------------------------------------------------------------------------------------------------------------------------
+Jest: "global" coverage threshold for 
+statements (85%) not met: 30.57%
+Jest: "global" coverage threshold for 
+branches (60%) not met: 5.86%
+Jest: "global" coverage threshold for lines 
+(85%) not met: 31.13%
+Jest: "global" coverage threshold for 
+functions (75%) not met: 10.95%
+Test Suites: 1 failed, 1 total
+Tests:       4 failed, 23 passed, 27 total
+Snapshots:   0 total
+Time:        91.653 s
+Ran all test suites matching 
+/tests\\integration\\supplier.test.js/i.
+
+Jest has detected the following 2 open 
+handles potentially keeping Jest from 
+exiting:
+
+  ΓùÅ  TCPSERVERWRAP
+
+    [0m [90m 253 |[39m       
+[36mconst[39m fakeId [33m=[39m 
+[36mnew[39m mongoose[33m.[39m[33mTypes[
+39m[33m.[39m[33mObjectId[39m()[33m;[39m
+     [90m 254 |[39m       [36mconst[39m 
+res [33m=[39m [36mawait[39m request(app)
+    [31m[1m>[22m[39m[90m 255 |[39m     
+    [33m.[39m[36mget[39m([32m`/suppliers
+/${fakeId}`[39m)
+     [90m     |[39m          
+[31m[1m^[22m[39m
+     [90m 256 |[39m         [33m.[39m[36
+mset[39m([32m'Authorization'[39m[33m,[39
+m [32m`Bearer ${tenantAdminToken}`[39m)
+     [90m 257 |[39m         [33m.[39m[36
+mset[39m([32m'X-Tenant-Slug'[39m[33m,[39
+m testTenant1[33m.[39mslug)[33m;[39m
+     [90m 258 |[39m[0m
+
+      at Test.serverAddress 
+(node_modules/supertest/lib/test.js:48:35)
+      at new Test 
+(node_modules/supertest/lib/test.js:34:14)
+      at Object.obj.<computed> [as get] 
+(node_modules/supertest/index.js:43:18)
+      at Object.get 
+(tests/integration/supplier.test.js:255:10)
+
+
+  ΓùÅ  TCPSERVERWRAP
+
+    [0m [90m 466 |[39m       
+[36mconst[39m fakeId [33m=[39m 
+[36mnew[39m mongoose[33m.[39m[33mTypes[
+39m[33m.[39m[33mObjectId[39m()[33m;[39m
+     [90m 467 |[39m       [36mconst[39m 
+res [33m=[39m [36mawait[39m request(app)
+    [31m[1m>[22m[39m[90m 468 |[39m     
+    [33m.[39m[36mdelete[39m([32m`/suppli
+ers/${fakeId}`[39m)
+     [90m     |[39m                
+[31m[1m^[22m[39m
+     [90m 469 |[39m         [33m.[39m[36
+mset[39m([32m'Authorization'[39m[33m,[39
+m [32m`Bearer ${tenantAdminToken}`[39m)
+     [90m 470 |[39m         [33m.[39m[36
+mset[39m([32m'X-Tenant-Slug'[39m[33m,[39
+m testTenant1[33m.[39mslug)[33m;[39m
+     [90m 471 |[39m[0m
+
+      at Test.serverAddress 
+(node_modules/supertest/lib/test.js:48:35)
+      at new Test 
+(node_modules/supertest/lib/test.js:34:14)
+      at Object.obj.<computed> 
+(node_modules/supertest/index.js:43:18)
+      at Object.<anonymous> 
+(tests/integration/supplier.test.js:468:16)
+

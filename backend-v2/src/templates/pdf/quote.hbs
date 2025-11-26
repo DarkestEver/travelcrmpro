@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quote - {{quote.number}}</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            color: #333;
+            line-height: 1.6;
+            font-size: 11pt;
+        }
+
+        .header {
+            background: linear-gradient(135deg, {{tenant.primaryColor}}, {{tenant.secondaryColor}});
+            color: white;
+            padding: 30px 40px;
+            margin-bottom: 30px;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .logo {
+            max-width: 150px;
+            max-height: 80px;
+        }
+
+        .company-info {
+            text-align: right;
+            font-size: 9pt;
+        }
+
+        .quote-title {
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .quote-title h1 {
+            font-size: 24pt;
+            color: {{tenant.primaryColor}};
+            margin-bottom: 10px;
+        }
+
+        .quote-number {
+            font-size: 12pt;
+            color: #666;
+        }
+
+        .info-section {
+            margin: 20px 40px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .info-item {
+            margin-bottom: 10px;
+        }
+
+        .info-label {
+            font-weight: bold;
+            color: #666;
+            font-size: 9pt;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .info-value {
+            font-size: 11pt;
+            margin-top: 3px;
+        }
+
+        .section {
+            margin: 30px 40px;
+        }
+
+        .section-title {
+            font-size: 14pt;
+            color: {{tenant.primaryColor}};
+            border-bottom: 2px solid {{tenant.primaryColor}};
+            padding-bottom: 8px;
+            margin-bottom: 15px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+
+        thead {
+            background-color: {{tenant.primaryColor}};
+            color: white;
+        }
+
+        th {
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 10pt;
+        }
+
+        td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        tr:hover {
+            background-color: #f5f5f5;
+        }
+
+        .text-right {
+            text-align: right;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .pricing-summary {
+            margin: 30px 40px;
+            float: right;
+            width: 400px;
+        }
+
+        .pricing-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .pricing-row.total {
+            background-color: {{tenant.primaryColor}};
+            color: white;
+            padding: 15px 20px;
+            font-size: 14pt;
+            font-weight: bold;
+            margin-top: 10px;
+            border-radius: 5px;
+        }
+
+        .payment-schedule {
+            margin: 30px 40px;
+            clear: both;
+        }
+
+        .inclusions-exclusions {
+            margin: 30px 40px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .list-box {
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 5px;
+        }
+
+        .list-box h3 {
+            color: {{tenant.primaryColor}};
+            margin-bottom: 10px;
+        }
+
+        .list-box ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .list-box li {
+            padding: 5px 0;
+            padding-left: 20px;
+            position: relative;
+        }
+
+        .list-box li:before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: {{tenant.primaryColor}};
+            font-weight: bold;
+        }
+
+        .exclusions li:before {
+            content: "✗";
+            color: #dc3545;
+        }
+
+        .terms {
+            margin: 30px 40px;
+            padding: 20px;
+            background: #fff8dc;
+            border-left: 4px solid {{tenant.primaryColor}};
+            font-size: 9pt;
+        }
+
+        .footer {
+            margin-top: 50px;
+            padding: 20px 40px;
+            background: #f8f9fa;
+            text-align: center;
+            font-size: 9pt;
+            color: #666;
+        }
+
+        .validity-badge {
+            display: inline-block;
+            background: #ffc107;
+            color: #000;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 9pt;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <div class="header-content">
+            <div>
+                {{#if tenant.logo}}
+                <img src="{{tenant.logo}}" alt="{{tenant.name}}" class="logo">
+                {{else}}
+                <h2>{{tenant.name}}</h2>
+                {{/if}}
+            </div>
+            <div class="company-info">
+                {{#if tenant.address}}<div>{{tenant.address}}</div>{{/if}}
+                {{#if tenant.phone}}<div>Phone: {{tenant.phone}}</div>{{/if}}
+                {{#if tenant.email}}<div>Email: {{tenant.email}}</div>{{/if}}
+                {{#if tenant.website}}<div>{{tenant.website}}</div>{{/if}}
+            </div>
+        </div>
+    </div>
+
+    <!-- Quote Title -->
+    <div class="quote-title">
+        <h1>{{quote.title}}</h1>
+        <div class="quote-number">Quote #{{quote.number}}</div>
+        <div style="margin-top: 10px;">
+            <span class="validity-badge">Valid until {{quote.validUntil}}</span>
+        </div>
+    </div>
+
+    <!-- Customer & Travel Info -->
+    <div class="info-section">
+        <div class="info-grid">
+            <div>
+                <h3 style="margin-bottom: 15px;">Customer Information</h3>
+                <div class="info-item">
+                    <div class="info-label">Name</div>
+                    <div class="info-value">{{customer.name}}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Email</div>
+                    <div class="info-value">{{customer.email}}</div>
+                </div>
+                {{#if customer.phone}}
+                <div class="info-item">
+                    <div class="info-label">Phone</div>
+                    <div class="info-value">{{customer.phone}}</div>
+                </div>
+                {{/if}}
+            </div>
+            <div>
+                <h3 style="margin-bottom: 15px;">Travel Details</h3>
+                <div class="info-item">
+                    <div class="info-label">Destination</div>
+                    <div class="info-value">{{quote.destination}}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Travel Dates</div>
+                    <div class="info-value">{{travelDetails.startDate}} - {{travelDetails.endDate}}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Duration</div>
+                    <div class="info-value">{{travelDetails.duration}} Days</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Travelers</div>
+                    <div class="info-value">
+                        {{travelDetails.totalTravelers}} 
+                        ({{travelDetails.adults}} Adults{{#if travelDetails.children}}, {{travelDetails.children}} Children{{/if}}{{#if travelDetails.infants}}, {{travelDetails.infants}} Infants{{/if}})
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Line Items -->
+    <div class="section">
+        <h2 class="section-title">Package Details</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th style="width: 5%;">Day</th>
+                    <th style="width: 15%;">Type</th>
+                    <th style="width: 45%;">Description</th>
+                    <th class="text-center" style="width: 10%;">Qty</th>
+                    <th class="text-right" style="width: 12%;">Unit Price</th>
+                    <th class="text-right" style="width: 13%;">Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{#each lineItems}}
+                <tr>
+                    <td class="text-center">{{day}}</td>
+                    <td>{{type}}</td>
+                    <td>{{description}}</td>
+                    <td class="text-center">{{quantity}}</td>
+                    <td class="text-right">{{unitPrice}}</td>
+                    <td class="text-right"><strong>{{total}}</strong></td>
+                </tr>
+                {{/each}}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pricing Summary -->
+    <div class="pricing-summary">
+        <div class="pricing-row">
+            <span>Subtotal:</span>
+            <span>{{pricing.subtotal}}</span>
+        </div>
+
+        {{#if pricing.discounts.length}}
+        {{#each pricing.discounts}}
+        <div class="pricing-row">
+            <span>{{name}} ({{value}}):</span>
+            <span style="color: #28a745;">-{{amount}}</span>
+        </div>
+        {{/each}}
+        {{/if}}
+
+        {{#if pricing.taxes.length}}
+        {{#each pricing.taxes}}
+        <div class="pricing-row">
+            <span>{{name}} ({{value}}):</span>
+            <span>{{amount}}</span>
+        </div>
+        {{/each}}
+        {{/if}}
+
+        <div class="pricing-row total">
+            <span>Grand Total:</span>
+            <span>{{pricing.grandTotal}}</span>
+        </div>
+    </div>
+
+    <!-- Payment Schedule -->
+    {{#if paymentSchedule.length}}
+    <div class="payment-schedule">
+        <h2 class="section-title">Payment Schedule</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th style="width: 40%;">Milestone</th>
+                    <th style="width: 20%;">Due Date</th>
+                    <th class="text-center" style="width: 15%;">Percentage</th>
+                    <th class="text-right" style="width: 25%;">Amount</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{#each paymentSchedule}}
+                <tr>
+                    <td>{{milestone}}</td>
+                    <td>{{dueDate}}</td>
+                    <td class="text-center">{{percentage}}</td>
+                    <td class="text-right"><strong>{{amount}}</strong></td>
+                </tr>
+                {{/each}}
+            </tbody>
+        </table>
+    </div>
+    {{/if}}
+
+    <!-- Inclusions & Exclusions -->
+    {{#if inclusions.length}}
+    <div class="inclusions-exclusions">
+        <div class="list-box">
+            <h3>✓ Inclusions</h3>
+            <ul>
+                {{#each inclusions}}
+                <li>{{this}}</li>
+                {{/each}}
+            </ul>
+        </div>
+
+        {{#if exclusions.length}}
+        <div class="list-box exclusions">
+            <h3>✗ Exclusions</h3>
+            <ul>
+                {{#each exclusions}}
+                <li>{{this}}</li>
+                {{/each}}
+            </ul>
+        </div>
+        {{/if}}
+    </div>
+    {{/if}}
+
+    <!-- Terms & Conditions -->
+    {{#if termsAndConditions}}
+    <div class="terms">
+        <h3 style="margin-bottom: 10px;">Terms & Conditions</h3>
+        <p style="white-space: pre-wrap;">{{termsAndConditions}}</p>
+    </div>
+    {{/if}}
+
+    {{#if cancellationPolicy}}
+    <div class="terms">
+        <h3 style="margin-bottom: 10px;">Cancellation Policy</h3>
+        <p style="white-space: pre-wrap;">{{cancellationPolicy}}</p>
+    </div>
+    {{/if}}
+
+    <!-- Footer -->
+    <div class="footer">
+        <p>This quote was generated on {{quote.createdAt}}</p>
+        <p>Quote valid until {{quote.validUntil}}</p>
+        <p style="margin-top: 10px;">Thank you for choosing {{tenant.name}}!</p>
+    </div>
+</body>
+</html>

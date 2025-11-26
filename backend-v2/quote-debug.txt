@@ -1,0 +1,606 @@
+﻿
+> travel-crm-backend-v2@2.0.0 test
+> jest --coverage --runInBand --forceExit --detectOpenHandles tests/integration/quote.test.js
+
+node.exe : (node:6564) [MONGOOSE] Warning: 
+Duplicate schema index on {"slug":1} found. 
+This is often due to declaring an index 
+using both "index: true" and 
+"schema.index()". Please remove the 
+duplicate index definition.
+At C:\Program Files\nodejs\npm.ps1:29 char:3
++   & $NODE_EXE $NPM_CLI_JS $args
++   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified:  
+   ((node:6564) [MO...dex definition.:Strin  
+  g) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandE 
+   rror
+ 
+(Use `node --trace-warnings ...` to show 
+where the warning was created)
+(node:6564) [MONGOOSE] Warning: Duplicate 
+schema index on {"domain":1} found. This is 
+often due to declaring an index using both 
+"index: true" and "schema.index()". Please 
+remove the duplicate index definition.
+(node:6564) [MONGOOSE] Warning: Duplicate 
+schema index on {"customDomain":1} found. 
+This is often due to declaring an index 
+using both "index: true" and 
+"schema.index()". Please remove the 
+duplicate index definition.
+(node:6564) [MONGOOSE] Warning: Duplicate 
+schema index on {"providerMessageId":1} 
+found. This is often due to declaring an 
+index using both "index: true" and 
+"schema.index()". Please remove the 
+duplicate index definition.
+(node:6564) [MONGOOSE] Warning: Duplicate 
+schema index on {"booking":1} found. This is 
+often due to declaring an index using both 
+"index: true" and "schema.index()". Please 
+remove the duplicate index definition.
+(node:6564) [MONGOOSE] Warning: Duplicate 
+schema index on {"quote":1} found. This is 
+often due to declaring an index using both 
+"index: true" and "schema.index()". Please 
+remove the duplicate index definition.
+(node:6564) [MONGODB DRIVER] Warning: 
+useNewUrlParser is a deprecated option: 
+useNewUrlParser has no effect since Node.js 
+Driver version 4.0.0 and will be removed in 
+the next major version
+(node:6564) [MONGODB DRIVER] Warning: 
+useUnifiedTopology is a deprecated option: 
+useUnifiedTopology has no effect since 
+Node.js Driver version 4.0.0 and will be 
+removed in the next major version
+FAIL tests/integration/quote.test.js (14.72 
+s)
+  Quote System Integration Tests
+    POST /quotes - Create Quote
+      ├ù should create a quote from 
+itinerary successfully (878 ms)
+      ├ù should generate unique quote 
+numbers (354 ms)
+      ├ù should extract line items from 
+itinerary correctly (257 ms)
+      ├ù should calculate pricing correctly 
+(270 ms)
+      ΓêÜ should fail without itinerary ID 
+(219 ms)
+    GET /quotes - List Quotes
+      ├ù should list all quotes (289 ms)
+      ├ù should filter quotes by status (267 
+ms)
+      ├ù should support pagination (316 ms)
+    GET /quotes/:id - Get Quote
+      ├ù should get quote by ID (316 ms)
+      ΓêÜ should return 404 for non-existent 
+quote (247 ms)
+    PATCH /quotes/:id - Update Quote
+      ΓêÜ should update draft quote (250 ms)
+      ΓêÜ should not update non-draft quote 
+(245 ms)
+    DELETE /quotes/:id - Delete Quote
+      ΓêÜ should delete draft quote (242 ms)
+      ΓêÜ should not delete non-draft quote 
+(246 ms)
+    POST /quotes/:id/send - Send Quote
+      ΓêÜ should send quote successfully 
+(3021 ms)
+    POST /quotes/:id/approve - Approve Quote
+      ΓêÜ should approve quote successfully 
+(public endpoint) (290 ms)
+      ΓêÜ should not approve draft quote 
+(254 ms)
+    POST /quotes/:id/reject - Reject Quote
+      ΓêÜ should reject quote successfully 
+(public endpoint) (273 ms)
+    POST /quotes/:id/revise - Revise Quote
+      ├ù should create quote revision (348 
+ms)
+    POST /quotes/:id/convert - Convert to 
+Booking
+      ├ù should convert approved quote to 
+booking (306 ms)
+      ΓêÜ should not convert non-approved 
+quote (255 ms)
+    GET /quotes/:id/versions - Get Versions
+      ├ù should get all versions of a quote 
+(230 ms)
+    GET /quotes/stats/overview - Quote 
+Statistics
+      ├ù should get quote statistics (258 ms)
+
+  ΓùÅ Quote System Integration Tests ΓÇ║ 
+POST /quotes - Create Quote ΓÇ║ should 
+create a quote from itinerary successfully
+
+    expect(received).toBe(expected) // 
+Object.is equality
+
+    Expected: 201
+    Received: 400
+
+    [0m [90m 270 |[39m         
+})[33m;[39m
+     [90m 271 |[39m
+    [31m[1m>[22m[39m[90m 272 |[39m     
+  expect(res[33m.[39mstatus)[33m.[39mtoBe
+([35m201[39m)[33m;[39m
+     [90m     |[39m                        
+  [31m[1m^[22m[39m
+     [90m 273 |[39m       expect(res[33m.
+[39mbody[33m.[39msuccess)[33m.[39mtoBe([
+36mtrue[39m)[33m;[39m
+     [90m 274 |[39m       expect(res[33m.
+[39mbody[33m.[39mdata)[33m.[39mtoHaveProp
+erty([32m'quoteNumber'[39m)[33m;[39m
+     [90m 275 |[39m       expect(res[33m.
+[39mbody[33m.[39mdata[33m.[39mquoteNumber
+)[33m.[39mtoMatch([35m/^QT-\d{4}-\d{4}$/[
+39m)[33m;[39m[0m
+
+      at Object.toBe 
+(tests/integration/quote.test.js:272:26)
+
+  ΓùÅ Quote System Integration Tests ΓÇ║ 
+POST /quotes - Create Quote ΓÇ║ should 
+generate unique quote numbers
+
+    expect(received).toBe(expected) // 
+Object.is equality
+
+    Expected: 201
+    Received: 400
+
+    [0m [90m 299 |[39m         
+})[33m;[39m
+     [90m 300 |[39m
+    [31m[1m>[22m[39m[90m 301 |[39m     
+  expect(res1[33m.[39mstatus)[33m.[39mtoB
+e([35m201[39m)[33m;[39m
+     [90m     |[39m                        
+   [31m[1m^[22m[39m
+     [90m 302 |[39m       expect(res2[33m.
+[39mstatus)[33m.[39mtoBe([35m201[39m)[3
+3m;[39m
+     [90m 303 |[39m       expect(res1[33m.
+[39mbody[33m.[39mdata[33m.[39mquoteNumbe
+r)[33m.[39mnot[33m.[39mtoBe(res2[33m.[3
+9mbody[33m.[39mdata[33m.[39mquoteNumber)
+[33m;[39m
+     [90m 304 |[39m     })[33m;[39m[0m
+
+      at Object.toBe 
+(tests/integration/quote.test.js:301:27)
+
+  ΓùÅ Quote System Integration Tests ΓÇ║ 
+POST /quotes - Create Quote ΓÇ║ should 
+extract line items from itinerary correctly
+
+    expect(received).toBe(expected) // 
+Object.is equality
+
+    Expected: 201
+    Received: 400
+
+    [0m [90m 313 |[39m         
+})[33m;[39m
+     [90m 314 |[39m
+    [31m[1m>[22m[39m[90m 315 |[39m     
+  expect(res[33m.[39mstatus)[33m.[39mtoBe
+([35m201[39m)[33m;[39m
+     [90m     |[39m                        
+  [31m[1m^[22m[39m
+     [90m 316 |[39m       [36mconst[39m 
+lineItems [33m=[39m res[33m.[39mbody[33m
+.[39mdata[33m.[39mlineItems[33m;[39m
+     [90m 317 |[39m       
+     [90m 318 |[39m       [90m// Should 
+have accommodation, activities, transport, 
+and meals[39m[0m
+
+      at Object.toBe 
+(tests/integration/quote.test.js:315:26)
+
+  ΓùÅ Quote System Integration Tests ΓÇ║ 
+POST /quotes - Create Quote ΓÇ║ should 
+calculate pricing correctly
+
+    expect(received).toBe(expected) // 
+Object.is equality
+
+    Expected: 201
+    Received: 400
+
+    [0m [90m 345 |[39m         
+})[33m;[39m
+     [90m 346 |[39m
+    [31m[1m>[22m[39m[90m 347 |[39m     
+  expect(res[33m.[39mstatus)[33m.[39mtoBe
+([35m201[39m)[33m;[39m
+     [90m     |[39m                        
+  [31m[1m^[22m[39m
+     [90m 348 |[39m       [36mconst[39m 
+pricing [33m=[39m res[33m.[39mbody[33m.
+[39mdata[33m.[39mpricing[33m;[39m
+     [90m 349 |[39m       
+     [90m 350 |[39m       [36mconst[39m 
+subtotal [33m=[39m 
+pricing[33m.[39msubtotal[33m;[39m[0m
+
+      at Object.toBe 
+(tests/integration/quote.test.js:347:26)
+
+  ΓùÅ Quote System Integration Tests ΓÇ║ GET 
+/quotes - List Quotes ΓÇ║ should list all 
+quotes
+
+    expect(received).toBe(expected) // 
+Object.is equality
+
+    Expected: 200
+    Received: 500
+
+    [0m [90m 418 |[39m         [33m.[39m
+[36mset[39m([32m'Authorization'[39m[33m,
+[39m [32m`Bearer 
+${authToken}`[39m)[33m;[39m
+     [90m 419 |[39m
+    [31m[1m>[22m[39m[90m 420 |[39m     
+  expect(res[33m.[39mstatus)[33m.[39mtoBe
+([35m200[39m)[33m;[39m
+     [90m     |[39m                        
+  [31m[1m^[22m[39m
+     [90m 421 |[39m       expect(res[33m.
+[39mbody[33m.[39msuccess)[33m.[39mtoBe([
+36mtrue[39m)[33m;[39m
+     [90m 422 |[39m       expect(res[33m.
+[39mbody[33m.[39mdata)[33m.[39mtoHaveLeng
+th([35m2[39m)[33m;[39m
+     [90m 423 |[39m       expect(res[33m.
+[39mbody[33m.[39mmeta[33m.[39mtotal)[33m
+.[39mtoBe([35m2[39m)[33m;[39m[0m
+
+      at Object.toBe 
+(tests/integration/quote.test.js:420:26)
+
+  ΓùÅ Quote System Integration Tests ΓÇ║ GET 
+/quotes - List Quotes ΓÇ║ should filter 
+quotes by status
+
+    expect(received).toBe(expected) // 
+Object.is equality
+
+    Expected: 200
+    Received: 500
+
+    [0m [90m 429 |[39m         [33m.[39m
+[36mset[39m([32m'Authorization'[39m[33m,
+[39m [32m`Bearer 
+${authToken}`[39m)[33m;[39m
+     [90m 430 |[39m
+    [31m[1m>[22m[39m[90m 431 |[39m     
+  expect(res[33m.[39mstatus)[33m.[39mtoBe
+([35m200[39m)[33m;[39m
+     [90m     |[39m                        
+  [31m[1m^[22m[39m
+     [90m 432 |[39m       expect(res[33m.
+[39mbody[33m.[39mdata)[33m.[39mtoHaveLeng
+th([35m1[39m)[33m;[39m
+     [90m 433 |[39m       expect(res[33m.
+[39mbody[33m.[39mdata[[35m0[39m][33m.[3
+9mstatus)[33m.[39mtoBe([32m'sent'[39m)[3
+3m;[39m
+     [90m 434 |[39m     })[33m;[39m[0m
+
+      at Object.toBe 
+(tests/integration/quote.test.js:431:26)
+
+  ΓùÅ Quote System Integration Tests ΓÇ║ GET 
+/quotes - List Quotes ΓÇ║ should support 
+pagination
+
+    expect(received).toBe(expected) // 
+Object.is equality
+
+    Expected: 200
+    Received: 500
+
+    [0m [90m 439 |[39m         [33m.[39m
+[36mset[39m([32m'Authorization'[39m[33m,
+[39m [32m`Bearer 
+${authToken}`[39m)[33m;[39m
+     [90m 440 |[39m
+    [31m[1m>[22m[39m[90m 441 |[39m     
+  expect(res[33m.[39mstatus)[33m.[39mtoBe
+([35m200[39m)[33m;[39m
+     [90m     |[39m                        
+  [31m[1m^[22m[39m
+     [90m 442 |[39m       expect(res[33m.
+[39mbody[33m.[39mdata)[33m.[39mtoHaveLeng
+th([35m1[39m)[33m;[39m
+     [90m 443 |[39m       expect(res[33m.
+[39mbody[33m.[39mmeta[33m.[39mpages)[33m
+.[39mtoBe([35m2[39m)[33m;[39m
+     [90m 444 |[39m     })[33m;[39m[0m
+
+      at Object.toBe 
+(tests/integration/quote.test.js:441:26)
+
+  ΓùÅ Quote System Integration Tests ΓÇ║ GET 
+/quotes/:id - Get Quote ΓÇ║ should get quote 
+by ID
+
+    expect(received).toBe(expected) // 
+Object.is equality
+
+    Expected: 200
+    Received: 500
+
+    [0m [90m 474 |[39m         [33m.[39m
+[36mset[39m([32m'Authorization'[39m[33m,
+[39m [32m`Bearer 
+${authToken}`[39m)[33m;[39m
+     [90m 475 |[39m
+    [31m[1m>[22m[39m[90m 476 |[39m     
+  expect(res[33m.[39mstatus)[33m.[39mtoBe
+([35m200[39m)[33m;[39m
+     [90m     |[39m                        
+  [31m[1m^[22m[39m
+     [90m 477 |[39m       expect(res[33m.
+[39mbody[33m.[39msuccess)[33m.[39mtoBe([
+36mtrue[39m)[33m;[39m
+     [90m 478 |[39m       expect(res[33m.
+[39mbody[33m.[39mdata[33m.[39mquoteNumber
+)[33m.[39mtoBe([32m'QT-2024-0001'[39m)[3
+3m;[39m
+     [90m 479 |[39m     })[33m;[39m[0m
+
+      at Object.toBe 
+(tests/integration/quote.test.js:476:26)
+
+  ΓùÅ Quote System Integration Tests ΓÇ║ 
+POST /quotes/:id/revise - Revise Quote ΓÇ║ 
+should create quote revision
+
+    expect(received).toBe(expected) // 
+Object.is equality
+
+    Expected: 201
+    Received: 400
+
+    [0m [90m 761 |[39m         
+})[33m;[39m
+     [90m 762 |[39m
+    [31m[1m>[22m[39m[90m 763 |[39m     
+  expect(res[33m.[39mstatus)[33m.[39mtoBe
+([35m201[39m)[33m;[39m
+     [90m     |[39m                        
+  [31m[1m^[22m[39m
+     [90m 764 |[39m       expect(res[33m.
+[39mbody[33m.[39msuccess)[33m.[39mtoBe([
+36mtrue[39m)[33m;[39m
+     [90m 765 |[39m       expect(res[33m.
+[39mbody[33m.[39mdata[33m.[39mversion)[3
+3m.[39mtoBe([35m2[39m)[33m;[39m
+     [90m 766 |[39m       expect(res[33m.
+[39mbody[33m.[39mdata[33m.[39mparentQuote
+)[33m.[39mtoBe(quote[33m.[39m_id[33m.[3
+9mtoString())[33m;[39m[0m
+
+      at Object.toBe 
+(tests/integration/quote.test.js:763:26)
+
+  ΓùÅ Quote System Integration Tests ΓÇ║ 
+POST /quotes/:id/convert - Convert to 
+Booking ΓÇ║ should convert approved quote to 
+booking
+
+    expect(received).toBe(expected) // 
+Object.is equality
+
+    Expected: 201
+    Received: 400
+
+    [0m [90m 815 |[39m         [33m.[39m
+[36mset[39m([32m'Authorization'[39m[33m,
+[39m [32m`Bearer 
+${authToken}`[39m)[33m;[39m
+     [90m 816 |[39m
+    [31m[1m>[22m[39m[90m 817 |[39m     
+  expect(res[33m.[39mstatus)[33m.[39mtoBe
+([35m201[39m)[33m;[39m
+     [90m     |[39m                        
+  [31m[1m^[22m[39m
+     [90m 818 |[39m       expect(res[33m.
+[39mbody[33m.[39msuccess)[33m.[39mtoBe([
+36mtrue[39m)[33m;[39m
+     [90m 819 |[39m       expect(res[33m.
+[39mbody[33m.[39mdata[33m.[39mbooking)[3
+3m.[39mtoHaveProperty([32m'bookingNumber'[
+39m)[33m;[39m
+     [90m 820 |[39m       expect(res[33m.
+[39mbody[33m.[39mdata[33m.[39mbooking[33
+m.[39mbookingNumber)[33m.[39mtoMatch([35m
+/^BK-\d{4}-\d{5}$/[39m)[33m;[39m[0m
+
+      at Object.toBe 
+(tests/integration/quote.test.js:817:26)
+
+  ΓùÅ Quote System Integration Tests ΓÇ║ GET 
+/quotes/:id/versions - Get Versions ΓÇ║ 
+should get all versions of a quote
+
+    MongoServerError: E11000 duplicate key 
+error collection: travel-crm-test.quotes 
+index: tenant_1_quoteNumber_1 dup key: { 
+tenant: 
+ObjectId('6925b3b12bb54b9257809bb5'), 
+quoteNumber: "QT-2024-0001" }
+
+      at InsertOneOperation.handleOk (node_mo
+dules/mongodb/src/operations/insert.ts:79:13)
+      at tryOperation (node_modules/mongodb/s
+rc/operations/execute_operation.ts:290:26)
+      at executeOperation (node_modules/mongo
+db/src/operations/execute_operation.ts:119:12
+)
+      at Collection.insertOne (node_modules/m
+ongodb/src/collection.ts:294:12)
+
+  ΓùÅ Quote System Integration Tests ΓÇ║ GET 
+/quotes/stats/overview - Quote Statistics 
+ΓÇ║ should get quote statistics
+
+    expect(received).toHaveProperty(path)
+
+    Expected path: "totalQuotes"
+    Received path: []
+
+    Received value: {"_id": null, 
+"approved": 1, "approvedValue": 2000, 
+"converted": 1, "convertedValue": 3000, 
+"draft": 1, "expired": 0, "rejected": 0, 
+"sent": 0, "total": 3, "totalValue": 6000, 
+"viewed": 0}
+
+    [0m [90m 987 |[39m       expect(res[3
+3m.[39mstatus)[33m.[39mtoBe([35m200[39m)
+[33m;[39m
+     [90m 988 |[39m       expect(res[33m.
+[39mbody[33m.[39msuccess)[33m.[39mtoBe([
+36mtrue[39m)[33m;[39m
+    [31m[1m>[22m[39m[90m 989 |[39m     
+  expect(res[33m.[39mbody[33m.[39mdata)[
+33m.[39mtoHaveProperty([32m'totalQuotes'[3
+9m)[33m;[39m
+     [90m     |[39m                        
+     [31m[1m^[22m[39m
+     [90m 990 |[39m       expect(res[33m.
+[39mbody[33m.[39mdata)[33m.[39mtoHaveProp
+erty([32m'byStatus'[39m)[33m;[39m
+     [90m 991 |[39m       expect(res[33m.
+[39mbody[33m.[39mdata)[33m.[39mtoHaveProp
+erty([32m'totalValue'[39m)[33m;[39m
+     [90m 992 |[39m       expect(res[33m.
+[39mbody[33m.[39mdata[33m.[39mtotalQuotes
+)[33m.[39mtoBe([35m3[39m)[33m;[39m[0m
+
+      at Object.toHaveProperty 
+(tests/integration/quote.test.js:989:29)
+
+---------------------------|---------|----------|---------|---------|------------------------------------------------------------------------------------------------------------------------------
+File                       | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s                                                                                                            
+---------------------------|---------|----------|---------|---------|------------------------------------------------------------------------------------------------------------------------------
+All files                  |   32.04 |     9.89 |   13.82 |   32.58 |                                                                                                                              
+ src                       |   94.44 |       50 |   33.33 |   94.44 |                                                                                                                              
+  app.js                   |   94.44 |       50 |   33.33 |   94.44 | 79-97,124                                                                                                                    
+ src/config                |    90.9 |    69.23 |       0 |   93.75 |                                                                                                                              
+  constants.js             |     100 |      100 |     100 |     100 |                                                                                                                              
+  index.js                 |      75 |    70.83 |       0 |   81.81 | 16-17                                                                                                                        
+  schema.js                |     100 |       50 |     100 |     100 | 30                                                                                                                           
+ src/controllers           |   17.42 |     8.72 |   10.22 |   17.91 |                                                                                                                              
+  authController.js        |   15.94 |        0 |       0 |   15.94 | 10-38,47-70,79-94,103-122,131-146,155-175,184-199                                                                            
+  bookingController.js     |    9.55 |        0 |       0 |    9.71 | 13-74,91-115,126-187,198-254,265-283,294-327,338-374,385-430,441-472,483-542                                                 
+  emailController.js       |   12.84 |        0 |       0 |   13.46 | 12-24,35-46,57-87,98-134,145-166,177-256,265-289,306-311                                                                     
+  healthController.js      |   38.88 |        0 |       0 |   38.88 | 10,22-44,52                                                                                                                  
+  itineraryController.js   |    8.29 |        0 |       0 |    8.52 | 13-66,83-112,123-167,178-229,240-255,266-295,306-347,358-390,401-426,437-483,494-539,551-615                                 
+  leadController.js        |    10.2 |        0 |       0 |   10.48 | 12-61,78-103,114-143,155-205,217-233,245-277,289-314,326-355,367-425                                                         
+  packageController.js     |    9.09 |        0 |       0 |    9.47 | 14-29,38-127,136-167,176-186,195-205,214-223,232-257,266-293,302-330,339-357,366-432,441-469,478-512,521-554,563-596,605-625 
+  paymentController.js     |   10.96 |        0 |       0 |   11.33 | 13-66,83-95,106-159,170-216,227-265,276-305,316-354,363-386,395-456,465-481                                                  
+  profileController.js     |   12.22 |        0 |       0 |   12.64 | 11-26,38-114,126-163,175-197,209-240,252-276                                                                                 
+  quoteController.js       |   73.95 |    60.81 |   85.71 |   73.83 | 45,49,53-58,151,157,199,310,333,391,416-454,473,506,522,554,558,570,587,592,615,623,655-658,677-706,729,739-749              
+  rateListController.js    |   10.42 |        0 |       0 |   10.42 | 16-81,91-109,119-191,201-275,285-310,320-338,348-366,376-394,404-433,443-477,487-502,512-554,564-588,598-653                 
+  reportController.js      |   13.72 |        0 |       0 |   15.55 | 14-52,80-132,147-209,221-291,303-378,393-419                                                                                 
+  supplierController.js    |   13.13 |        0 |       0 |    13.4 | 12-64,84-107,119-138,150-199,211-235,247-272,284-314,327-370                                                                 
+  tenantController.js      |    8.45 |        0 |       0 |     9.3 | 11-78,87-112,121-194,203-289,298-335,344-374,383-432                                                                         
+  userController.js        |    8.47 |        0 |       0 |    8.47 | 12-91,102-140,151-264,274-331,340-384                                                                                        
+ src/lib                   |   33.33 |     10.2 |   16.21 |   33.54 |                                                                                                                              
+  database.js              |   15.87 |    16.66 |    7.14 |   16.12 | 18-161                                                                                                                       
+  errors.js                |    62.5 |    15.78 |      25 |    62.5 | 33-78                                                                                                                        
+  logger.js                |    64.7 |       40 |       0 |    64.7 | 33-38,49                                                                                                                     
+  metrics.js               |   72.88 |     3.84 |   13.33 |   72.88 | 177-185,195,205-211,225,234,243,253,262,271,281,288,295,302                                                                  
+  redis.js                 |    9.52 |     6.45 |    4.54 |     9.7 | 18-257                                                                                                                       
+  sentry.js                |    37.7 |     6.12 |   42.85 |   37.73 | 11-58,71,81,91-97,106-107,119-120,132-141,149-150,157-158                                                                    
+ src/middleware            |   33.71 |    17.52 |   31.91 |   33.52 |                                                                                                                              
+  asyncHandler.js          |      75 |      100 |      50 |      75 | 10                                                                                                                           
+  audit.js                 |       0 |        0 |       0 |       0 | 1-119                                                                                                                        
+  auth.js                  |    37.7 |    17.85 |      40 |    37.7 | 15,30,38,65,73-108,123-141,149-182                                                                                           
+  errorHandler.js          |    92.3 |    78.26 |     100 |      92 | 36-37                                                                                                                        
+  logger.js                |     100 |      100 |     100 |     100 |                                                                                                                              
+  rbac.js                  |   23.07 |        0 |    8.33 |   23.07 | 101-119,126-129,136-163,172-198,206-233,242-280,289-297,304-312                                                              
+  response.js              |   63.63 |    35.29 |      40 |   63.63 | 14-27,36,43                                                                                                                  
+  tenant.js                |    8.33 |        0 |       0 |    8.33 | 14-118,127-175,183-201,208-238                                                                                               
+  validation.js            |    60.6 |       50 |   55.55 |   63.33 | 46-57,69-91                                                                                                                  
+ src/models                |   36.39 |     7.44 |    12.2 |   36.98 |                                                                                                                              
+  AuditLog.js              |       0 |        0 |       0 |       0 | 1-365                                                                                                                        
+  Booking.js               |   27.77 |        0 |       0 |   28.08 | 285,290-294,299-301,306-314,320-338,345-368,373-380,388-419,424,433-437,450-460                                              
+  EmailLog.js              |   36.36 |        0 |       0 |   36.36 | 185-189,194-196,201-208,213-215,220-226,231-241,246-315,332,347                                                              
+  EmailTemplate.js         |    37.5 |        0 |       0 |    38.7 | 96,163-177,186-188,193,202,211-374                                                                                           
+  Invoice.js               |   24.44 |        0 |       0 |   24.44 | 235-238,243-247,252,262-289,296-308,316-317,325-330,341-342,351-362,371,382-429,435-444                                      
+  Itinerary.js             |   34.02 |    14.58 |    5.88 |   35.86 | 365-366,371-375,380-414,424-431,436-448,453-464,469-484,489,497,504-505,526-527                                              
+  Lead.js                  |   66.66 |    53.84 |   33.33 |      70 | 235-237,242-247,252-253,258,263                                                                                              
+  Package.js               |   29.07 |        0 |       0 |   29.49 | 442-443,448,453,458-464,469-485,490-493,498-500,505-507,512-526,531-550,561-580,585,613-693,706,718-746                      
+  Payment.js               |   33.33 |        0 |       0 |   34.69 | 143-150,156-159,164-165,176,184-207,216,238-255                                                                              
+  Quote.js                 |   80.68 |       50 |   78.57 |   80.68 | 429-431,462-464,509,543,563-565,578-581,603,656-657                                                                          
+  RateList.js              |   18.75 |        0 |       0 |   19.28 | 414-415,425-430,443-450,465-611,618-627,634-643,650-669,683-694,708-736,747,761-769                                          
+  Supplier.js              |   45.45 |        0 |       0 |   46.87 | 180-182,187-188,193-201,206-207,212-218,227                                                                                  
+  Tenant.js                |      50 |    18.51 |      20 |      50 | 218-219,236-242,247-253,259,270-271,278,283-289,294,299,306                                                                  
+  User.js                  |   54.79 |       25 |   27.77 |   54.79 | 201-207,234,243,250,260-266,272,282-285,290-293,298-299,304,309,314,319,324,333,341                                          
+ src/routes                |   98.21 |      100 |       0 |   98.21 |                                                                                                                              
+  auth.js                  |     100 |      100 |     100 |     100 |                                                                                                                              
+  booking.js               |     100 |      100 |     100 |     100 |                                                                                                                              
+  email.js                 |     100 |      100 |     100 |     100 |                                                                                                                              
+  health.js                |     100 |      100 |     100 |     100 |                                                                                                                              
+  itinerary.js             |     100 |      100 |     100 |     100 |                                                                                                                              
+  lead.js                  |     100 |      100 |     100 |     100 |                                                                                                                              
+  metrics.js               |   54.54 |      100 |       0 |   54.54 | 13-18                                                                                                                        
+  package.js               |     100 |      100 |     100 |     100 |                                                                                                                              
+  payment.js               |     100 |      100 |     100 |     100 |                                                                                                                              
+  profile.js               |     100 |      100 |     100 |     100 |                                                                                                                              
+  quote.js                 |     100 |      100 |     100 |     100 |                                                                                                                              
+  rateList.js              |     100 |      100 |     100 |     100 |                                                                                                                              
+  report.js                |     100 |      100 |     100 |     100 |                                                                                                                              
+  supplier.js              |     100 |      100 |     100 |     100 |                                                                                                                              
+  tenant.js                |     100 |      100 |     100 |     100 |                                                                                                                              
+  user.js                  |     100 |      100 |     100 |     100 |                                                                                                                              
+ src/services              |   18.96 |     8.07 |   12.04 |   19.07 |                                                                                                                              
+  authService.js           |   11.97 |        0 |       0 |   11.97 | 19,26-116,124-191,202-225,235-294,303-343,352-394,404-416                                                                    
+  emailService.js          |   23.33 |     0.73 |       0 |   24.41 | 15,22-42,48-51,58-75,87-112,122-166,174-188,208-221,235-248,262-275,289-301,315-335                                          
+  gdprService.js           |       0 |        0 |       0 |       0 | 1-298                                                                                                                        
+  paymentGatewayService.js |    6.12 |     3.38 |    7.14 |    6.12 | 30-526                                                                                                                       
+  pdfService.js            |   54.41 |    37.14 |   38.88 |   56.25 | 41-44,56,69-70,157-184,211-290,312-315,340-341                                                                               
+  tokenService.js          |   27.02 |        0 |   28.57 |   27.02 | 21-46,63-119                                                                                                                 
+  uploadService.js         |   34.61 |        0 |       0 |   35.06 | 31-40,48-51,59-64,73-78,86-89,103-107,154-165,173-182,189-194,202-212                                                        
+ src/validation            |     100 |      100 |     100 |     100 |                                                                                                                              
+  authSchemas.js           |     100 |      100 |     100 |     100 |                                                                                                                              
+  bookingSchemas.js        |     100 |      100 |     100 |     100 |                                                                                                                              
+  emailSchemas.js          |     100 |      100 |     100 |     100 |                                                                                                                              
+  itinerarySchemas.js      |     100 |      100 |     100 |     100 |                                                                                                                              
+  leadSchemas.js           |     100 |      100 |     100 |     100 |                                                                                                                              
+  paymentSchemas.js        |     100 |      100 |     100 |     100 |                                                                                                                              
+  profileSchemas.js        |     100 |      100 |     100 |     100 |                                                                                                                              
+  quoteSchemas.js          |     100 |      100 |     100 |     100 |                                                                                                                              
+  rateListSchemas.js       |     100 |      100 |     100 |     100 |                                                                                                                              
+  supplierSchemas.js       |     100 |      100 |     100 |     100 |                                                                                                                              
+  tenantSchemas.js         |     100 |      100 |     100 |     100 |                                                                                                                              
+  userSchemas.js           |     100 |      100 |     100 |     100 |                                                                                                                              
+---------------------------|---------|----------|---------|---------|------------------------------------------------------------------------------------------------------------------------------
+Jest: "global" coverage threshold for 
+statements (85%) not met: 32.04%
+Jest: "global" coverage threshold for 
+branches (60%) not met: 9.89%
+Jest: "global" coverage threshold for lines 
+(85%) not met: 32.58%
+Jest: "global" coverage threshold for 
+functions (75%) not met: 13.82%
+Test Suites: 1 failed, 1 total
+Tests:       12 failed, 11 passed, 23 total
+Snapshots:   0 total
+Time:        16.037 s
+Ran all test suites matching 
+/tests\\integration\\quote.test.js/i.

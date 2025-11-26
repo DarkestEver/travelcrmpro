@@ -1,0 +1,602 @@
+﻿
+> travel-crm-backend-v2@2.0.0 test
+> jest --coverage --runInBand --forceExit --detectOpenHandles tests/integration/payment.test.js
+
+node.exe : (node:15708) [MONGOOSE] Warning: 
+Duplicate schema index on {"slug":1} found. 
+This is often due to declaring an index 
+using both "index: true" and 
+"schema.index()". Please remove the 
+duplicate index definition.
+At C:\Program Files\nodejs\npm.ps1:29 char:3
++   & $NODE_EXE $NPM_CLI_JS $args
++   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified:  
+   ((node:15708) [M...dex definition.:Strin  
+  g) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandE 
+   rror
+ 
+(Use `node --trace-warnings ...` to show 
+where the warning was created)
+(node:15708) [MONGOOSE] Warning: Duplicate 
+schema index on {"domain":1} found. This is 
+often due to declaring an index using both 
+"index: true" and "schema.index()". Please 
+remove the duplicate index definition.
+(node:15708) [MONGOOSE] Warning: Duplicate 
+schema index on {"customDomain":1} found. 
+This is often due to declaring an index 
+using both "index: true" and 
+"schema.index()". Please remove the 
+duplicate index definition.
+(node:15708) [MONGOOSE] Warning: Duplicate 
+schema index on {"providerMessageId":1} 
+found. This is often due to declaring an 
+index using both "index: true" and 
+"schema.index()". Please remove the 
+duplicate index definition.
+(node:15708) [MONGOOSE] Warning: Duplicate 
+schema index on {"booking":1} found. This is 
+often due to declaring an index using both 
+"index: true" and "schema.index()". Please 
+remove the duplicate index definition.
+(node:15708) [MONGOOSE] Warning: Duplicate 
+schema index on {"quote":1} found. This is 
+often due to declaring an index using both 
+"index: true" and "schema.index()". Please 
+remove the duplicate index definition.
+(node:15708) [MONGODB DRIVER] Warning: 
+useNewUrlParser is a deprecated option: 
+useNewUrlParser has no effect since Node.js 
+Driver version 4.0.0 and will be removed in 
+the next major version
+(node:15708) [MONGODB DRIVER] Warning: 
+useUnifiedTopology is a deprecated option: 
+useUnifiedTopology has no effect since 
+Node.js Driver version 4.0.0 and will be 
+removed in the next major version
+FAIL tests/integration/payment.test.js 
+(10.614 s)
+  Payment Integration Tests
+    POST /api/payments/create-intent
+      ├ù should create a payment intent 
+successfully (974 ms)
+      ΓêÜ should return 400 if invoice not 
+found (249 ms)
+      ├ù should return 400 if amount exceeds 
+invoice due (239 ms)
+      ├ù should create customer if email 
+provided (281 ms)
+    GET /api/payments/intent/:paymentIntentId
+      ├ù should retrieve payment intent 
+status (266 ms)
+      ├ù should return 404 if payment intent 
+not found (234 ms)
+    POST /api/payments/webhooks/stripe
+      ├ù should handle 
+payment_intent.succeeded event (327 ms)
+      ├ù should handle 
+payment_intent.payment_failed event (261 ms)
+      ├ù should handle charge.refunded event 
+(269 ms)
+      ΓêÜ should reject webhook with invalid 
+signature (231 ms)
+    POST /api/payments/:id/stripe-refund
+      ├ù should process full refund 
+successfully (264 ms)
+      ├ù should process partial refund 
+successfully (299 ms)
+      ├ù should return 400 if refund amount 
+exceeds payment (273 ms)
+      ├ù should return 400 if payment not 
+completed (253 ms)
+    Invoice Number Generation with Tenant 
+Settings
+      ΓêÜ should generate invoice number 
+with custom prefix (254 ms)
+      ├ù should increment invoice numbers 
+correctly (241 ms)
+      ΓêÜ should use start number for first 
+invoice (308 ms)
+    Payment Flow Integration
+      ├ù should complete full payment flow 
+from intent to confirmation (270 ms)
+
+  ΓùÅ Payment Integration Tests ΓÇ║ POST 
+/api/payments/create-intent ΓÇ║ should 
+create a payment intent successfully
+
+    expect(received).toBe(expected) // 
+Object.is equality
+
+    Expected: 200
+    Received: 404
+
+    [0m [90m 212 |[39m         
+})[33m;[39m
+     [90m 213 |[39m
+    [31m[1m>[22m[39m[90m 214 |[39m     
+  expect(response[33m.[39mstatus)[33m.[39
+mtoBe([35m200[39m)[33m;[39m
+     [90m     |[39m                        
+       [31m[1m^[22m[39m
+     [90m 215 |[39m       expect(response[
+33m.[39mbody[33m.[39msuccess)[33m.[39mto
+Be([36mtrue[39m)[33m;[39m
+     [90m 216 |[39m       expect(response[
+33m.[39mbody[33m.[39mdata[33m.[39mpaymen
+tIntent)[33m.[39mtoHaveProperty([32m'id'[
+39m)[33m;[39m
+     [90m 217 |[39m       expect(response[
+33m.[39mbody[33m.[39mdata[33m.[39mpaymen
+tIntent)[33m.[39mtoHaveProperty([32m'clien
+t_secret'[39m)[33m;[39m[0m
+
+      at Object.toBe 
+(tests/integration/payment.test.js:214:31)
+
+  ΓùÅ Payment Integration Tests ΓÇ║ POST 
+/api/payments/create-intent ΓÇ║ should 
+return 400 if amount exceeds invoice due
+
+    expect(received).toBe(expected) // 
+Object.is equality
+
+    Expected: 400
+    Received: 404
+
+    [0m [90m 259 |[39m         
+})[33m;[39m
+     [90m 260 |[39m
+    [31m[1m>[22m[39m[90m 261 |[39m     
+  expect(response[33m.[39mstatus)[33m.[39
+mtoBe([35m400[39m)[33m;[39m
+     [90m     |[39m                        
+       [31m[1m^[22m[39m
+     [90m 262 |[39m       expect(response[
+33m.[39mbody[33m.[39msuccess)[33m.[39mto
+Be([36mfalse[39m)[33m;[39m
+     [90m 263 |[39m       expect(response[
+33m.[39mbody[33m.[39mmessage)[33m.[39mto
+Contain([32m'exceeds'[39m)[33m;[39m
+     [90m 264 |[39m     })[33m;[39m[0m
+
+      at Object.toBe 
+(tests/integration/payment.test.js:261:31)
+
+  ΓùÅ Payment Integration Tests ΓÇ║ POST 
+/api/payments/create-intent ΓÇ║ should 
+create customer if email provided
+
+    expect(received).toBe(expected) // 
+Object.is equality
+
+    Expected: 200
+    Received: 404
+
+    [0m [90m 289 |[39m         
+})[33m;[39m
+     [90m 290 |[39m
+    [31m[1m>[22m[39m[90m 291 |[39m     
+  expect(response[33m.[39mstatus)[33m.[39
+mtoBe([35m200[39m)[33m;[39m
+     [90m     |[39m                        
+       [31m[1m^[22m[39m
+     [90m 292 |[39m       expect(stripeMock
+[33m.[39mcustomers[33m.[39mcreate)[33m.
+[39mtoHaveBeenCalledWith(
+     [90m 293 |[39m         
+expect[33m.[39mobjectContaining({
+     [90m 294 |[39m           
+email[33m:[39m 
+[32m'john@example.com'[39m[33m,[39m[0m
+
+      at Object.toBe 
+(tests/integration/payment.test.js:291:31)
+
+  ΓùÅ Payment Integration Tests ΓÇ║ GET 
+/api/payments/intent/:paymentIntentId ΓÇ║ 
+should retrieve payment intent status
+
+    expect(received).toBe(expected) // 
+Object.is equality
+
+    Expected: 200
+    Received: 500
+
+    [0m [90m 314 |[39m         [33m.[39m
+[36mset[39m([32m'Authorization'[39m[33m,
+[39m [32m`Bearer ${token}`[39m)[33m;[39m
+     [90m 315 |[39m
+    [31m[1m>[22m[39m[90m 316 |[39m     
+  expect(response[33m.[39mstatus)[33m.[39
+mtoBe([35m200[39m)[33m;[39m
+     [90m     |[39m                        
+       [31m[1m^[22m[39m
+     [90m 317 |[39m       expect(response[
+33m.[39mbody[33m.[39msuccess)[33m.[39mto
+Be([36mtrue[39m)[33m;[39m
+     [90m 318 |[39m       expect(response[
+33m.[39mbody[33m.[39mdata[33m.[39mstatus
+)[33m.[39mtoBe([32m'succeeded'[39m)[33m;
+[39m
+     [90m 319 |[39m     })[33m;[39m[0m
+
+      at Object.toBe 
+(tests/integration/payment.test.js:316:31)
+
+  ΓùÅ Payment Integration Tests ΓÇ║ GET 
+/api/payments/intent/:paymentIntentId ΓÇ║ 
+should return 404 if payment intent not found
+
+    expect(received).toBe(expected) // 
+Object.is equality
+
+    Expected: 404
+    Received: 500
+
+    [0m [90m 329 |[39m         [33m.[39m
+[36mset[39m([32m'Authorization'[39m[33m,
+[39m [32m`Bearer ${token}`[39m)[33m;[39m
+     [90m 330 |[39m
+    [31m[1m>[22m[39m[90m 331 |[39m     
+  expect(response[33m.[39mstatus)[33m.[39
+mtoBe([35m404[39m)[33m;[39m
+     [90m     |[39m                        
+       [31m[1m^[22m[39m
+     [90m 332 |[39m     })[33m;[39m
+     [90m 333 |[39m   })[33m;[39m
+     [90m 334 |[39m[0m
+
+      at Object.toBe 
+(tests/integration/payment.test.js:331:31)
+
+  ΓùÅ Payment Integration Tests ΓÇ║ POST 
+/api/payments/webhooks/stripe ΓÇ║ should 
+handle payment_intent.succeeded event
+
+    expect(received).toBe(expected) // 
+Object.is equality
+
+    Expected: 200
+    Received: 400
+
+    [0m [90m 363 |[39m         
+[33m.[39msend(mockEvent)[33m;[39m
+     [90m 364 |[39m
+    [31m[1m>[22m[39m[90m 365 |[39m     
+  expect(response[33m.[39mstatus)[33m.[39
+mtoBe([35m200[39m)[33m;[39m
+     [90m     |[39m                        
+       [31m[1m^[22m[39m
+     [90m 366 |[39m       expect(response[
+33m.[39mbody[33m.[39mreceived)[33m.[39mt
+oBe([36mtrue[39m)[33m;[39m
+     [90m 367 |[39m
+     [90m 368 |[39m       [90m// Verify 
+invoice was marked as paid[39m[0m
+
+      at Object.toBe 
+(tests/integration/payment.test.js:365:31)
+
+  ΓùÅ Payment Integration Tests ΓÇ║ POST 
+/api/payments/webhooks/stripe ΓÇ║ should 
+handle payment_intent.payment_failed event
+
+    expect(received).toBe(expected) // 
+Object.is equality
+
+    Expected: 200
+    Received: 400
+
+    [0m [90m 416 |[39m         
+[33m.[39msend(mockEvent)[33m;[39m
+     [90m 417 |[39m
+    [31m[1m>[22m[39m[90m 418 |[39m     
+  expect(response[33m.[39mstatus)[33m.[39
+mtoBe([35m200[39m)[33m;[39m
+     [90m     |[39m                        
+       [31m[1m^[22m[39m
+     [90m 419 |[39m
+     [90m 420 |[39m       [90m// Verify 
+payment record was created with failed 
+status[39m
+     [90m 421 |[39m       [36mconst[39m 
+payment [33m=[39m [36mawait[39m 
+[33mPayment[39m[33m.[39mfindOne({ [0m
+
+      at Object.toBe 
+(tests/integration/payment.test.js:418:31)
+
+  ΓùÅ Payment Integration Tests ΓÇ║ POST 
+/api/payments/webhooks/stripe ΓÇ║ should 
+handle charge.refunded event
+
+    ValidationError: Payment validation 
+failed: processedBy: Path `processedBy` is 
+required., method: Path `method` is 
+required., customer.email: Path 
+`customer.email` is required., 
+customer.name: Path `customer.name` is 
+required.
+
+      at 
+model.Object.<anonymous>.Document.invalidate 
+(node_modules/mongoose/lib/document.js:3362:3
+2)
+      at 
+node_modules/mongoose/lib/document.js:3123:17
+      at node_modules/mongoose/lib/schemaType
+.js:1446:9
+
+  ΓùÅ Payment Integration Tests ΓÇ║ POST 
+/api/payments/:id/stripe-refund ΓÇ║ should 
+process full refund successfully
+
+    expect(received).toBe(expected) // 
+Object.is equality
+
+    Expected: 200
+    Received: 404
+
+    [0m [90m 546 |[39m         
+})[33m;[39m
+     [90m 547 |[39m
+    [31m[1m>[22m[39m[90m 548 |[39m     
+  expect(response[33m.[39mstatus)[33m.[39
+mtoBe([35m200[39m)[33m;[39m
+     [90m     |[39m                        
+       [31m[1m^[22m[39m
+     [90m 549 |[39m       expect(response[
+33m.[39mbody[33m.[39msuccess)[33m.[39mto
+Be([36mtrue[39m)[33m;[39m
+     [90m 550 |[39m       expect(response[
+33m.[39mbody[33m.[39mdata[33m.[39mrefund
+)[33m.[39mtoHaveProperty([32m'id'[39m)[3
+3m;[39m
+     [90m 551 |[39m[0m
+
+      at Object.toBe 
+(tests/integration/payment.test.js:548:31)
+
+  ΓùÅ Payment Integration Tests ΓÇ║ POST 
+/api/payments/:id/stripe-refund ΓÇ║ should 
+process partial refund successfully
+
+    expect(received).toBe(expected) // 
+Object.is equality
+
+    Expected: 200
+    Received: 404
+
+    [0m [90m 586 |[39m         
+})[33m;[39m
+     [90m 587 |[39m
+    [31m[1m>[22m[39m[90m 588 |[39m     
+  expect(response[33m.[39mstatus)[33m.[39
+mtoBe([35m200[39m)[33m;[39m
+     [90m     |[39m                        
+       [31m[1m^[22m[39m
+     [90m 589 |[39m
+     [90m 590 |[39m       [90m// Verify 
+invoice was partially refunded[39m
+     [90m 591 |[39m       [36mconst[39m 
+updatedInvoice [33m=[39m [36mawait[39m [
+33mInvoice[39m[33m.[39mfindById(invoice[3
+3m.[39m_id)[33m;[39m[0m
+
+      at Object.toBe 
+(tests/integration/payment.test.js:588:31)
+
+  ΓùÅ Payment Integration Tests ΓÇ║ POST 
+/api/payments/:id/stripe-refund ΓÇ║ should 
+return 400 if refund amount exceeds payment
+
+    expect(received).toBe(expected) // 
+Object.is equality
+
+    Expected: 400
+    Received: 404
+
+    [0m [90m 608 |[39m         
+})[33m;[39m
+     [90m 609 |[39m
+    [31m[1m>[22m[39m[90m 610 |[39m     
+  expect(response[33m.[39mstatus)[33m.[39
+mtoBe([35m400[39m)[33m;[39m
+     [90m     |[39m                        
+       [31m[1m^[22m[39m
+     [90m 611 |[39m       expect(response[
+33m.[39mbody[33m.[39msuccess)[33m.[39mto
+Be([36mfalse[39m)[33m;[39m
+     [90m 612 |[39m     })[33m;[39m
+     [90m 613 |[39m[0m
+
+      at Object.toBe 
+(tests/integration/payment.test.js:610:31)
+
+  ΓùÅ Payment Integration Tests ΓÇ║ POST 
+/api/payments/:id/stripe-refund ΓÇ║ should 
+return 400 if payment not completed
+
+    expect(received).toBe(expected) // 
+Object.is equality
+
+    Expected: 400
+    Received: 404
+
+    [0m [90m 624 |[39m         
+})[33m;[39m
+     [90m 625 |[39m
+    [31m[1m>[22m[39m[90m 626 |[39m     
+  expect(response[33m.[39mstatus)[33m.[39
+mtoBe([35m400[39m)[33m;[39m
+     [90m     |[39m                        
+       [31m[1m^[22m[39m
+     [90m 627 |[39m       expect(response[
+33m.[39mbody[33m.[39mmessage)[33m.[39mto
+Contain([32m'completed'[39m)[33m;[39m
+     [90m 628 |[39m     })[33m;[39m
+     [90m 629 |[39m   })[33m;[39m[0m
+
+      at Object.toBe 
+(tests/integration/payment.test.js:626:31)
+
+  ΓùÅ Payment Integration Tests ΓÇ║ Invoice 
+Number Generation with Tenant Settings ΓÇ║ 
+should increment invoice numbers correctly
+
+    ValidationError: Invoice validation 
+failed: paymentStatus.amountDue: Path 
+`paymentStatus.amountDue` is required.
+
+      at 
+model.Object.<anonymous>.Document.invalidate 
+(node_modules/mongoose/lib/document.js:3362:3
+2)
+      at 
+node_modules/mongoose/lib/document.js:3123:17
+      at node_modules/mongoose/lib/schemaType
+.js:1446:9
+
+  ΓùÅ Payment Integration Tests ΓÇ║ Payment 
+Flow Integration ΓÇ║ should complete full 
+payment flow from intent to confirmation
+
+    expect(received).toBe(expected) // 
+Object.is equality
+
+    Expected: 200
+    Received: 404
+
+    [0m [90m 696 |[39m         
+})[33m;[39m
+     [90m 697 |[39m
+    [31m[1m>[22m[39m[90m 698 |[39m     
+  expect(intentResponse[33m.[39mstatus)[33
+m.[39mtoBe([35m200[39m)[33m;[39m
+     [90m     |[39m                        
+             [31m[1m^[22m[39m
+     [90m 699 |[39m       expect(intentResp
+onse[33m.[39mbody[33m.[39mdata[33m.[39m
+clientSecret)[33m.[39mtoBe([32m'pi_test_se
+cret'[39m)[33m;[39m
+     [90m 700 |[39m
+     [90m 701 |[39m       [90m// Step 2: 
+Simulate successful payment webhook[39m[0m
+
+      at Object.toBe 
+(tests/integration/payment.test.js:698:37)
+
+---------------------------|---------|----------|---------|---------|------------------------------------------------------------------------------------------------------------------------------
+File                       | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s                                                                                                            
+---------------------------|---------|----------|---------|---------|------------------------------------------------------------------------------------------------------------------------------
+All files                  |   28.41 |     4.46 |    8.25 |   28.98 |                                                                                                                              
+ src                       |   95.83 |       50 |   66.66 |   95.83 |                                                                                                                              
+  app.js                   |   95.83 |       50 |   66.66 |   95.83 | 79-97                                                                                                                        
+ src/config                |    90.9 |    69.23 |       0 |   93.75 |                                                                                                                              
+  constants.js             |     100 |      100 |     100 |     100 |                                                                                                                              
+  index.js                 |      75 |    70.83 |       0 |   81.81 | 16-17                                                                                                                        
+  schema.js                |     100 |       50 |     100 |     100 | 30                                                                                                                           
+ src/controllers           |   11.71 |     0.29 |     1.7 |   12.08 |                                                                                                                              
+  authController.js        |   15.94 |        0 |       0 |   15.94 | 10-38,47-70,79-94,103-122,131-146,155-175,184-199                                                                            
+  bookingController.js     |    9.55 |        0 |       0 |    9.71 | 13-74,91-115,126-187,198-254,265-283,294-327,338-374,385-430,441-472,483-542                                                 
+  emailController.js       |   12.84 |        0 |       0 |   13.46 | 12-24,35-46,57-87,98-134,145-166,177-256,265-289,306-311                                                                     
+  healthController.js      |   38.88 |        0 |       0 |   38.88 | 10,22-44,52                                                                                                                  
+  itineraryController.js   |    8.29 |        0 |       0 |    8.52 | 13-66,83-112,123-167,178-229,240-255,266-295,306-347,358-390,401-426,437-483,494-539,551-615                                 
+  leadController.js        |    10.2 |        0 |       0 |   10.48 | 12-61,78-103,114-143,155-205,217-233,245-277,289-314,326-355,367-425                                                         
+  packageController.js     |    9.09 |        0 |       0 |    9.47 | 14-29,38-127,136-167,176-186,195-205,214-223,232-257,266-293,302-330,339-357,366-432,441-469,478-512,521-554,563-596,605-625 
+  paymentController.js     |   23.22 |     4.28 |      25 |      24 | 13-66,83-95,106-159,170-216,227-265,276-305,330-343,368,376-381,395-456                                                      
+  profileController.js     |   12.22 |        0 |       0 |   12.64 | 11-26,38-114,126-163,175-197,209-240,252-276                                                                                 
+  quoteController.js       |   11.16 |        0 |       0 |   11.21 | 23-87,97-117,127-316,326-374,384-406,416-454,464-506,516-538,548-570,580-598,608-667,677-706,716-729,739-749                 
+  rateListController.js    |   10.42 |        0 |       0 |   10.42 | 16-81,91-109,119-191,201-275,285-310,320-338,348-366,376-394,404-433,443-477,487-502,512-554,564-588,598-653                 
+  reportController.js      |   13.72 |        0 |       0 |   15.55 | 14-52,80-132,147-209,221-291,303-378,393-419                                                                                 
+  supplierController.js    |   13.13 |        0 |       0 |    13.4 | 12-64,84-107,119-138,150-199,211-235,247-272,284-314,327-370                                                                 
+  tenantController.js      |    8.45 |        0 |       0 |     9.3 | 11-78,87-112,121-194,203-289,298-335,344-374,383-432                                                                         
+  userController.js        |    8.47 |        0 |       0 |    8.47 | 12-91,102-140,151-264,274-331,340-384                                                                                        
+ src/lib                   |   33.33 |    11.56 |   16.21 |   33.54 |                                                                                                                              
+  database.js              |   15.87 |    16.66 |    7.14 |   16.12 | 18-161                                                                                                                       
+  errors.js                |    62.5 |    21.05 |      25 |    62.5 | 24-42,60-78                                                                                                                  
+  logger.js                |    64.7 |       40 |       0 |    64.7 | 33-38,49                                                                                                                     
+  metrics.js               |   72.88 |     7.69 |   13.33 |   72.88 | 177-185,195,205-211,225,234,243,253,262,271,281,288,295,302                                                                  
+  redis.js                 |    9.52 |     6.45 |    4.54 |     9.7 | 18-257                                                                                                                       
+  sentry.js                |    37.7 |     6.12 |   42.85 |   37.73 | 11-58,71,81,91-97,106-107,119-120,132-141,149-150,157-158                                                                    
+ src/middleware            |   29.39 |    13.91 |   29.78 |   29.73 |                                                                                                                              
+  asyncHandler.js          |     100 |      100 |     100 |     100 |                                                                                                                              
+  audit.js                 |       0 |        0 |       0 |       0 | 1-119                                                                                                                        
+  auth.js                  |    37.7 |    17.85 |      40 |    37.7 | 15,30,38,65,73-108,123-141,149-182                                                                                           
+  errorHandler.js          |   53.84 |    56.52 |      50 |      56 | 13-17,21-24,36-37                                                                                                            
+  logger.js                |     100 |       50 |     100 |     100 | 21                                                                                                                           
+  rbac.js                  |   27.69 |        5 |   16.66 |   27.69 | 101-119,126-129,136-163,173,182-189,206-233,242-280,289-297,304-312                                                          
+  response.js              |   59.09 |    29.41 |      40 |   59.09 | 14-27,36,43,65                                                                                                               
+  tenant.js                |    8.33 |        0 |       0 |    8.33 | 14-118,127-175,183-201,208-238                                                                                               
+  validation.js            |   36.36 |    16.66 |   33.33 |      40 | 15-26,40-61,69-91                                                                                                            
+ src/models                |   34.51 |     6.29 |    5.81 |   35.17 |                                                                                                                              
+  AuditLog.js              |       0 |        0 |       0 |       0 | 1-365                                                                                                                        
+  Booking.js               |   45.55 |    26.19 |   15.38 |   46.06 | 285,290-294,299-301,306-314,320-338,345-368,373-380,391,411-414,424,433-437,456-457                                          
+  EmailLog.js              |   36.36 |        0 |       0 |   36.36 | 185-189,194-196,201-208,213-215,220-226,231-241,246-315,332,347                                                              
+  EmailTemplate.js         |    37.5 |        0 |       0 |    38.7 | 96,163-177,186-188,193,202,211-374                                                                                           
+  Invoice.js               |   38.88 |     9.09 |   11.76 |   38.88 | 235-238,243-247,252,265,284-286,296-308,316-317,325-330,341-342,351-362,371,382-429                                          
+  Itinerary.js             |   34.02 |    14.58 |    5.88 |   35.86 | 365-366,371-375,380-414,424-431,436-448,453-464,469-484,489,497,504-505,526-527                                              
+  Lead.js                  |   51.51 |        0 |       0 |   56.66 | 227-229,234-237,242-247,252-253,258,263                                                                                      
+  Package.js               |   29.07 |        0 |       0 |   29.49 | 442-443,448,453,458-464,469-485,490-493,498-500,505-507,512-526,531-550,561-580,585,613-693,706,718-746                      
+  Payment.js               |   33.33 |        0 |       0 |   34.69 | 143-150,156-159,164-165,176,184-207,216,238-255                                                                              
+  Quote.js                 |   34.09 |        0 |       0 |   34.09 | 392,399-401,406,420-422,429-431,441-444,452-454,462-464,474-509,519,540-568,578-581,601-634,655-659                          
+  RateList.js              |   18.75 |        0 |       0 |   19.28 | 414-415,425-430,443-450,465-611,618-627,634-643,650-669,683-694,708-736,747,761-769                                          
+  Supplier.js              |   45.45 |        0 |       0 |   46.87 | 180-182,187-188,193-201,206-207,212-218,227                                                                                  
+  Tenant.js                |      50 |    22.22 |      20 |      50 | 218-219,236-242,247-253,259,270-271,278,283-289,294,299,306                                                                  
+  User.js                  |   52.05 |       25 |   16.66 |   52.05 | 201-207,223,228,234,243,250,260-266,272,282-285,290-293,298-299,304,309,314,319,324,333,341                                  
+ src/routes                |   98.21 |      100 |       0 |   98.21 |                                                                                                                              
+  auth.js                  |     100 |      100 |     100 |     100 |                                                                                                                              
+  booking.js               |     100 |      100 |     100 |     100 |                                                                                                                              
+  email.js                 |     100 |      100 |     100 |     100 |                                                                                                                              
+  health.js                |     100 |      100 |     100 |     100 |                                                                                                                              
+  itinerary.js             |     100 |      100 |     100 |     100 |                                                                                                                              
+  lead.js                  |     100 |      100 |     100 |     100 |                                                                                                                              
+  metrics.js               |   54.54 |      100 |       0 |   54.54 | 13-18                                                                                                                        
+  package.js               |     100 |      100 |     100 |     100 |                                                                                                                              
+  payment.js               |     100 |      100 |     100 |     100 |                                                                                                                              
+  profile.js               |     100 |      100 |     100 |     100 |                                                                                                                              
+  quote.js                 |     100 |      100 |     100 |     100 |                                                                                                                              
+  rateList.js              |     100 |      100 |     100 |     100 |                                                                                                                              
+  report.js                |     100 |      100 |     100 |     100 |                                                                                                                              
+  supplier.js              |     100 |      100 |     100 |     100 |                                                                                                                              
+  tenant.js                |     100 |      100 |     100 |     100 |                                                                                                                              
+  user.js                  |     100 |      100 |     100 |     100 |                                                                                                                              
+ src/services              |   14.73 |     0.83 |    6.02 |   14.94 |                                                                                                                              
+  authService.js           |   11.97 |        0 |       0 |   11.97 | 19,26-116,124-191,202-225,235-294,303-343,352-394,404-416                                                                    
+  emailService.js          |   23.33 |     0.73 |       0 |   24.41 | 15,22-42,48-51,58-75,87-112,122-166,174-188,208-221,235-248,262-275,289-301,315-335                                          
+  gdprService.js           |       0 |        0 |       0 |       0 | 1-298                                                                                                                        
+  paymentGatewayService.js |    7.48 |     3.38 |   14.28 |    7.48 | 30-509,522-526                                                                                                               
+  pdfService.js            |   11.76 |        0 |    5.55 |    12.5 | 22-341                                                                                                                       
+  tokenService.js          |   27.02 |        0 |   28.57 |   27.02 | 21-46,63-119                                                                                                                 
+  uploadService.js         |   34.61 |        0 |       0 |   35.06 | 31-40,48-51,59-64,73-78,86-89,103-107,154-165,173-182,189-194,202-212                                                        
+ src/validation            |     100 |      100 |     100 |     100 |                                                                                                                              
+  authSchemas.js           |     100 |      100 |     100 |     100 |                                                                                                                              
+  bookingSchemas.js        |     100 |      100 |     100 |     100 |                                                                                                                              
+  emailSchemas.js          |     100 |      100 |     100 |     100 |                                                                                                                              
+  itinerarySchemas.js      |     100 |      100 |     100 |     100 |                                                                                                                              
+  leadSchemas.js           |     100 |      100 |     100 |     100 |                                                                                                                              
+  paymentSchemas.js        |     100 |      100 |     100 |     100 |                                                                                                                              
+  profileSchemas.js        |     100 |      100 |     100 |     100 |                                                                                                                              
+  quoteSchemas.js          |     100 |      100 |     100 |     100 |                                                                                                                              
+  rateListSchemas.js       |     100 |      100 |     100 |     100 |                                                                                                                              
+  supplierSchemas.js       |     100 |      100 |     100 |     100 |                                                                                                                              
+  tenantSchemas.js         |     100 |      100 |     100 |     100 |                                                                                                                              
+  userSchemas.js           |     100 |      100 |     100 |     100 |                                                                                                                              
+---------------------------|---------|----------|---------|---------|------------------------------------------------------------------------------------------------------------------------------
+Jest: "global" coverage threshold for 
+statements (85%) not met: 28.41%
+Jest: "global" coverage threshold for 
+branches (60%) not met: 4.46%
+Jest: "global" coverage threshold for lines 
+(85%) not met: 28.98%
+Jest: "global" coverage threshold for 
+functions (75%) not met: 8.25%
+Test Suites: 1 failed, 1 total
+Tests:       14 failed, 4 passed, 18 total
+Snapshots:   0 total
+Time:        12.129 s
+Ran all test suites matching 
+/tests\\integration\\payment.test.js/i.

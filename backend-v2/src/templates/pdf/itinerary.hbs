@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Itinerary - {{itinerary.title}}</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            color: #333;
+            line-height: 1.6;
+            font-size: 11pt;
+        }
+
+        .header {
+            background: linear-gradient(135deg, {{tenant.primaryColor}}, {{tenant.secondaryColor}});
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 28pt;
+            margin-bottom: 10px;
+        }
+
+        .header .subtitle {
+            font-size: 14pt;
+            opacity: 0.9;
+        }
+
+        .day-section {
+            margin: 30px 40px;
+            page-break-inside: avoid;
+        }
+
+        .day-header {
+            background-color: {{tenant.primaryColor}};
+            color: white;
+            padding: 15px 20px;
+            border-radius: 8px 8px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .day-number {
+            font-size: 18pt;
+            font-weight: bold;
+        }
+
+        .day-date {
+            font-size: 12pt;
+        }
+
+        .day-content {
+            border: 2px solid {{tenant.primaryColor}};
+            border-top: none;
+            border-radius: 0 0 8px 8px;
+            padding: 20px;
+        }
+
+        .day-title {
+            font-size: 14pt;
+            color: {{tenant.primaryColor}};
+            margin-bottom: 10px;
+        }
+
+        .day-description {
+            margin-bottom: 20px;
+            color: #666;
+        }
+
+        .info-block {
+            background: #f8f9fa;
+            padding: 15px;
+            margin: 15px 0;
+            border-left: 4px solid {{tenant.primaryColor}};
+            border-radius: 4px;
+        }
+
+        .info-block h4 {
+            color: {{tenant.primaryColor}};
+            margin-bottom: 8px;
+            font-size: 12pt;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+            border-bottom: 1px dotted #ddd;
+        }
+
+        .info-label {
+            font-weight: 600;
+            color: #666;
+        }
+
+        .activities-list {
+            margin: 15px 0;
+        }
+
+        .activity-item {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            padding: 12px;
+            margin: 10px 0;
+        }
+
+        .activity-title {
+            font-weight: bold;
+            color: {{tenant.primaryColor}};
+            margin-bottom: 5px;
+        }
+
+        .activity-time {
+            font-size: 9pt;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .meal-item {
+            display: inline-block;
+            background: #e8f5e9;
+            padding: 8px 15px;
+            margin: 5px 5px 5px 0;
+            border-radius: 20px;
+            font-size: 10pt;
+        }
+
+        .footer {
+            margin-top: 50px;
+            padding: 20px;
+            background: #f8f9fa;
+            text-align: center;
+            font-size: 9pt;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <h1>{{itinerary.title}}</h1>
+        <div class="subtitle">{{itinerary.destination}}</div>
+        <div class="subtitle" style="margin-top: 10px;">
+            {{itinerary.startDate}} to {{itinerary.endDate}} ({{itinerary.duration}} Days)
+        </div>
+    </div>
+
+    <!-- Day by Day Itinerary -->
+    {{#each days}}
+    <div class="day-section">
+        <div class="day-header">
+            <div class="day-number">Day {{dayNumber}}</div>
+            <div class="day-date">{{date}}</div>
+        </div>
+        <div class="day-content">
+            {{#if title}}
+            <h3 class="day-title">{{title}}</h3>
+            {{/if}}
+
+            {{#if description}}
+            <p class="day-description">{{description}}</p>
+            {{/if}}
+
+            <!-- Accommodation -->
+            {{#if accommodation}}
+            <div class="info-block">
+                <h4>🏨 Accommodation</h4>
+                <div class="info-row">
+                    <span class="info-label">Hotel:</span>
+                    <span>{{accommodation.name}}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Type:</span>
+                    <span>{{accommodation.type}} - {{accommodation.roomType}}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Check-in:</span>
+                    <span>{{accommodation.checkIn}}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Check-out:</span>
+                    <span>{{accommodation.checkOut}}</span>
+                </div>
+            </div>
+            {{/if}}
+
+            <!-- Transport -->
+            {{#if transport}}
+            <div class="info-block">
+                <h4>🚗 Transport</h4>
+                <div class="info-row">
+                    <span class="info-label">Type:</span>
+                    <span>{{transport.type}}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Route:</span>
+                    <span>{{transport.from}} → {{transport.to}}</span>
+                </div>
+                {{#if transport.departureTime}}
+                <div class="info-row">
+                    <span class="info-label">Departure:</span>
+                    <span>{{transport.departureTime}}</span>
+                </div>
+                {{/if}}
+                {{#if transport.arrivalTime}}
+                <div class="info-row">
+                    <span class="info-label">Arrival:</span>
+                    <span>{{transport.arrivalTime}}</span>
+                </div>
+                {{/if}}
+            </div>
+            {{/if}}
+
+            <!-- Activities -->
+            {{#if activities.length}}
+            <div class="activities-list">
+                <h4 style="color: {{../tenant.primaryColor}}; margin-bottom: 10px;">📍 Activities</h4>
+                {{#each activities}}
+                <div class="activity-item">
+                    <div class="activity-title">{{title}}</div>
+                    {{#if startTime}}
+                    <div class="activity-time">⏰ {{startTime}}{{#if endTime}} - {{endTime}}{{/if}}</div>
+                    {{/if}}
+                    {{#if location}}
+                    <div style="font-size: 9pt; color: #666;">📍 {{location}}</div>
+                    {{/if}}
+                    {{#if description}}
+                    <div style="margin-top: 8px;">{{description}}</div>
+                    {{/if}}
+                </div>
+                {{/each}}
+            </div>
+            {{/if}}
+
+            <!-- Meals -->
+            {{#if meals.length}}
+            <div style="margin: 15px 0;">
+                <h4 style="color: {{../tenant.primaryColor}}; margin-bottom: 10px;">🍽️ Meals</h4>
+                {{#each meals}}
+                <div class="meal-item">
+                    <strong>{{type}}</strong>{{#if restaurant}} at {{restaurant}}{{/if}}{{#if cuisine}} - {{cuisine}}{{/if}}
+                </div>
+                {{/each}}
+            </div>
+            {{/if}}
+        </div>
+    </div>
+    {{/each}}
+
+    <!-- Footer -->
+    <div class="footer">
+        <p>Itinerary prepared by {{tenant.name}}</p>
+        <p style="margin-top: 5px;">This itinerary is subject to availability and confirmation</p>
+    </div>
+</body>
+</html>

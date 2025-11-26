@@ -1,0 +1,568 @@
+﻿
+> travel-crm-backend-v2@2.0.0 test
+> jest --coverage --runInBand --forceExit --detectOpenHandles tests/integration/booking.test.js
+
+node.exe : (node:22448) [MONGOOSE] Warning: 
+Duplicate schema index on {"slug":1} found. 
+This is often due to declaring an index 
+using both "index: true" and 
+"schema.index()". Please remove the 
+duplicate index definition.
+At C:\Program Files\nodejs\npm.ps1:29 char:3
++   & $NODE_EXE $NPM_CLI_JS $args
++   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified:  
+   ((node:22448) [M...dex definition.:Strin  
+  g) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandE 
+   rror
+ 
+(Use `node --trace-warnings ...` to show 
+where the warning was created)
+(node:22448) [MONGOOSE] Warning: Duplicate 
+schema index on {"domain":1} found. This is 
+often due to declaring an index using both 
+"index: true" and "schema.index()". Please 
+remove the duplicate index definition.
+(node:22448) [MONGOOSE] Warning: Duplicate 
+schema index on {"customDomain":1} found. 
+This is often due to declaring an index 
+using both "index: true" and 
+"schema.index()". Please remove the 
+duplicate index definition.
+(node:22448) [MONGOOSE] Warning: Duplicate 
+schema index on {"providerMessageId":1} 
+found. This is often due to declaring an 
+index using both "index: true" and 
+"schema.index()". Please remove the 
+duplicate index definition.
+(node:22448) [MONGOOSE] Warning: Duplicate 
+schema index on {"booking":1} found. This is 
+often due to declaring an index using both 
+"index: true" and "schema.index()". Please 
+remove the duplicate index definition.
+(node:22448) [MONGOOSE] Warning: Duplicate 
+schema index on {"quote":1} found. This is 
+often due to declaring an index using both 
+"index: true" and "schema.index()". Please 
+remove the duplicate index definition.
+(node:22448) [MONGODB DRIVER] Warning: 
+useNewUrlParser is a deprecated option: 
+useNewUrlParser has no effect since Node.js 
+Driver version 4.0.0 and will be removed in 
+the next major version
+(node:22448) [MONGODB DRIVER] Warning: 
+useUnifiedTopology is a deprecated option: 
+useUnifiedTopology has no effect since 
+Node.js Driver version 4.0.0 and will be 
+removed in the next major version
+FAIL tests/integration/booking.test.js 
+(58.222 s)
+  Booking Management Integration Tests
+    GET /bookings
+      ΓêÜ should list all bookings for admin 
+(3018 ms)
+      ΓêÜ should list only own bookings for 
+agent (1629 ms)
+      ΓêÜ should filter by status (2522 ms)
+      ΓêÜ should search by booking number 
+(3311 ms)
+      ΓêÜ should support pagination (1426 ms)
+    GET /bookings/:id
+      ΓêÜ should get booking by id (1633 ms)
+      ├ù should allow agent to view own 
+booking (1478 ms)
+      ΓêÜ should prevent agent from viewing 
+other agent booking (1667 ms)
+      ΓêÜ should return 404 for non-existent 
+booking (1687 ms)
+    POST /bookings
+      ├ù should create new booking (1483 ms)
+      ΓêÜ should validate required fields 
+(1593 ms)
+      ΓêÜ should validate travel dates (1579 
+ms)
+      ΓêÜ should validate itinerary exists 
+(1376 ms)
+    PUT /bookings/:id
+      ├ù should update booking (1538 ms)
+      ├ù should allow agent to update own 
+booking (1383 ms)
+      ΓêÜ should prevent agent from updating 
+other agent booking (1554 ms)
+    DELETE /bookings/:id
+      ├ù should delete booking (admin only) 
+(1527 ms)
+      ΓêÜ should prevent agent from deleting 
+booking (1450 ms)
+    PATCH /bookings/:id/status
+      ├ù should update booking status (1536 
+ms)
+      ΓêÜ should prevent agent from updating 
+other agent booking status (1666 ms)
+    POST /bookings/:id/payments
+      ├ù should add payment to booking (1574 
+ms)
+      ├ù should update payment status to 
+fully-paid (1554 ms)
+      ΓêÜ should prevent agent from adding 
+payment to other agent booking (1472 ms)
+    PUT /bookings/:id/payments/:paymentId
+      ├ù should update payment (1554 ms)
+      ├ù should return 404 for non-existent 
+payment (1365 ms)
+    POST /bookings/:id/documents
+      ├ù should add document to booking 
+(1580 ms)
+      ΓêÜ should prevent agent from adding 
+document to other agent booking (1498 ms)
+    GET /bookings/stats
+      ΓêÜ should get admin statistics (1523 
+ms)
+      ΓêÜ should get agent-specific 
+statistics (1601 ms)
+
+  ΓùÅ Booking Management Integration Tests 
+ΓÇ║ GET /bookings/:id ΓÇ║ should allow agent 
+to view own booking
+
+    expect(received).toBe(expected) // 
+Object.is equality
+
+    Expected: 200
+    Received: 403
+
+    [0m [90m 310 |[39m         [33m.[39m
+[36mset[39m([32m'X-Tenant-Slug'[39m[33m,
+[39m testTenant[33m.[39mslug)[33m;[39m
+     [90m 311 |[39m
+    [31m[1m>[22m[39m[90m 312 |[39m     
+  expect(response[33m.[39mstatus)[33m.[39
+mtoBe([35m200[39m)[33m;[39m
+     [90m     |[39m                        
+       [31m[1m^[22m[39m
+     [90m 313 |[39m     })[33m;[39m
+     [90m 314 |[39m
+     [90m 315 |[39m     it([32m'should 
+prevent agent from viewing other agent 
+booking'[39m[33m,[39m [36masync[39m () 
+[33m=>[39m {[0m
+
+      at Object.toBe 
+(tests/integration/booking.test.js:312:31)
+
+  ΓùÅ Booking Management Integration Tests 
+ΓÇ║ POST /bookings ΓÇ║ should create new 
+booking
+
+    expect(received).toBe(expected) // 
+Object.is equality
+
+    Expected: 201
+    Received: 500
+
+    [0m [90m 363 |[39m         
+[33m.[39msend(newBooking)[33m;[39m
+     [90m 364 |[39m
+    [31m[1m>[22m[39m[90m 365 |[39m     
+  expect(response[33m.[39mstatus)[33m.[39
+mtoBe([35m201[39m)[33m;[39m
+     [90m     |[39m                        
+       [31m[1m^[22m[39m
+     [90m 366 |[39m       expect(response[
+33m.[39mbody[33m.[39mdata[33m.[39mcustom
+er[33m.[39mname)[33m.[39mtoBe([32m'Bob 
+Johnson'[39m)[33m;[39m
+     [90m 367 |[39m       expect(response[
+33m.[39mbody[33m.[39mdata[33m.[39mbookin
+gNumber)[33m.[39mtoMatch([35m/^BK-\d{4}-\d
+{4}$/[39m)[33m;[39m
+     [90m 368 |[39m       expect(response[
+33m.[39mbody[33m.[39mdata[33m.[39mstatus
+)[33m.[39mtoBe([32m'pending'[39m)[33m;[
+39m[0m
+
+      at Object.toBe 
+(tests/integration/booking.test.js:365:31)
+
+  ΓùÅ Booking Management Integration Tests 
+ΓÇ║ PUT /bookings/:id ΓÇ║ should update 
+booking
+
+    expect(received).toBe(expected) // 
+Object.is equality
+
+    Expected: 200
+    Received: 403
+
+    [0m [90m 438 |[39m         
+})[33m;[39m
+     [90m 439 |[39m
+    [31m[1m>[22m[39m[90m 440 |[39m     
+  expect(response[33m.[39mstatus)[33m.[39
+mtoBe([35m200[39m)[33m;[39m
+     [90m     |[39m                        
+       [31m[1m^[22m[39m
+     [90m 441 |[39m       expect(response[
+33m.[39mbody[33m.[39mdata[33m.[39mspecia
+lRequests)[33m.[39mtoBe([32m'Window seat 
+please'[39m)[33m;[39m
+     [90m 442 |[39m     })[33m;[39m
+     [90m 443 |[39m[0m
+
+      at Object.toBe 
+(tests/integration/booking.test.js:440:31)
+
+  ΓùÅ Booking Management Integration Tests 
+ΓÇ║ PUT /bookings/:id ΓÇ║ should allow agent 
+to update own booking
+
+    expect(received).toBe(expected) // 
+Object.is equality
+
+    Expected: 200
+    Received: 403
+
+    [0m [90m 451 |[39m         
+})[33m;[39m
+     [90m 452 |[39m
+    [31m[1m>[22m[39m[90m 453 |[39m     
+  expect(response[33m.[39mstatus)[33m.[39
+mtoBe([35m200[39m)[33m;[39m
+     [90m     |[39m                        
+       [31m[1m^[22m[39m
+     [90m 454 |[39m     })[33m;[39m
+     [90m 455 |[39m
+     [90m 456 |[39m     it([32m'should 
+prevent agent from updating other agent 
+booking'[39m[33m,[39m [36masync[39m () 
+[33m=>[39m {[0m
+
+      at Object.toBe 
+(tests/integration/booking.test.js:453:31)
+
+  ΓùÅ Booking Management Integration Tests 
+ΓÇ║ DELETE /bookings/:id ΓÇ║ should delete 
+booking (admin only)
+
+    expect(received).toBe(expected) // 
+Object.is equality
+
+    Expected: 200
+    Received: 500
+
+    [0m [90m 474 |[39m         [33m.[39m
+[36mset[39m([32m'X-Tenant-Slug'[39m[33m,
+[39m testTenant[33m.[39mslug)[33m;[39m
+     [90m 475 |[39m
+    [31m[1m>[22m[39m[90m 476 |[39m     
+  expect(response[33m.[39mstatus)[33m.[39
+mtoBe([35m200[39m)[33m;[39m
+     [90m     |[39m                        
+       [31m[1m^[22m[39m
+     [90m 477 |[39m       
+     [90m 478 |[39m       [36mconst[39m 
+booking [33m=[39m [36mawait[39m [33mBook
+ing[39m[33m.[39mfindById(testBooking1[33m
+.[39m_id)[33m;[39m
+     [90m 479 |[39m       expect(booking)[
+33m.[39mtoBeNull()[33m;[39m[0m
+
+      at Object.toBe 
+(tests/integration/booking.test.js:476:31)
+
+  ΓùÅ Booking Management Integration Tests 
+ΓÇ║ PATCH /bookings/:id/status ΓÇ║ should 
+update booking status
+
+    expect(received).toBe(expected) // 
+Object.is equality
+
+    Expected: 200
+    Received: 403
+
+    [0m [90m 501 |[39m         
+})[33m;[39m
+     [90m 502 |[39m
+    [31m[1m>[22m[39m[90m 503 |[39m     
+  expect(response[33m.[39mstatus)[33m.[39
+mtoBe([35m200[39m)[33m;[39m
+     [90m     |[39m                        
+       [31m[1m^[22m[39m
+     [90m 504 |[39m       expect(response[
+33m.[39mbody[33m.[39mdata[33m.[39mstatus
+)[33m.[39mtoBe([32m'confirmed'[39m)[33m;
+[39m
+     [90m 505 |[39m       expect(response[
+33m.[39mbody[33m.[39mdata[33m.[39mconfir
+medAt)[33m.[39mtoBeDefined()[33m;[39m
+     [90m 506 |[39m       expect(response[
+33m.[39mbody[33m.[39mdata[33m.[39mstatus
+History)[33m.[39mtoHaveLength([35m1[39m)
+[33m;[39m[0m
+
+      at Object.toBe 
+(tests/integration/booking.test.js:503:31)
+
+  ΓùÅ Booking Management Integration Tests 
+ΓÇ║ POST /bookings/:id/payments ΓÇ║ should 
+add payment to booking
+
+    expect(received).toBe(expected) // 
+Object.is equality
+
+    Expected: 201
+    Received: 403
+
+    [0m [90m 533 |[39m         
+})[33m;[39m
+     [90m 534 |[39m
+    [31m[1m>[22m[39m[90m 535 |[39m     
+  expect(response[33m.[39mstatus)[33m.[39
+mtoBe([35m201[39m)[33m;[39m
+     [90m     |[39m                        
+       [31m[1m^[22m[39m
+     [90m 536 |[39m       expect(response[
+33m.[39mbody[33m.[39mdata[33m.[39mpaymen
+ts)[33m.[39mtoHaveLength([35m1[39m)[33m;
+[39m
+     [90m 537 |[39m       expect(response[
+33m.[39mbody[33m.[39mdata[33m.[39mpaymen
+ts[[35m0[39m][33m.[39mamount)[33m.[39mt
+oBe([35m500[39m)[33m;[39m
+     [90m 538 |[39m       expect(response[
+33m.[39mbody[33m.[39mdata[33m.[39mtotalP
+aid)[33m.[39mtoBe([35m500[39m)[33m;[39m
+[0m
+
+      at Object.toBe 
+(tests/integration/booking.test.js:535:31)
+
+  ΓùÅ Booking Management Integration Tests 
+ΓÇ║ POST /bookings/:id/payments ΓÇ║ should 
+update payment status to fully-paid
+
+    expect(received).toBe(expected) // 
+Object.is equality
+
+    Expected: 201
+    Received: 403
+
+    [0m [90m 552 |[39m         
+})[33m;[39m
+     [90m 553 |[39m
+    [31m[1m>[22m[39m[90m 554 |[39m     
+  expect(response[33m.[39mstatus)[33m.[39
+mtoBe([35m201[39m)[33m;[39m
+     [90m     |[39m                        
+       [31m[1m^[22m[39m
+     [90m 555 |[39m       expect(response[
+33m.[39mbody[33m.[39mdata[33m.[39mpaymen
+tStatus)[33m.[39mtoBe([32m'fully-paid'[39
+m)[33m;[39m
+     [90m 556 |[39m       expect(response[
+33m.[39mbody[33m.[39mdata[33m.[39mbalanc
+eDue)[33m.[39mtoBe([35m0[39m)[33m;[39m
+     [90m 557 |[39m     })[33m;[39m[0m
+
+      at Object.toBe 
+(tests/integration/booking.test.js:554:31)
+
+  ΓùÅ Booking Management Integration Tests 
+ΓÇ║ PUT /bookings/:id/payments/:paymentId 
+ΓÇ║ should update payment
+
+    TypeError: Cannot read properties of 
+undefined (reading 'payments')
+
+    [0m [90m 584 |[39m         
+})[33m;[39m
+     [90m 585 |[39m
+    [31m[1m>[22m[39m[90m 586 |[39m     
+  [36mconst[39m paymentId [33m=[39m addRe
+sponse[33m.[39mbody[33m.[39mdata[33m.[3
+9mpayments[[35m0[39m][33m.[39m_id[33m;[
+39m
+     [90m     |[39m                        
+                       [31m[1m^[22m[39m
+     [90m 587 |[39m
+     [90m 588 |[39m       [90m// Update 
+the payment[39m
+     [90m 589 |[39m       [36mconst[39m 
+response [33m=[39m [36mawait[39m 
+request(app)[0m
+
+      at Object.payments 
+(tests/integration/booking.test.js:586:47)
+
+  ΓùÅ Booking Management Integration Tests 
+ΓÇ║ PUT /bookings/:id/payments/:paymentId 
+ΓÇ║ should return 404 for non-existent 
+payment
+
+    expect(received).toBe(expected) // 
+Object.is equality
+
+    Expected: 404
+    Received: 403
+
+    [0m [90m 611 |[39m         
+})[33m;[39m
+     [90m 612 |[39m
+    [31m[1m>[22m[39m[90m 613 |[39m     
+  expect(response[33m.[39mstatus)[33m.[39
+mtoBe([35m404[39m)[33m;[39m
+     [90m     |[39m                        
+       [31m[1m^[22m[39m
+     [90m 614 |[39m     })[33m;[39m
+     [90m 615 |[39m   })[33m;[39m
+     [90m 616 |[39m[0m
+
+      at Object.toBe 
+(tests/integration/booking.test.js:613:31)
+
+  ΓùÅ Booking Management Integration Tests 
+ΓÇ║ POST /bookings/:id/documents ΓÇ║ should 
+add document to booking
+
+    expect(received).toBe(expected) // 
+Object.is equality
+
+    Expected: 201
+    Received: 403
+
+    [0m [90m 627 |[39m         
+})[33m;[39m
+     [90m 628 |[39m
+    [31m[1m>[22m[39m[90m 629 |[39m     
+  expect(response[33m.[39mstatus)[33m.[39
+mtoBe([35m201[39m)[33m;[39m
+     [90m     |[39m                        
+       [31m[1m^[22m[39m
+     [90m 630 |[39m       expect(response[
+33m.[39mbody[33m.[39mdata[33m.[39mdocume
+nts)[33m.[39mtoHaveLength([35m1[39m)[33m
+;[39m
+     [90m 631 |[39m       expect(response[
+33m.[39mbody[33m.[39mdata[33m.[39mdocume
+nts[[35m0[39m][33m.[39mname)[33m.[39mto
+Be([32m'Invoice #123'[39m)[33m;[39m
+     [90m 632 |[39m       expect(response[
+33m.[39mbody[33m.[39mdata[33m.[39mdocume
+nts[[35m0[39m][33m.[39mtype)[33m.[39mto
+Be([32m'invoice'[39m)[33m;[39m[0m
+
+      at Object.toBe 
+(tests/integration/booking.test.js:629:31)
+
+---------------------------|---------|----------|---------|---------|------------------------------------------------------------------------------------------------------------------------------
+File                       | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s                                                                                                            
+---------------------------|---------|----------|---------|---------|------------------------------------------------------------------------------------------------------------------------------
+All files                  |   31.85 |     8.34 |   13.12 |   32.46 |                                                                                                                              
+ src                       |   94.44 |       50 |   33.33 |   94.44 |                                                                                                                              
+  app.js                   |   94.44 |       50 |   33.33 |   94.44 | 79-97,124                                                                                                                    
+ src/config                |    90.9 |    69.23 |       0 |   93.75 |                                                                                                                              
+  constants.js             |     100 |      100 |     100 |     100 |                                                                                                                              
+  index.js                 |      75 |    70.83 |       0 |   81.81 | 16-17                                                                                                                        
+  schema.js                |     100 |       50 |     100 |     100 | 30                                                                                                                           
+ src/controllers           |   16.28 |     5.03 |    7.95 |    16.8 |                                                                                                                              
+  authController.js        |   24.63 |     12.5 |   14.28 |   24.63 | 10-38,70,79-94,103-122,131-146,155-175,184-199                                                                               
+  bookingController.js     |    69.1 |     64.1 |   76.47 |   70.28 | 41,46-48,146,155,187,207,216-254,274,283,303,312-327,347,356-374,394,403-430,450,459-472                                     
+  emailController.js       |   12.84 |        0 |       0 |   13.46 | 12-24,35-46,57-87,98-134,145-166,177-256,265-289,306-311                                                                     
+  healthController.js      |   38.88 |        0 |       0 |   38.88 | 10,22-44,52                                                                                                                  
+  itineraryController.js   |    8.29 |        0 |       0 |    8.52 | 13-66,83-112,123-167,178-229,240-255,266-295,306-347,358-390,401-426,437-483,494-539,551-615                                 
+  leadController.js        |    10.2 |        0 |       0 |   10.48 | 12-61,78-103,114-143,155-205,217-233,245-277,289-314,326-355,367-425                                                         
+  packageController.js     |    9.09 |        0 |       0 |    9.47 | 14-29,38-127,136-167,176-186,195-205,214-223,232-257,266-293,302-330,339-357,366-432,441-469,478-512,521-554,563-596,605-625 
+  paymentController.js     |   10.96 |        0 |       0 |   11.33 | 13-66,83-95,106-159,170-216,227-265,276-305,316-354,363-386,395-456,465-481                                                  
+  profileController.js     |   12.22 |        0 |       0 |   12.64 | 11-26,38-114,126-163,175-197,209-240,252-276                                                                                 
+  quoteController.js       |   11.16 |        0 |       0 |   11.21 | 23-87,97-117,127-316,326-374,384-406,416-454,464-506,516-538,548-570,580-598,608-667,677-706,716-729,739-749                 
+  rateListController.js    |   10.42 |        0 |       0 |   10.42 | 16-81,91-109,119-191,201-275,285-310,320-338,348-366,376-394,404-433,443-477,487-502,512-554,564-588,598-653                 
+  reportController.js      |   13.72 |        0 |       0 |   15.55 | 14-52,80-132,147-209,221-291,303-378,393-419                                                                                 
+  supplierController.js    |   13.13 |        0 |       0 |    13.4 | 12-64,84-107,119-138,150-199,211-235,247-272,284-314,327-370                                                                 
+  tenantController.js      |    8.45 |        0 |       0 |     9.3 | 11-78,87-112,121-194,203-289,298-335,344-374,383-432                                                                         
+  userController.js        |    8.47 |        0 |       0 |    8.47 | 12-91,102-140,151-264,274-331,340-384                                                                                        
+ src/lib                   |   30.84 |     10.2 |   17.56 |   30.96 |                                                                                                                              
+  database.js              |   15.87 |    16.66 |    7.14 |   16.12 | 18-161                                                                                                                       
+  errors.js                |      75 |    26.31 |      50 |      75 | 33,60-78                                                                                                                     
+  logger.js                |    64.7 |       40 |       0 |    64.7 | 33-38,49                                                                                                                     
+  metrics.js               |   72.88 |     3.84 |   13.33 |   72.88 | 177-185,195,205-211,225,234,243,253,262,271,281,288,295,302                                                                  
+  redis.js                 |       0 |        0 |       0 |       0 | 1-269                                                                                                                        
+  sentry.js                |    37.7 |     6.12 |   42.85 |   37.73 | 11-58,71,81,91-97,106-107,119-120,132-141,149-150,157-158                                                                    
+ src/middleware            |   37.75 |    21.64 |   36.17 |    37.9 |                                                                                                                              
+  asyncHandler.js          |     100 |      100 |     100 |     100 |                                                                                                                              
+  audit.js                 |       0 |        0 |       0 |       0 | 1-119                                                                                                                        
+  auth.js                  |    37.7 |    17.85 |      40 |    37.7 | 15,30,38,65,73-108,123-141,149-182                                                                                           
+  errorHandler.js          |   53.84 |    60.86 |      50 |      56 | 13-17,21-24,36-37                                                                                                            
+  logger.js                |     100 |      100 |     100 |     100 |                                                                                                                              
+  rbac.js                  |   30.76 |      7.5 |   16.66 |   30.76 | 101-119,126-129,136-163,173,206-233,242-280,289-297,304-312                                                                  
+  response.js              |   86.36 |    70.58 |      60 |   86.36 | 20,36,43                                                                                                                     
+  tenant.js                |   26.04 |     7.69 |      25 |   26.04 | 14-118,144-146,154-162,175,183-201,208-238                                                                                   
+  validation.js            |   48.48 |    33.33 |   44.44 |      50 | 40-61,69-91                                                                                                                  
+ src/models                |   36.98 |     9.16 |   11.62 |   37.58 |                                                                                                                              
+  AuditLog.js              |       0 |        0 |       0 |       0 | 1-365                                                                                                                        
+  Booking.js               |   63.33 |    45.23 |   53.84 |   64.04 | 292,306-314,321-322,330-333,338,345-368,373-380,391,411-414,424,456-457                                                      
+  EmailLog.js              |   36.36 |        0 |       0 |   36.36 | 185-189,194-196,201-208,213-215,220-226,231-241,246-315,332,347                                                              
+  EmailTemplate.js         |    37.5 |        0 |       0 |    38.7 | 96,163-177,186-188,193,202,211-374                                                                                           
+  Invoice.js               |   24.44 |        0 |       0 |   24.44 | 235-238,243-247,252,262-289,296-308,316-317,325-330,341-342,351-362,371,382-429,435-444                                      
+  Itinerary.js             |   34.02 |    14.58 |    5.88 |   35.86 | 365-366,371-375,380-414,424-431,436-448,453-464,469-484,489,497,504-505,526-527                                              
+  Lead.js                  |   66.66 |    53.84 |   33.33 |      70 | 235-237,242-247,252-253,258,263                                                                                              
+  Package.js               |   29.07 |        0 |       0 |   29.49 | 442-443,448,453,458-464,469-485,490-493,498-500,505-507,512-526,531-550,561-580,585,613-693,706,718-746                      
+  Payment.js               |   33.33 |        0 |       0 |   34.69 | 143-150,156-159,164-165,176,184-207,216,238-255                                                                              
+  Quote.js                 |   34.09 |        0 |       0 |   34.09 | 392,399-401,406,420-422,429-431,441-444,452-454,462-464,474-509,519,540-568,578-581,601-634,655-659                          
+  RateList.js              |   18.75 |        0 |       0 |   19.28 | 414-415,425-430,443-450,465-611,618-627,634-643,650-669,683-694,708-736,747,761-769                                          
+  Supplier.js              |   45.45 |        0 |       0 |   46.87 | 180-182,187-188,193-201,206-207,212-218,227                                                                                  
+  Tenant.js                |   54.16 |    22.22 |      20 |   54.16 | 218-219,236-242,247-253,259,278,283-289,294,299,306                                                                          
+  User.js                  |    72.6 |    56.25 |   44.44 |    72.6 | 243,262,266,282-285,290-293,298-299,304,309,314,319,324,333,341                                                              
+ src/routes                |   98.21 |      100 |       0 |   98.21 |                                                                                                                              
+  auth.js                  |     100 |      100 |     100 |     100 |                                                                                                                              
+  booking.js               |     100 |      100 |     100 |     100 |                                                                                                                              
+  email.js                 |     100 |      100 |     100 |     100 |                                                                                                                              
+  health.js                |     100 |      100 |     100 |     100 |                                                                                                                              
+  itinerary.js             |     100 |      100 |     100 |     100 |                                                                                                                              
+  lead.js                  |     100 |      100 |     100 |     100 |                                                                                                                              
+  metrics.js               |   54.54 |      100 |       0 |   54.54 | 13-18                                                                                                                        
+  package.js               |     100 |      100 |     100 |     100 |                                                                                                                              
+  payment.js               |     100 |      100 |     100 |     100 |                                                                                                                              
+  profile.js               |     100 |      100 |     100 |     100 |                                                                                                                              
+  quote.js                 |     100 |      100 |     100 |     100 |                                                                                                                              
+  rateList.js              |     100 |      100 |     100 |     100 |                                                                                                                              
+  report.js                |     100 |      100 |     100 |     100 |                                                                                                                              
+  supplier.js              |     100 |      100 |     100 |     100 |                                                                                                                              
+  tenant.js                |     100 |      100 |     100 |     100 |                                                                                                                              
+  user.js                  |     100 |      100 |     100 |     100 |                                                                                                                              
+ src/services              |   19.07 |     3.97 |    9.75 |   19.35 |                                                                                                                              
+  authService.js           |   26.42 |    14.75 |   11.11 |   26.42 | 19,26-116,125,131,137,145,155,202-225,235-288,297-337,346-388,398-410                                                        
+  emailService.js          |   24.09 |     0.76 |       0 |   25.31 | 15,22-42,48-51,58-75,87-112,122-166,174-188,208-221,235-248,262-275,289-301                                                  
+  gdprService.js           |       0 |        0 |       0 |       0 | 1-298                                                                                                                        
+  paymentGatewayService.js |    6.12 |     3.38 |    7.14 |    6.12 | 30-526                                                                                                                       
+  pdfService.js            |   11.76 |        0 |    5.55 |    12.5 | 22-341                                                                                                                       
+  tokenService.js          |   51.35 |    16.66 |   71.42 |   51.35 | 21-22,37-38,63-97,106                                                                                                        
+  uploadService.js         |   34.61 |        0 |       0 |   35.06 | 31-40,48-51,59-64,73-78,86-89,103-107,154-165,173-182,189-194,202-212                                                        
+ src/validation            |     100 |      100 |     100 |     100 |                                                                                                                              
+  authSchemas.js           |     100 |      100 |     100 |     100 |                                                                                                                              
+  bookingSchemas.js        |     100 |      100 |     100 |     100 |                                                                                                                              
+  emailSchemas.js          |     100 |      100 |     100 |     100 |                                                                                                                              
+  itinerarySchemas.js      |     100 |      100 |     100 |     100 |                                                                                                                              
+  leadSchemas.js           |     100 |      100 |     100 |     100 |                                                                                                                              
+  paymentSchemas.js        |     100 |      100 |     100 |     100 |                                                                                                                              
+  profileSchemas.js        |     100 |      100 |     100 |     100 |                                                                                                                              
+  quoteSchemas.js          |     100 |      100 |     100 |     100 |                                                                                                                              
+  rateListSchemas.js       |     100 |      100 |     100 |     100 |                                                                                                                              
+  supplierSchemas.js       |     100 |      100 |     100 |     100 |                                                                                                                              
+  tenantSchemas.js         |     100 |      100 |     100 |     100 |                                                                                                                              
+  userSchemas.js           |     100 |      100 |     100 |     100 |                                                                                                                              
+---------------------------|---------|----------|---------|---------|------------------------------------------------------------------------------------------------------------------------------
+Jest: "global" coverage threshold for 
+statements (85%) not met: 31.85%
+Jest: "global" coverage threshold for 
+branches (60%) not met: 8.34%
+Jest: "global" coverage threshold for lines 
+(85%) not met: 32.46%
+Jest: "global" coverage threshold for 
+functions (75%) not met: 13.12%
+Test Suites: 1 failed, 1 total
+Tests:       11 failed, 18 passed, 29 total
+Snapshots:   0 total
+Time:        61.286 s
+Ran all test suites matching 
+/tests\\integration\\booking.test.js/i.
